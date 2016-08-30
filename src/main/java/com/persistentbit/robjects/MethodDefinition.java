@@ -1,27 +1,54 @@
 package com.persistentbit.robjects;
-import com.persistentbit.core.collections.PList;
+
+import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.properties.FieldNames;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
 import java.util.Objects;
 
 
 public class MethodDefinition implements Serializable
 {
-    private String methodName;
-    private String resultClassName;
-    private PList<ParamDefinition> parameters;
+    private final String methodName;
+    private final Class<?> resultClass;
+    private final String[] paramNames;
+    private final Class<?>[] paramTypes;
 
 
-    public MethodDefinition(Method method){
-        this(method.getName(),method.getReturnType().getName(),ParamDefinition.forMethod(method));
+    private static String[] getMethodParamNames(Method m) {
+        FieldNames fn = m.getDeclaredAnnotation(FieldNames.class);
+        if(fn != null){
+            return fn.names();
+        }
+        Parameter[] params = m.getParameters();
+        String[] result = new String[params.length];
+        for(int t=0; t<params.length;t++){
+            result[t] = params[t].getName();
+        }
+        return result;
     }
 
-    public MethodDefinition(String methodName, String resultClassName, PList<ParamDefinition> parameters)
+    public MethodDefinition(Method method){
+        this(method.getName(),method.getReturnType(), method.getParameterTypes(),getMethodParamNames(method));
+
+    }
+
+    @Override
+    public String toString() {
+        String params = PStream.from(paramTypes).zip(PStream.from(paramNames)).map(t -> t._2.getSimpleName() + " " + t._1).toString(",");
+        return "MethodDefinition[" + resultClass.getSimpleName() + "#" + methodName + "(" + params + ")]";
+    }
+
+    public MethodDefinition(String methodName, Class<?> resultClass, Class<?>[] paramTypes, String[] paramNames)
     {
         this.methodName = Objects.requireNonNull(methodName);
-        this.resultClassName = Objects.requireNonNull(resultClassName);
-        this.parameters = Objects.requireNonNull(parameters);
+        this.resultClass = Objects.requireNonNull(resultClass);
+        this.paramTypes = Objects.requireNonNull(paramTypes);
+        this.paramNames = Objects.requireNonNull(paramNames);
+
     }
 
     public String getMethodName()
@@ -29,47 +56,40 @@ public class MethodDefinition implements Serializable
         return methodName;
     }
 
-    public String getResultClassName()
-    {
-        return resultClassName;
+
+    public Class<?> getResultClass() {
+        return resultClass;
     }
 
-    public PList<ParamDefinition> getParameters()
-    {
-        return parameters;
+    public String[] getParamNames() {
+        return paramNames;
+    }
+
+    public Class<?>[] getParamTypes() {
+        return paramTypes;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
         MethodDefinition that = (MethodDefinition) o;
 
-        if (!methodName.equals(that.methodName))
-            return false;
-        if (!resultClassName.equals(that.resultClassName))
-            return false;
-
-        return parameters.equals(that.getParameters());
+        if (!methodName.equals(that.methodName)) return false;
+        if (!resultClass.equals(that.resultClass)) return false;
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        if (!Arrays.equals(paramNames, that.paramNames)) return false;
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        return Arrays.equals(paramTypes, that.paramTypes);
 
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         int result = methodName.hashCode();
-        result = 31 * result + resultClassName.hashCode();
-        result = 31 * result + parameters.hashCode();
+        result = 31 * result + resultClass.hashCode();
+        result = 31 * result + Arrays.hashCode(paramTypes);
         return result;
-    }
-
-    @Override
-    public String toString()
-    {
-        return "MethodDef[" + methodName+ "(" + parameters+ ")]";
     }
 }

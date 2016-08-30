@@ -1,33 +1,46 @@
 package com.persistentbit.robjects;
 
-import com.persistentbit.core.Nullable;
+import com.persistentbit.core.Immutable;
+import com.persistentbit.core.collections.PList;
 
-import java.util.Optional;
-
+/**
+ * @author Peter Muys
+ * @since 30/08/2016
+ */
+@Immutable
 public class RCall {
-    private final MethodDefinition  methodToCall;
-    private final Object[]   arguments;
-    @Nullable  private final RCall nextCall;
+    private final PList<RMethodCall>  callStack;
+    private final RMethodCall   thisCall;
 
-    public RCall(MethodDefinition md,Object[] arguments){
-        this(md,arguments,null);
+    public RCall(PList<RMethodCall> callStack, RMethodCall thisCall) {
+        this.callStack = callStack;
+        this.thisCall = thisCall;
     }
 
-    public RCall(MethodDefinition methodToCall,Object[] arguments,RCall nextCall){
-        this.methodToCall = methodToCall;
-        this.arguments = arguments;
-        this.nextCall = nextCall;
+    public PList<RMethodCall> getCallStack() {
+        return callStack;
     }
 
-    public Object[] getArguments() {
-        return arguments;
+    public RMethodCall getThisCall() {
+        return thisCall;
     }
 
-    public MethodDefinition getMethodToCall() {
-        return methodToCall;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        RCall call = (RCall) o;
+
+        if (!callStack.equals(call.callStack)) return false;
+        return thisCall.equals(call.thisCall);
+
     }
 
-    public Optional<RCall> getNextCall() {
-        return Optional.ofNullable(nextCall);
+    @Override
+    public int hashCode() {
+        int result = callStack.hashCode();
+        result = 31 * result + thisCall.hashCode();
+        return result;
     }
 }

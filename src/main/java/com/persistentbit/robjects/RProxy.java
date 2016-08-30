@@ -1,34 +1,47 @@
 package com.persistentbit.robjects;
 
-
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 
 public class RProxy implements InvocationHandler {
 
-    public RServer server;
-    public RCallResult callResult;
-    public Class    remotableClass;
+    public RemoteService server;
+    public RemoteObjectDefinition rod;
 
-    public RProxy(RServer server, RCallResult callResult, Class remotableClass) {
+
+    private RProxy(RemoteService server,RemoteObjectDefinition rod) {
         this.server = server;
-        this.callResult = callResult;
-        this.remotableClass = remotableClass;
-    }
+        this.rod = rod;
 
+    }
+    static public <C> C create(RemoteService server, RemoteObjectDefinition rod){
+        return (C)Proxy.newProxyInstance(RProxy.class.getClassLoader(),new Class<?>[]{rod.getRemoteObjectClass()},new RProxy(server,rod));
+    }
+    static public <C> C create(RemoteService server){
+        return create(server,server.getRoot().getRobject().get());
+    }
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        RCallResult thisResult  = null;
-        RCall call = new RCall(new MethodDefinition(method),args);
-        if(callResult == null){
-
-
-            thisResult = server.rootCall(call);
-        } else {
-            thisResult = server.call(remotableClass,this,call);
+        MethodDefinition md = new MethodDefinition(method);
+        if(rod.getRemoteCached().containsKey(md)){
+            return rod.getRemoteCached().get(md);
         }
-        throw new RuntimeException("NotYet");
+        RCall call = new RCall(rod.getCallStack(),new RMethodCall(md,args));
+        RCallResult result = server.call(call);
+        result.getException().ifPresent(e ->{ throw new RuntimeException("Remote exception",e);});
+        if(result.getValue().isPresent()){
+            return result.getValue().get();
+        }
+        //Must be remote object
+        RemoteObjectDefinition rod = result.getRobject().orElse(null);
+        if (rod == null) {
+            return null;
+        }
+        //Class<?> resultCls = //RemotableClasses.getRemotableClass(method.getReturnType());
+        //Object robj = Proxy.newProxyInstance(this.getClass().getClassLoader(),new Class<?>[]{resultCls},new RProxy(server,rod));
+        //return robj;
+        return RProxy.create(server,rod);
     }
 }

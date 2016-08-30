@@ -1,70 +1,106 @@
 package com.persistentbit.robjects;
 
 
+import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.collections.PMap;
+import com.persistentbit.jjson.mapping.JJMapper;
+import com.persistentbit.robjects.annotations.RemoteCache;
 
-import com.persistentbit.robjects.annotations.Remotable;
-
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 
-public class RServer<R> {
+public class RServer<R> implements RemoteService{
+    static private final Logger log = Logger.getLogger(RServer.class.getName());
     private final Class<R>   rootInterface;
     private final Supplier<R> rootSupplier;
+    private final JJMapper  mapper;
 
     public RServer(Class<R> rootInterface, Supplier<R> rootSupplier) {
+        this.mapper = new JJMapper();
         this.rootInterface = Objects.requireNonNull(rootInterface);
         this.rootSupplier = Objects.requireNonNull(rootSupplier);
     }
 
 
-    public R createRootProxy(){
-        return (R)Proxy.newProxyInstance(this.getClass().getClassLoader(),new Class<?>[]{rootInterface},new RProxy(this,null,rootInterface));
+
+
+    public RCallResult  getRoot() {
+        RemoteObjectDefinition rod =  createROD(PList.empty(),this.rootInterface,rootSupplier.get());
+        return RCallResult.robject(rod);
     }
 
-    public RCallResult  rootCall(RCall call){
-        return call(rootInterface,rootSupplier,call);
-    }
+    public RCallResult  call(RCall call){
 
-    public RCallResult call(Class remoteInterface, Object obj, RCall call){
+        //JJNode jsonCall = mapper.write(call);
+        //System.out.println("call: " + JJPrinter.print(true,jsonCall));
 
-        MethodDefinition md = call.getMethodToCall();
-        try{
-            if(obj == null){
-                throw new RuntimeException("Can't call on null: " + md);
+
+
+        try {
+            Object result = call(rootSupplier.get(),call.getCallStack());
+            result = call(result, call.getThisCall());
+            if(result instanceof Optional){
+                result = ((Optional)result).orElse(null);
             }
-            Method m = remoteInterface.getMethod(md.getMethodName(),md.getParameters().map(pd ->{ try {
-                return Class.forName(pd.getTypeName());
-            }catch (Exception e){
-                throw new RuntimeException(e);
-            }}).toArray());
-            Object result = m.invoke(obj,call.getArguments());
-            RCall nextCall = call.getNextCall().orElse(null);
-            if(nextCall == null){
-                return new RCallResult(call,result,null);
+            Class<?> remoteClass = result == null ? null : RemotableClasses.getRemotableClass(result.getClass());
+            if(remoteClass == null ){
+                return RCallResult.value(result);
+            } else {
+                return RCallResult.robject(createROD(call.getCallStack().plus(call.getThisCall()),remoteClass,result));
             }
-            Class resultType = m.getReturnType();
-            return call(resultType,result,nextCall);
-
         }catch (Exception e){
+            log.severe(e.getMessage());
+            return RCallResult.exception(e);
+        }
+
+    }
+
+    private RemoteObjectDefinition  createROD(PList<RMethodCall> call, Class<?> remotableClass, Object obj){
+        try {
+            PList<MethodDefinition> remoteMethods = PList.empty();
+            PMap<MethodDefinition, Object> cachedMethods = PMap.empty();
+            for (Method m : remotableClass.getDeclaredMethods()) {
+                MethodDefinition md = new MethodDefinition(m);
+                if (m.getParameterCount() == 0 && m.getDeclaredAnnotation(RemoteCache.class) != null) {
+                    Object value = m.invoke(obj);
+                    cachedMethods = cachedMethods.put(md, value);
+                } else {
+                    remoteMethods = remoteMethods.plus(md);
+                }
+            }
+            return new RemoteObjectDefinition(remotableClass,remoteMethods, cachedMethods, call);
+        } catch (Exception e){
             throw new RuntimeException(e);
         }
+
     }
 
-    public Class<?>  getRemotableClass(Class<?> cls){
 
-        if(cls.getDeclaredAnnotation(Remotable.class) != null){
-            return cls;
+    private Object call(Object obj, RMethodCall call) throws NoSuchMethodException,IllegalAccessException,InvocationTargetException{
+        MethodDefinition md = call.getMethodToCall();
+        if(obj instanceof Optional){
+            obj = ((Optional)obj).orElse(null);
         }
-        for(Class<?> i : cls.getInterfaces()){
-            Class<?> resCls = getRemotableClass(i);
-            if(resCls != null){
-                return resCls;
-            }
+        if(obj == null){
+            throw new RuntimeException("Can't call on null: " + md);
         }
+        Method m = obj.getClass().getMethod(md.getMethodName(),md.getParamTypes());
+        obj = m.invoke(obj,call.getArguments());
+        return obj;
 
-        return null;
     }
+
+    private Object call(Object obj, PList<RMethodCall> callStack) throws NoSuchMethodException,IllegalAccessException,InvocationTargetException{
+        for(RMethodCall c : callStack){
+            obj = call(obj,c);
+        }
+        return obj;
+    }
+
+
 }

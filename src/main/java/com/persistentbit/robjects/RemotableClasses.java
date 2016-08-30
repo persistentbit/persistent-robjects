@@ -4,7 +4,6 @@ package com.persistentbit.robjects;
 
 
 
-
 import com.persistentbit.robjects.annotations.Remotable;
 
 import java.util.HashMap;
