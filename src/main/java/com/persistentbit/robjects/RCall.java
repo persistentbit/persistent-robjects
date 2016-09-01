@@ -16,6 +16,9 @@ public class RCall {
         this.callStack = callStack;
         this.thisCall = thisCall;
     }
+    public RCall() {
+        this(PList.empty(),null);
+    }
 
     public PList<RMethodCall> getCallStack() {
         return callStack;

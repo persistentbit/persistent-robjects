@@ -4,6 +4,8 @@ package com.persistentbit.robjects;
  * @author Peter Muys
  */
 public interface RemoteService {
-    RCallResult  getRoot();
+    default RCallResult  getRoot(){
+        return call(new RCall());
+    }
     RCallResult  call(RCall call);
 }

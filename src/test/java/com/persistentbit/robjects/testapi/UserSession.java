@@ -9,4 +9,5 @@ import com.persistentbit.robjects.annotations.Remotable;
 @Remotable
 public interface UserSession {
     UserData    getDetails();
+
 }

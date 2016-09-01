@@ -45,13 +45,17 @@ public class RMethodCall {
         public Object read(Type type, JJNode node, JJReader masterReader) {
             JJNodeObject obj = node.asObject().get();
             MethodDefinition md = masterReader.read(obj.get("methodToCall").get(),MethodDefinition.class);
-            PList<JJNode> items = obj.get("arguments").get().asArray().get().pstream().plist();
+            JJNode argNode = obj.get("arguments").get();
+            if(argNode.asNull().isPresent()){
+                return new RMethodCall(md,new Object[0]);
+            }
+            PList<JJNode> items = argNode.asArray().get().pstream().plist();
             Object[] res = new Object[md.getParamTypes().length];
             for(int t=0; t<md.getParamTypes().length; t++){
                 JJNode n = items.get(t);
-                res[t] = masterReader.read(n,)
+                res[t] = masterReader.read(n,md.getParamTypes()[t]);
             }
-
+            return new RMethodCall(md,res);
         }
     };
 }

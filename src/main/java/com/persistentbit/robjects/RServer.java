@@ -30,16 +30,13 @@ public class RServer<R> implements RemoteService{
 
 
 
-    public RCallResult  getRoot() {
-        RemoteObjectDefinition rod =  createROD(PList.empty(),this.rootInterface,rootSupplier.get());
-        return RCallResult.robject(rod);
-    }
+
 
     public RCallResult  call(RCall call){
 
-        //JJNode jsonCall = mapper.write(call);
-        //System.out.println("call: " + JJPrinter.print(true,jsonCall));
-
+        if(call.getThisCall() == null){
+            return getRoot();
+        }
 
 
         try {

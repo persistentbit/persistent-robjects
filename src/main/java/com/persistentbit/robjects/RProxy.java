@@ -40,9 +40,7 @@ public class RProxy implements InvocationHandler {
         if (rod == null) {
             return null;
         }
-        //Class<?> resultCls = //RemotableClasses.getRemotableClass(method.getReturnType());
-        //Object robj = Proxy.newProxyInstance(this.getClass().getClassLoader(),new Class<?>[]{resultCls},new RProxy(server,rod));
-        //return robj;
+
         return RProxy.create(server,rod);
     }
 }
