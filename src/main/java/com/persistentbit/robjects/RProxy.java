@@ -26,7 +26,8 @@ public class RProxy implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         MethodDefinition md = new MethodDefinition(method);
         if(rod.getRemoteCached().containsKey(md)){
-            return rod.getRemoteCached().get(md);
+            Object cached = rod.getRemoteCached().get(md).getValue();
+            return cached;
         }
         RCall call = new RCall(rod.getCallStack(),new RMethodCall(md,args));
         RCallResult result = server.call(call);

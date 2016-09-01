@@ -76,8 +76,8 @@ public class MethodDefinition implements Serializable
 
         MethodDefinition that = (MethodDefinition) o;
 
-        if (!methodName.equals(that.methodName)) return false;
-        if (!resultClass.equals(that.resultClass)) return false;
+        if (methodName != null ? !methodName.equals(that.methodName) : that.methodName != null) return false;
+        //if (resultClass != null ? !resultClass.equals(that.resultClass) : that.resultClass != null) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(paramNames, that.paramNames)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
@@ -87,8 +87,9 @@ public class MethodDefinition implements Serializable
 
     @Override
     public int hashCode() {
-        int result = methodName.hashCode();
-        result = 31 * result + resultClass.hashCode();
+        int result = methodName != null ? methodName.hashCode() : 0;
+        //result = 31 * result + (resultClass != null ? resultClass.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(paramNames);
         result = 31 * result + Arrays.hashCode(paramTypes);
         return result;
     }

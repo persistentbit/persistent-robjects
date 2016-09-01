@@ -2,6 +2,7 @@ package com.persistentbit.robjects;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
+import com.persistentbit.jjson.utils.ObjectWithTypeName;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -11,23 +12,27 @@ public class RemoteObjectDefinition implements Serializable
 {
     private final Class<?>  remoteObjectClass;
     private final PList<MethodDefinition> remoteMethods;
-    private final PMap<MethodDefinition,Object> remoteCached;
+    private final PMap<MethodDefinition,ObjectWithTypeName> remoteCached;
     private final PList<RMethodCall> callStack;
 
-    public RemoteObjectDefinition(Class<?> remoteObjectClass,PList<MethodDefinition> remoteMethods, PMap<MethodDefinition, Object> remoteCached, PList<RMethodCall> callStack) {
+
+
+
+
+    public RemoteObjectDefinition(Class<?> remoteObjectClass, PList<MethodDefinition> remoteMethods, PMap<MethodDefinition, ObjectWithTypeName> remoteCached, PList<RMethodCall> callStack) {
         this.remoteObjectClass = Objects.requireNonNull(remoteObjectClass);
         this.callStack = Objects.requireNonNull(callStack);
         this.remoteMethods = Objects.requireNonNull(remoteMethods);
         this.remoteCached = Objects.requireNonNull(remoteCached);
     }
-    public RemoteObjectDefinition(Class<?> remoteObjectClass,PList<MethodDefinition> remoteMethods, PMap<MethodDefinition, Object> remoteCached) {
+    public RemoteObjectDefinition(Class<?> remoteObjectClass,PList<MethodDefinition> remoteMethods, PMap<MethodDefinition, ObjectWithTypeName> remoteCached) {
         this(remoteObjectClass,remoteMethods,remoteCached,PList.empty());
     }
     public PList<MethodDefinition> getRemoteMethods() {
         return remoteMethods;
     }
 
-    public PMap<MethodDefinition, Object> getRemoteCached() {
+    public PMap<MethodDefinition, ObjectWithTypeName> getRemoteCached() {
         return remoteCached;
     }
 

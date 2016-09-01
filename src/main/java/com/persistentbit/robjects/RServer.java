@@ -4,6 +4,7 @@ package com.persistentbit.robjects;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.jjson.mapping.JJMapper;
+import com.persistentbit.jjson.utils.ObjectWithTypeName;
 import com.persistentbit.robjects.annotations.RemoteCache;
 
 import java.lang.reflect.InvocationTargetException;
@@ -63,12 +64,12 @@ public class RServer<R> implements RemoteService{
     private RemoteObjectDefinition  createROD(PList<RMethodCall> call, Class<?> remotableClass, Object obj){
         try {
             PList<MethodDefinition> remoteMethods = PList.empty();
-            PMap<MethodDefinition, Object> cachedMethods = PMap.empty();
+            PMap<MethodDefinition, ObjectWithTypeName> cachedMethods = PMap.empty();
             for (Method m : remotableClass.getDeclaredMethods()) {
                 MethodDefinition md = new MethodDefinition(m);
                 if (m.getParameterCount() == 0 && m.getDeclaredAnnotation(RemoteCache.class) != null) {
                     Object value = m.invoke(obj);
-                    cachedMethods = cachedMethods.put(md, value);
+                    cachedMethods = cachedMethods.put(md, new ObjectWithTypeName(value));
                 } else {
                     remoteMethods = remoteMethods.plus(md);
                 }
