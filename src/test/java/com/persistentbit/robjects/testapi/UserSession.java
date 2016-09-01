@@ -1,5 +1,6 @@
 package com.persistentbit.robjects.testapi;
 
+import com.persistentbit.core.Tuple2;
 import com.persistentbit.robjects.annotations.Remotable;
 
 /**
@@ -9,5 +10,9 @@ import com.persistentbit.robjects.annotations.Remotable;
 @Remotable
 public interface UserSession {
     UserData    getDetails();
+
+    Tuple2<Integer,String>  createMeATuple(int v1, String v2);
+
+    void testWithVoid();
 
 }

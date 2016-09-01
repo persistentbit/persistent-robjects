@@ -43,6 +43,9 @@ public class RMethodCall {
     static public final JJObjectReader jsonReader = new JJObjectReader() {
         @Override
         public Object read(Type type, JJNode node, JJReader masterReader) {
+            if(node.getType() == JJNode.JType.jsonNull){
+                return null;
+            }
             JJNodeObject obj = node.asObject().get();
             MethodDefinition md = masterReader.read(obj.get("methodToCall").get(),MethodDefinition.class);
             JJNode argNode = obj.get("arguments").get();

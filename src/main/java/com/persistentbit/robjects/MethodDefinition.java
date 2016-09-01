@@ -45,7 +45,7 @@ public class MethodDefinition implements Serializable
     public MethodDefinition(String methodName, Class<?> resultClass, Class<?>[] paramTypes, String[] paramNames)
     {
         this.methodName = Objects.requireNonNull(methodName);
-        this.resultClass = Objects.requireNonNull(resultClass);
+        this.resultClass = resultClass; //null means method with void
         this.paramTypes = Objects.requireNonNull(paramTypes);
         this.paramNames = Objects.requireNonNull(paramNames);
 

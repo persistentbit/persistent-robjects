@@ -35,7 +35,8 @@ public class RServer<R> implements RemoteService{
     public RCallResult  call(RCall call){
 
         if(call.getThisCall() == null){
-            return getRoot();
+            RemoteObjectDefinition rod =  createROD(PList.empty(),this.rootInterface,rootSupplier.get());
+            return RCallResult.robject(rod);
         }
 
 

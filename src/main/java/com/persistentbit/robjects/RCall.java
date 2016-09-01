@@ -43,7 +43,7 @@ public class RCall {
     @Override
     public int hashCode() {
         int result = callStack.hashCode();
-        result = 31 * result + thisCall.hashCode();
+        result = 31 * result + (thisCall == null ? 0 : thisCall.hashCode());
         return result;
     }
 }

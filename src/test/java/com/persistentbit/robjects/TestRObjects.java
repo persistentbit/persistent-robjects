@@ -34,7 +34,10 @@ public class TestRObjects {
         assert us != null;
         UserData ud = us.getDetails();
         assert ud.userName.equals(un);
+        us.testWithVoid();
+        System.out.println("Got Tuple: " + us.createMeATuple(1,"test"));
     }
+
 
     static public void main(String...args){
         new TestRObjects().test();
