@@ -11,6 +11,8 @@ import com.persistentbit.robjects.annotations.Remotable;
 public interface UserSession {
     UserData    getDetails();
 
+    UsersService    getUsersService();
+
     Tuple2<Integer,String>  createMeATuple(int v1, String v2);
 
     void testWithVoid();

@@ -13,21 +13,19 @@ public class RemoteObjectDefinition implements Serializable
     private final Class<?>  remoteObjectClass;
     private final PList<MethodDefinition> remoteMethods;
     private final PMap<MethodDefinition,ObjectWithTypeName> remoteCached;
-    private final PList<RMethodCall> callStack;
+    private final RCallStack callStack;
 
 
 
 
 
-    public RemoteObjectDefinition(Class<?> remoteObjectClass, PList<MethodDefinition> remoteMethods, PMap<MethodDefinition, ObjectWithTypeName> remoteCached, PList<RMethodCall> callStack) {
+    public RemoteObjectDefinition(Class<?> remoteObjectClass, PList<MethodDefinition> remoteMethods, PMap<MethodDefinition, ObjectWithTypeName> remoteCached, RCallStack callStack) {
         this.remoteObjectClass = Objects.requireNonNull(remoteObjectClass);
         this.callStack = Objects.requireNonNull(callStack);
         this.remoteMethods = Objects.requireNonNull(remoteMethods);
         this.remoteCached = Objects.requireNonNull(remoteCached);
     }
-    public RemoteObjectDefinition(Class<?> remoteObjectClass,PList<MethodDefinition> remoteMethods, PMap<MethodDefinition, ObjectWithTypeName> remoteCached) {
-        this(remoteObjectClass,remoteMethods,remoteCached,PList.empty());
-    }
+
     public PList<MethodDefinition> getRemoteMethods() {
         return remoteMethods;
     }
@@ -36,7 +34,7 @@ public class RemoteObjectDefinition implements Serializable
         return remoteCached;
     }
 
-    public PList<RMethodCall> getCallStack() {
+    public RCallStack getCallStack() {
         return callStack;
     }
 

@@ -20,11 +20,15 @@ public class RServer<R> implements RemoteService{
     private final Class<R>   rootInterface;
     private final Supplier<R> rootSupplier;
     private final JJMapper  mapper;
-
-    public RServer(Class<R> rootInterface, Supplier<R> rootSupplier) {
-        this.mapper = new JJMapper();
+    private final String    secret;
+    public RServer(String secret,Class<R> rootInterface, Supplier<R> rootSupplier){
+        this(secret, rootInterface,rootSupplier,new JJMapper());
+    }
+    public RServer(String secret, Class<R> rootInterface, Supplier<R> rootSupplier,JJMapper mapper) {
+        this.secret = secret;
         this.rootInterface = Objects.requireNonNull(rootInterface);
         this.rootSupplier = Objects.requireNonNull(rootSupplier);
+        this.mapper = mapper;
     }
 
 
@@ -35,7 +39,7 @@ public class RServer<R> implements RemoteService{
     public RCallResult  call(RCall call){
 
         if(call.getThisCall() == null){
-            RemoteObjectDefinition rod =  createROD(PList.empty(),this.rootInterface,rootSupplier.get());
+            RemoteObjectDefinition rod =  createROD(RCallStack.createAndSign(PList.empty(),mapper,secret),this.rootInterface,rootSupplier.get());
             return RCallResult.robject(rod);
         }
 
@@ -50,7 +54,8 @@ public class RServer<R> implements RemoteService{
             if(remoteClass == null ){
                 return RCallResult.value(call.getThisCall().getMethodToCall(),result);
             } else {
-                return RCallResult.robject(createROD(call.getCallStack().plus(call.getThisCall()),remoteClass,result));
+                RCallStack newCallStack = RCallStack.createAndSign(call.getCallStack().getCallStack().plus(call.getThisCall()),mapper,secret);
+                return RCallResult.robject(createROD(newCallStack,remoteClass,result));
             }
         }catch (Exception e){
             log.severe(e.getMessage());
@@ -59,7 +64,7 @@ public class RServer<R> implements RemoteService{
 
     }
 
-    private RemoteObjectDefinition  createROD(PList<RMethodCall> call, Class<?> remotableClass, Object obj){
+    private RemoteObjectDefinition  createROD(RCallStack call, Class<?> remotableClass, Object obj){
         try {
             PList<MethodDefinition> remoteMethods = PList.empty();
             PMap<MethodDefinition, ObjectWithTypeName> cachedMethods = PMap.empty();
@@ -83,9 +88,9 @@ public class RServer<R> implements RemoteService{
     private Object call(Object obj, RMethodCall call) throws NoSuchMethodException,IllegalAccessException,InvocationTargetException{
 
         MethodDefinition md = call.getMethodToCall();
-        if(obj instanceof Optional){
-            obj = ((Optional)obj).orElse(null);
-        }
+        //if(obj instanceof Optional){
+        //    obj = ((Optional)obj).orElse(null);
+        //}
         if(obj == null){
             throw new RuntimeException("Can't call on null: " + md);
         }
@@ -95,8 +100,11 @@ public class RServer<R> implements RemoteService{
 
     }
 
-    private Object call(Object obj, PList<RMethodCall> callStack) throws NoSuchMethodException,IllegalAccessException,InvocationTargetException{
-        for(RMethodCall c : callStack){
+    private Object call(Object obj, RCallStack callStack) throws NoSuchMethodException,IllegalAccessException,InvocationTargetException{
+        if(callStack.verifySignature(secret,mapper) == false){
+            throw new RObjException("Wrong signature !!!");
+        }
+        for(RMethodCall c : callStack.getCallStack()){
             obj = call(obj,c);
         }
         return obj;

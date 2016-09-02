@@ -1,26 +1,26 @@
 package com.persistentbit.robjects;
 
 import com.persistentbit.core.Immutable;
-import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.utils.BaseValueClass;
 
 /**
  * @author Peter Muys
  * @since 30/08/2016
  */
 @Immutable
-public class RCall {
-    private final PList<RMethodCall>  callStack;
+public class RCall extends BaseValueClass{
+    private final RCallStack  callStack;
     private final RMethodCall   thisCall;
 
-    public RCall(PList<RMethodCall> callStack, RMethodCall thisCall) {
+    public RCall(RCallStack callStack, RMethodCall thisCall) {
         this.callStack = callStack;
         this.thisCall = thisCall;
     }
-    public RCall() {
-        this(PList.empty(),null);
+    public RCall(RCallStack callStack) {
+        this(callStack,null);
     }
 
-    public PList<RMethodCall> getCallStack() {
+    public RCallStack getCallStack() {
         return callStack;
     }
 
@@ -28,22 +28,6 @@ public class RCall {
         return thisCall;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
 
-        RCall call = (RCall) o;
 
-        if (!callStack.equals(call.callStack)) return false;
-        return thisCall.equals(call.thisCall);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = callStack.hashCode();
-        result = 31 * result + (thisCall == null ? 0 : thisCall.hashCode());
-        return result;
-    }
 }

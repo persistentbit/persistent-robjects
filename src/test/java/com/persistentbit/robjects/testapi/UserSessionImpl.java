@@ -1,5 +1,6 @@
 package com.persistentbit.robjects.testapi;
 
+import com.persistentbit.core.Lazy;
 import com.persistentbit.core.Tuple2;
 
 /**
@@ -8,9 +9,17 @@ import com.persistentbit.core.Tuple2;
  */
 public class UserSessionImpl implements UserSession{
     private final String userName;
+    private final Lazy<UsersService> usersService;
     public UserSessionImpl(String userName){
         this.userName = userName;
+        usersService = new Lazy<>(() -> new UserServiceImpl());
     }
+
+    @Override
+    public UsersService getUsersService() {
+        return usersService.get();
+    }
+
     @Override
     public UserData getDetails() {
         return new UserData(userName);
