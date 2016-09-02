@@ -47,9 +47,7 @@ public class RServer<R> implements RemoteService{
         try {
             Object result = call(rootSupplier.get(),call.getCallStack());
             result = call(result, call.getThisCall());
-            if(result instanceof Optional){
-                result = ((Optional)result).orElse(null);
-            }
+
             Class<?> remoteClass = result == null ? null : RemotableClasses.getRemotableClass(result.getClass());
             if(remoteClass == null ){
                 return RCallResult.value(call.getThisCall().getMethodToCall(),result);
@@ -96,6 +94,7 @@ public class RServer<R> implements RemoteService{
         }
         Method m = obj.getClass().getMethod(md.getMethodName(),md.getParamTypes());
         obj = m.invoke(obj,call.getArguments());
+
         return obj;
 
     }

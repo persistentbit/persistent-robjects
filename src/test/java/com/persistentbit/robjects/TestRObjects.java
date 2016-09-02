@@ -6,6 +6,7 @@ import com.persistentbit.jjson.security.JJSigning;
 import com.persistentbit.robjects.testapi.*;
 import org.junit.Test;
 
+import java.util.Optional;
 import java.util.logging.*;
 
 /**
@@ -18,7 +19,7 @@ public class TestRObjects {
         System.setProperty("java.util.logging.SimpleFormatter.format",
                 "%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS.%1$tL %4$-7s [%3$s] (%2$s) %5$s %6$s%n");
         Logger global = Logger.getLogger("");
-        global.setLevel(Level.INFO);
+        global.setLevel(Level.FINE);
         ConsoleHandler ch= new ConsoleHandler();
         ch.setLevel(Level.FINEST);
         global.addHandler(ch);
@@ -52,8 +53,10 @@ public class TestRObjects {
         us.showTuple(new Tuple2<>(1234,"This is a tuple param"));
         UsersService users = us.getUsersService();
         System.out.println(users.getAllUsers());
-        System.out.println(users.testOptional(1).get());
-        System.out.println(users.testOptional(null).orElse(0));
+        Optional<Integer> opt1  = users.testOptional(1);
+        Optional<Integer> opt2  = users.testOptional(null);
+        System.out.println("Opt1:" + opt1);
+        System.out.println("Opt2:" + opt2);
     }
 
 
