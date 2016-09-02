@@ -7,8 +7,9 @@ import java.lang.reflect.Proxy;
 
 public class RProxy implements InvocationHandler {
 
-    public RemoteService server;
-    public RemoteObjectDefinition rod;
+
+    private final RemoteService server;
+    private final RemoteObjectDefinition rod;
 
 
     private RProxy(RemoteService server,RemoteObjectDefinition rod) {
@@ -24,7 +25,7 @@ public class RProxy implements InvocationHandler {
     }
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        MethodDefinition md = new MethodDefinition(method);
+        MethodDefinition md = new MethodDefinition(rod.getRemoteObjectClass(),method);
         if(rod.getRemoteCached().containsKey(md)){
             Object cached = rod.getRemoteCached().get(md).getValue();
             return cached;

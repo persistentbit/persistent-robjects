@@ -26,4 +26,8 @@ public class UserSessionImpl implements UserSession{
         System.out.println("testWithVoid called on UserSession !!!");
     }
 
+    @Override
+    public void showTuple(Tuple2<Integer, String> tupleParam) {
+        System.out.println("show tuple:" + tupleParam);
+    }
 }

@@ -14,5 +14,5 @@ public interface UserSession {
     Tuple2<Integer,String>  createMeATuple(int v1, String v2);
 
     void testWithVoid();
-
+    void showTuple(Tuple2<Integer,String> tupleParam);
 }

@@ -1,5 +1,6 @@
 package com.persistentbit.robjects;
 
+import com.persistentbit.core.Tuple2;
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.security.JJSigning;
 import com.persistentbit.robjects.testapi.*;
@@ -36,6 +37,7 @@ public class TestRObjects {
         assert ud.userName.equals(un);
         us.testWithVoid();
         System.out.println("Got Tuple: " + us.createMeATuple(1,"test"));
+        us.showTuple(new Tuple2<>(1234,"This is a tuple param"));
     }
 
 

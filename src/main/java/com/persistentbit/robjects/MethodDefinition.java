@@ -2,10 +2,14 @@ package com.persistentbit.robjects;
 
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.properties.FieldNames;
+import com.persistentbit.jjson.mapping.JJReader;
+import com.persistentbit.jjson.mapping.impl.JJObjectReader;
+import com.persistentbit.jjson.nodes.JJNode;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -13,7 +17,7 @@ import java.util.Objects;
 public class MethodDefinition implements Serializable
 {
     private final String methodName;
-    private final Class<?> resultClass;
+    private final Class<?>  remotableClass;
     private final String[] paramNames;
     private final Class<?>[] paramTypes;
 
@@ -31,21 +35,21 @@ public class MethodDefinition implements Serializable
         return result;
     }
 
-    public MethodDefinition(Method method){
-        this(method.getName(),method.getReturnType(), method.getParameterTypes(),getMethodParamNames(method));
+    public MethodDefinition(Class<?> remotableClass,Method method){
+        this(remotableClass,method.getName(),method.getParameterTypes(),getMethodParamNames(method));
 
     }
 
     @Override
     public String toString() {
         String params = PStream.from(paramTypes).zip(PStream.from(paramNames)).map(t -> t._2.getSimpleName() + " " + t._1).toString(",");
-        return "MethodDefinition[" + resultClass.getSimpleName() + "#" + methodName + "(" + params + ")]";
+        return "MethodDefinition[" + remotableClass.getSimpleName() + "#" + methodName + "(" + params + ")]";
     }
 
-    public MethodDefinition(String methodName, Class<?> resultClass, Class<?>[] paramTypes, String[] paramNames)
+    public MethodDefinition(Class<?> remotableClass,String methodName, Class<?>[] paramTypes, String[] paramNames)
     {
+        this.remotableClass = Objects.requireNonNull(remotableClass);
         this.methodName = Objects.requireNonNull(methodName);
-        this.resultClass = resultClass; //null means method with void
         this.paramTypes = Objects.requireNonNull(paramTypes);
         this.paramNames = Objects.requireNonNull(paramNames);
 
@@ -56,9 +60,8 @@ public class MethodDefinition implements Serializable
         return methodName;
     }
 
-
-    public Class<?> getResultClass() {
-        return resultClass;
+    public Class<?> getRemotableClass() {
+        return remotableClass;
     }
 
     public String[] getParamNames() {
@@ -77,7 +80,7 @@ public class MethodDefinition implements Serializable
         MethodDefinition that = (MethodDefinition) o;
 
         if (methodName != null ? !methodName.equals(that.methodName) : that.methodName != null) return false;
-        //if (resultClass != null ? !resultClass.equals(that.resultClass) : that.resultClass != null) return false;
+        if (remotableClass != null ? !remotableClass.equals(that.remotableClass) : that.remotableClass != null) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(paramNames, that.paramNames)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
@@ -88,9 +91,11 @@ public class MethodDefinition implements Serializable
     @Override
     public int hashCode() {
         int result = methodName != null ? methodName.hashCode() : 0;
-        //result = 31 * result + (resultClass != null ? resultClass.hashCode() : 0);
+        result = 31 * result + (remotableClass != null ? remotableClass.hashCode() : 0);
         result = 31 * result + Arrays.hashCode(paramNames);
         result = 31 * result + Arrays.hashCode(paramTypes);
         return result;
     }
+
+
 }

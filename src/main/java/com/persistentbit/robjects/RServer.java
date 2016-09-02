@@ -48,7 +48,7 @@ public class RServer<R> implements RemoteService{
             }
             Class<?> remoteClass = result == null ? null : RemotableClasses.getRemotableClass(result.getClass());
             if(remoteClass == null ){
-                return RCallResult.value(result);
+                return RCallResult.value(call.getThisCall().getMethodToCall(),result);
             } else {
                 return RCallResult.robject(createROD(call.getCallStack().plus(call.getThisCall()),remoteClass,result));
             }
@@ -64,7 +64,7 @@ public class RServer<R> implements RemoteService{
             PList<MethodDefinition> remoteMethods = PList.empty();
             PMap<MethodDefinition, ObjectWithTypeName> cachedMethods = PMap.empty();
             for (Method m : remotableClass.getDeclaredMethods()) {
-                MethodDefinition md = new MethodDefinition(m);
+                MethodDefinition md = new MethodDefinition(remotableClass,m);
                 if (m.getParameterCount() == 0 && m.getDeclaredAnnotation(RemoteCache.class) != null) {
                     Object value = m.invoke(obj);
                     cachedMethods = cachedMethods.put(md, new ObjectWithTypeName(value));
@@ -81,6 +81,7 @@ public class RServer<R> implements RemoteService{
 
 
     private Object call(Object obj, RMethodCall call) throws NoSuchMethodException,IllegalAccessException,InvocationTargetException{
+
         MethodDefinition md = call.getMethodToCall();
         if(obj instanceof Optional){
             obj = ((Optional)obj).orElse(null);
