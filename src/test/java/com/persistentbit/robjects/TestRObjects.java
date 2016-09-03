@@ -57,6 +57,9 @@ public class TestRObjects {
         Optional<Integer> opt2  = users.testOptional(null);
         System.out.println("Opt1:" + opt1);
         System.out.println("Opt2:" + opt2);
+        assert opt1.isPresent();
+        assert opt1.get() == 1;
+        assert opt2.isPresent() == false;
     }
 
 

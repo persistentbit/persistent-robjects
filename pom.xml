@@ -7,7 +7,7 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>PERSISTENT-ROBJECTS</name>
-    <description>Persistent collections and streams for java</description>
+    <description>Remote java objects</description>
     <url>https://github.com/persistentbit/persistent-robjects.git</url>
 
 
