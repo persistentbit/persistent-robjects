@@ -10,5 +10,4 @@ public interface App {
     String  createLoginToken(String un, String pw);
     UserSession getUserSession(String loginToken);
 
-
 }
