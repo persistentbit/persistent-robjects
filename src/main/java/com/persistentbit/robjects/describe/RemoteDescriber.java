@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 
 /**
@@ -21,6 +22,7 @@ import java.util.Optional;
  * @since 31/08/2016
  */
 public class RemoteDescriber {
+    static private final Logger log = Logger.getLogger(RemoteDescriber.class.getName());
     private final JJMapper  mapper;
 
     public RemoteDescriber(JJMapper mapper) {
@@ -49,7 +51,7 @@ public class RemoteDescriber {
             }
             PList<RemoteMethodDescription> methods = PList.empty();
             for(Method m : cls.getDeclaredMethods()){
-                System.out.println("Adding method " + m);
+                log.fine("Adding method " + m);
                 PList<JJPropertyDescription> params =
                         PStream.from(m.getParameters()).map(p-> new JJPropertyDescription(p.getName(),mapper.describe(p.getType()).getTypeSignature(),PList.empty())).plist();
                 RemoteMethodDescription rem = new RemoteMethodDescription(m.getName(),
@@ -86,7 +88,7 @@ public class RemoteDescriber {
                 return;
             }
 
-            System.out.println("adding value class " + t);
+            log.fine("adding value class " + t);
 
 
             JJTypeDescription ts = mapper.describe(cls,t);
