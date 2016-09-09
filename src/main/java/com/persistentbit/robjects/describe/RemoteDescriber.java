@@ -4,6 +4,7 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.jjson.mapping.JJMapper;
+import com.persistentbit.jjson.mapping.description.JJClass;
 import com.persistentbit.jjson.mapping.description.JJPropertyDescription;
 import com.persistentbit.jjson.mapping.description.JJTypeDescription;
 import com.persistentbit.jjson.mapping.description.JJTypeSignature;
@@ -61,7 +62,7 @@ public class RemoteDescriber {
             }
 
 
-            remotables = remotables.put(cls,new RemoteClassDescription(new JJTypeSignature(cls.getName(), JJTypeSignature.JsonType.jsonObject),methods));
+            remotables = remotables.put(cls,new RemoteClassDescription(new JJTypeSignature(new JJClass(cls), JJTypeSignature.JsonType.jsonObject),methods));
             for(Method m : cls.getDeclaredMethods()){
                 for(Parameter p : m.getParameters()){
                     addValueClass(p.getType(),p.getParameterizedType());
@@ -93,9 +94,9 @@ public class RemoteDescriber {
 
             JJTypeDescription ts = mapper.describe(cls,t);
             valueClasses = valueClasses.put(cls,ts);
-            ts.getAllUsedClassNames().map(clsName -> {
+            ts.getAllUsedClassNames().map(jjClass -> {
                 try {
-                    return Class.forName(clsName);
+                    return Class.forName(jjClass.getFullJavaName());
                 } catch (ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
