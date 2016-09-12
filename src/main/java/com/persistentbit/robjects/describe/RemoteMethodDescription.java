@@ -15,13 +15,15 @@ public class RemoteMethodDescription extends BaseValueClass{
     private final JJTypeSignature returnType;
     private final PList<JJPropertyDescription>   parameters;
     private final boolean isCached;
+    private final boolean returnsRemoteObject;
     @NoEqual  private final PList<String> doc;
 
-    public RemoteMethodDescription(String methodName, JJTypeSignature returnType, PList<JJPropertyDescription> parameters, boolean isCached, PList<String> doc) {
+    public RemoteMethodDescription(String methodName, JJTypeSignature returnType, PList<JJPropertyDescription> parameters, boolean isCached,boolean returnsRemoteObject, PList<String> doc) {
         this.methodName = methodName;
         this.returnType = returnType;
         this.parameters = parameters;
         this.isCached = isCached;
+        this.returnsRemoteObject = returnsRemoteObject;
         this.doc = doc;
     }
 
@@ -43,5 +45,9 @@ public class RemoteMethodDescription extends BaseValueClass{
 
     public PList<String> getDoc() {
         return doc;
+    }
+
+    public boolean isReturnsRemoteObject() {
+        return returnsRemoteObject;
     }
 }

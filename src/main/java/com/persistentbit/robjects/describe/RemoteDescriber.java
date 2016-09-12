@@ -8,8 +8,10 @@ import com.persistentbit.jjson.mapping.description.JJClass;
 import com.persistentbit.jjson.mapping.description.JJPropertyDescription;
 import com.persistentbit.jjson.mapping.description.JJTypeDescription;
 import com.persistentbit.jjson.mapping.description.JJTypeSignature;
+import com.persistentbit.robjects.RemotableClasses;
 import com.persistentbit.robjects.annotations.Remotable;
 import com.persistentbit.robjects.annotations.RemoteCache;
+import sun.rmi.rmic.RemoteClass;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -55,9 +57,10 @@ public class RemoteDescriber {
                 log.fine("Adding method " + m);
                 PList<JJPropertyDescription> params =
                         PStream.from(m.getParameters()).map(p-> new JJPropertyDescription(p.getName(),mapper.describe(p.getType()).getTypeSignature(),PList.empty())).plist();
+                boolean returnsRemote = RemotableClasses.getRemotableClass(m.getReturnType()) != null;
                 RemoteMethodDescription rem = new RemoteMethodDescription(m.getName(),
                         mapper.describe(m.getReturnType(),m.getGenericReturnType()).getTypeSignature(),
-                        params,m.getDeclaredAnnotation(RemoteCache.class) != null,PList.empty());
+                        params,m.getDeclaredAnnotation(RemoteCache.class) != null,returnsRemote,PList.empty());
                 methods  = methods.plus(rem);
             }
 

@@ -1,0 +1,49 @@
+
+
+
+package com.persistentbit.myapp
+
+import Address from com.persistentbit.common;
+
+/*
+    Contains a person name
+*/
+class Name
+    /*
+     The first name
+    */
+    firstName: string;
+    middleName: string?;
+    lastName: string;
+
+
+class Tuple2<T1,T2>
+    _1: T1;
+    _2: T2;
+
+class EmailAddress
+    address:string
+    name:string?
+
+enum ContactType
+    home,work
+
+class Person
+    id: int;
+    name: Name;
+    email: EmailAddress
+    address: Address
+
+
+class remote App
+    cached version():string;
+    loginToken(userName:string, passWord:string):string;
+    verifyLoginToken(loginToken:string):boolean;
+    getUserSession(loginToken:string):UserSession?;
+    getAllUsers():List<Person>;
+
+
+
+class remote UserSession
+    getUser():Person;
+    sendEmail(p:Person,title:string, message:string)
