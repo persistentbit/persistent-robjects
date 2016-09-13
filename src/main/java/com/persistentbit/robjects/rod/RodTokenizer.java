@@ -4,6 +4,7 @@ import com.persistentbit.core.Tuple2;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.SimpleTokenizer;
+import com.persistentbit.core.tokenizer.TokenFound;
 import com.persistentbit.core.utils.BaseValueClass;
 
 import java.io.BufferedReader;
@@ -29,22 +30,28 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
         add("\\(",tOpen);
         add("\\)",tClose);
         add("\\.",tPoint);
-        add("package",tPackage);
-        add("from",tFrom);
-        add("class",tClass);
-        add("import",tImport);
-        add("cached",tCached);
-        add("enum",tEnum);
         add("<",tGenStart);
         add(">",tGenEnd);
         add("\\,",tComma);
         add("\\?",tQuestion);
         add("\\:",tColon);
         add("\\;",tSemiColon);
-        /*
-         */
-        add("[a-zA-Z_][a-zA-Z0-9_]*",tIdentifier);
-        add("\\s+",tWhiteSpace);
+        add("\\{",tBlockStart);
+        add("\\}",tBlockEnd);
+        add(SimpleTokenizer.regExMatcher("[a-zA-Z_][a-zA-Z0-9_]*",tIdentifier).map(found -> {
+            switch (found.text){
+                case "package": return new TokenFound<>(found.text,tPackage,found.ignore);
+                case "from": return new TokenFound<>(found.text,tFrom,found.ignore);
+                case "class":return new TokenFound<>(found.text,tClass,found.ignore);
+                case "import":return new TokenFound<>(found.text,tImport,found.ignore);
+                case "cached":return new TokenFound<>(found.text,tCached,found.ignore);
+                case "enum":return new TokenFound<>(found.text,tEnum,found.ignore);
+                case "value" : return new TokenFound<>(found.text,tValue,found.ignore);
+                case "remote": return new TokenFound<>(found.text,tRemote,found.ignore);
+                default: return found;
+            }
+        }));
+        add(RodTokenizer.regExMatcher("\\s+",tWhiteSpace).ignore());
 
     }
 
