@@ -11,7 +11,7 @@ import com.persistentbit.jjson.mapping.description.JJTypeSignature;
 import com.persistentbit.robjects.RemotableClasses;
 import com.persistentbit.robjects.annotations.Remotable;
 import com.persistentbit.robjects.annotations.RemoteCache;
-import sun.rmi.rmic.RemoteClass;
+
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
