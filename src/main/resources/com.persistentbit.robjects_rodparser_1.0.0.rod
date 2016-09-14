@@ -1,0 +1,49 @@
+
+
+
+value class REnum{
+    name:String;
+    values:Array<String>;
+}
+
+value class RValueType{
+    typeSig:RTypeSig;
+    required:Boolean;
+}
+
+value class RFunctionParam{
+    name:String;
+    valueType:RValueType;
+}
+
+value class RProperty{
+    name:String;
+    valueType:RValueType;
+}
+
+value class RFunction{
+    name:String;
+    params:Array<RFunctionParam>;
+    resultType:?RValueType;
+}
+
+value class RRemoteClass{
+    typeSig:RTypeSig;
+    functions:Array<RFunction>;
+}
+
+value class RValueClass{
+    typeSig:RTypeSig;
+    properties: Array<RProperty>;
+}
+
+
+value class RService{
+    enums:Array<REnum>;
+    valueClasses:Array<RValueClass>;
+    remoteClasses:Array<RRemoteClass>;
+}
+
+remote class RodCompiler{
+    compile(name:String,code:String):RService;
+}

@@ -25,8 +25,8 @@ import static com.persistentbit.robjects.rod.RodTokenType.*;
 public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
 
     public RodTokenizer(){
-        add("/\\*.*\\*/",tComment);
-        add("\\n",tNl);
+        add(regExMatcher("/\\*.*\\*/",tComment).ignore());
+        add(regExMatcher("\\n",tNl).ignore());
         add("\\(",tOpen);
         add("\\)",tClose);
         add("\\.",tPoint);
@@ -48,6 +48,9 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
                 case "enum":return new TokenFound<>(found.text,tEnum,found.ignore);
                 case "value" : return new TokenFound<>(found.text,tValue,found.ignore);
                 case "remote": return new TokenFound<>(found.text,tRemote,found.ignore);
+                case "void": return new TokenFound<>(found.text,tVoid,found.ignore);
+                case "exception": return new TokenFound<>(found.text,tException,found.ignore);
+                case "throws": return new TokenFound<>(found.text,tThrows,found.ignore);
                 default: return found;
             }
         }));

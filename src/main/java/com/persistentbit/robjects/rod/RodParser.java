@@ -4,7 +4,9 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.core.utils.BaseValueClass;
+import com.persistentbit.core.utils.NoEqual;
 import com.persistentbit.robjects.describe.RemoteServiceDescription;
+import com.persistentbit.robjects.rod.values.*;
 
 import java.util.function.Supplier;
 
@@ -17,45 +19,9 @@ public class RodParser {
     private Token<RodTokenType> current;
     private String packageName;
 
-
-
-
-    static private class RTypeSig extends BaseValueClass{
-        public final String             name;
-        public final PList<RTypeSig>    generics;
-
-        public RTypeSig(String name, PList<RTypeSig> generics) {
-            this.name = name;
-            this.generics = generics;
-        }
-    }
-
-    static private class RProperty extends BaseValueClass{
-        public final String     name;
-        public final RTypeSig   typeSig;
-        public final boolean    required;
-
-        public RProperty(String name, RTypeSig typeSig,boolean required) {
-            this.name = name;
-            this.typeSig = typeSig;
-            this.required = required;
-        }
-    }
-
-    static private class RValueClass extends BaseValueClass{
-        public final RTypeSig           typeSig;
-        public final PList<RProperty>   properties;
-
-        public RValueClass(RTypeSig typeSig, PList<RProperty> properties) {
-            this.typeSig = typeSig;
-            this.properties = properties;
-        }
-    }
-
-
     public RodParser(String packageName,PStream<Token<RodTokenType>> tokens){
         this.packageName = packageName;
-        this.tokens = tokens.filter(t -> t.type != tComment);
+        this.tokens = tokens;
         next();
     }
     private Token<RodTokenType> next() {
@@ -71,19 +37,27 @@ public class RodParser {
         return current;
     }
 
-    public RemoteServiceDescription    parseService() {
+    public RService    parseService() {
         if(current.type == tPackage){
             packageName = parsePackage();
         }
         PList<RValueClass>  values = PList.empty();
+        PList<RRemoteClass> remotes = PList.empty();
+        PList<REnum> enums = PList.empty();
         while(current.type != RodTokenType.tEOF){
             switch(current.type){
                 //case tImport: handleImport();
                 case tValue: values = values.plus(parseValueClass());
-                case tRemote: handleRemote();
+                    break;
+                case tRemote: remotes = remotes.plus(parseRemoteClass());
+                    break;
+                case tEnum: enums = enums.plus(parseEnum());
+                    break;
+                default:
+                    throw new RodParserException(current.pos,"Expected a definition.");
             }
         }
-        return null;
+        return new RService(enums,values,remotes);
     }
 
     private RTypeSig parseTypeSignature() {
@@ -133,28 +107,74 @@ public class RodParser {
         return new RValueClass(sig,props);
     }
 
-    private RProperty   parseRProperty() {
-        assertType(tIdentifier,"property name expected");
-        String name = current.text;
-        next(); //skip name;
+    private RValueType  parseRValueType() {
         boolean required = true;
         if(current.type == tQuestion){
             required = false;
             next();
         }
-        skip(tColon,"':' expected after property name");
         RTypeSig sig = parseTypeSignature();
-        skipEndOfStatement();
-        return new RProperty(name,sig,required);
+        return new RValueType(sig,required);
     }
 
-    private void handleRemote() {
+    private RProperty   parseRProperty() {
+        assertType(tIdentifier,"property name expected");
+        String name = current.text;
+        next(); //skip name;
 
+        skip(tColon,"':' expected after property name");
+        RValueType valueType = parseRValueType();
+        skipEndOfStatement();
+        return new RProperty(name,valueType);
+    }
+    private RFunctionParam  parseFunctionParam() {
+        assertType(tIdentifier,"parameter name expected");
+        String name = current.text;
+        next(); //skip name;
+
+        skip(tColon,"':' expected after parameter name");
+        RValueType valueType = parseRValueType();
+
+        return new RFunctionParam(name,valueType);
+    }
+
+    private RRemoteClass parseRemoteClass() {
+        skip(tRemote,"'remote' expected");
+        skip(tClass,"'class' expected");
+        RTypeSig sig = parseTypeSignature();
+        PList<RFunction> functions = PList.empty();
+        if(current.type == tBlockStart){
+            next();
+            while(current.type!= tEOF && current.type != tBlockEnd){
+                functions = functions.plus(parseRFunction());
+            }
+            skip(tBlockEnd,"'}' expected");
+        }
+        return new RRemoteClass(sig,functions);
+    }
+
+    private RFunction parseRFunction() {
+        assertType(tIdentifier,"function name expected");
+        String name = current.text;
+        next(); //skip name;
+        skip(tOpen,"'(' expected after function name");
+        PList<RFunctionParam> params = PList.empty();
+        if(current.type == tIdentifier) {
+            params = sep(tComma, () -> parseFunctionParam());
+        }
+        skip(tClose,"')' expected after function parameters");
+        skip(tColon,"':' expected to define the function return type");
+        RValueType returnType = null;
+        if(current.type != tVoid){
+            returnType = parseRValueType();
+        }
+        skipEndOfStatement();
+        return new RFunction(name,params,returnType);
     }
 
     private String parsePackage() {
         skip(tPackage,"package expected");
-        String res = sep(tComma,() -> {
+        String res = sep(tPoint,() -> {
             assertType(tIdentifier,"name expected");
             String name = current.text;
             next();
@@ -182,14 +202,36 @@ public class RodParser {
         return res;
     }
 
-    private void handleImport() {
+    private REnum parseEnum(){
+        skip(tEnum,"'enum' expected");
+        assertType(tIdentifier,"enum name expected.");
+        String name = current.text;
+        next();
+        skip(tBlockStart,"'{' expected for enum definition");
 
+        PList<String> values = sep(tComma,() -> {
+            assertType(tIdentifier,"enum value name expected");
+            String valueName = current.text;
+            next();
+            return valueName;
+        });
+        skip(tBlockEnd,"'}' expected to end enum definintion for '" + name + "'");
+        return new REnum(name,values);
     }
 
     static public void main(String...args) throws Exception{
         String test = PList.val(
                 "package be.schaubroeck;",
-                "value class App{",
+                "enum Runtime{",
+                " production, development",
+                "}",
+                "value class AppInfo{",
+                "name:String;",
+                "version:String;",
+                "runtime:Runtime;",
+                "}",
+                "remote class App{",
+                "getAppInfo():AppInfo;",
                 "}"
                 ).toString("\n");
         System.out.println(test);
