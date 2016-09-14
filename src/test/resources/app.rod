@@ -13,7 +13,7 @@ class Name
      The first name
     */
     firstName: string;
-    middleName: string?;
+    middleName?: string;
     lastName: string;
 
 

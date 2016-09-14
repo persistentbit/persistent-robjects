@@ -1,14 +1,13 @@
 package com.persistentbit.robjects.rod;
 
 import com.persistentbit.core.collections.PList;
-import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PStream;
-import com.persistentbit.core.tokenizer.SimpleTokenizer;
 import com.persistentbit.core.tokenizer.Token;
-import com.persistentbit.jjson.mapping.description.JJClass;
-import com.persistentbit.jjson.mapping.description.JJTypeSignature;
-import com.persistentbit.robjects.RemoteService;
+import com.persistentbit.core.utils.BaseValueClass;
 import com.persistentbit.robjects.describe.RemoteServiceDescription;
+
+import java.util.function.Supplier;
+
 import static com.persistentbit.robjects.rod.RodTokenType.*;
 /**
  * Created by petermuys on 12/09/16.
@@ -18,9 +17,45 @@ public class RodParser {
     private Token<RodTokenType> current;
     private String packageName;
 
+
+
+
+    static private class RTypeSig extends BaseValueClass{
+        public final String             name;
+        public final PList<RTypeSig>    generics;
+
+        public RTypeSig(String name, PList<RTypeSig> generics) {
+            this.name = name;
+            this.generics = generics;
+        }
+    }
+
+    static private class RProperty extends BaseValueClass{
+        public final String     name;
+        public final RTypeSig   typeSig;
+        public final boolean    required;
+
+        public RProperty(String name, RTypeSig typeSig,boolean required) {
+            this.name = name;
+            this.typeSig = typeSig;
+            this.required = required;
+        }
+    }
+
+    static private class RValueClass extends BaseValueClass{
+        public final RTypeSig           typeSig;
+        public final PList<RProperty>   properties;
+
+        public RValueClass(RTypeSig typeSig, PList<RProperty> properties) {
+            this.typeSig = typeSig;
+            this.properties = properties;
+        }
+    }
+
+
     public RodParser(String packageName,PStream<Token<RodTokenType>> tokens){
         this.packageName = packageName;
-        this.tokens = tokens.filter(t -> t.type == tComment);
+        this.tokens = tokens.filter(t -> t.type != tComment);
         next();
     }
     private Token<RodTokenType> next() {
@@ -37,67 +72,129 @@ public class RodParser {
     }
 
     public RemoteServiceDescription    parseService() {
+        if(current.type == tPackage){
+            packageName = parsePackage();
+        }
+        PList<RValueClass>  values = PList.empty();
         while(current.type != RodTokenType.tEOF){
             switch(current.type){
-                case tPackage: handlePackage();
-                case tImport: handleImport();
-                case tValue: handleValue();
+                //case tImport: handleImport();
+                case tValue: values = values.plus(parseValueClass());
                 case tRemote: handleRemote();
             }
         }
         return null;
     }
 
-    private JJTypeSignature parseTypeSignature() {
+    private RTypeSig parseTypeSignature() {
+        assertType(tIdentifier,"Class name expected.");
         String className = current.text;
+
         next(); //skip class name
-        PMap<String,JJTypeSignature> generics = PMap.empty();
+        PList<RTypeSig> generics = PList.empty();
         if(current.type == tGenStart){
-            next();//skip <
-            int count = 1;
-            do{
-                JJTypeSignature genType = parseTypeSignature();
-                generics = generics.put("??" + count,genType);
-                if(current.type == tComma){
-                    next(); //skip ,
-                } else if(current.type == tGenEnd){
+            next(); //skip <
+            while(current.type != tEOF){
+                generics = generics.plus(parseTypeSignature());
+                if(current.type == tGenEnd){
                     next(); //skip >
                     break;
                 }
-                count++;
-            }while(true);
+                skip(tComma,"Expected ',' ");
+            }
         }
-        JJTypeSignature.JsonType type = JJTypeSignature.JsonType.jsonObject;
-        switch (className){
-            case "Array": type= JJTypeSignature.JsonType.jsonArray;break;
-            case "String": type= JJTypeSignature.JsonType.jsonString; break;
-            case "Int": type= JJTypeSignature.JsonType.jsonNumber; break;
-            case "Double": type= JJTypeSignature.JsonType.jsonNumber; break;
-            case "Float": type= JJTypeSignature.JsonType.jsonNumber; break;
-            case "Short":type= JJTypeSignature.JsonType.jsonNumber; break;
-            case "Long":type= JJTypeSignature.JsonType.jsonNumber; break;
-            case "Boolean": type= JJTypeSignature.JsonType.jsonBoolean; break;
-            case "Byte": type= JJTypeSignature.JsonType.jsonNumber; break;
-            case "Set": type= JJTypeSignature.JsonType.jsonSet; break;
-            case "Map": type= JJTypeSignature.JsonType.jsonMap; break;
+        return new RTypeSig(className,generics);
+    }
+    private void assertType(RodTokenType type, String msg){
+        if(current.type != type){
+            throw new RodParserException(current.pos,msg);
         }
-        return new JJTypeSignature(new JJClass(packageName,className),type,generics);
     }
 
-    private void handleValue(){
+    private void skip(RodTokenType type,String msg){
+        assertType(type,msg);
+        next();
+    }
 
+
+    private RValueClass parseValueClass(){
+
+        skip(tValue,"'value' expected");
+        skip(tClass,"'class' expected");
+        RTypeSig sig = parseTypeSignature();
+        PList<RProperty> props = PList.empty();
+        if(current.type == tBlockStart){
+            next();
+            while(current.type!= tEOF && current.type != tBlockEnd){
+                props = props.plus(parseRProperty());
+            }
+            skip(tBlockEnd,"'}' expected");
+        }
+        return new RValueClass(sig,props);
+    }
+
+    private RProperty   parseRProperty() {
+        assertType(tIdentifier,"property name expected");
+        String name = current.text;
+        next(); //skip name;
+        boolean required = true;
+        if(current.type == tQuestion){
+            required = false;
+            next();
+        }
+        skip(tColon,"':' expected after property name");
+        RTypeSig sig = parseTypeSignature();
+        skipEndOfStatement();
+        return new RProperty(name,sig,required);
     }
 
     private void handleRemote() {
 
     }
 
-    private void handlePackage() {
-
+    private String parsePackage() {
+        skip(tPackage,"package expected");
+        String res = sep(tComma,() -> {
+            assertType(tIdentifier,"name expected");
+            String name = current.text;
+            next();
+            return name;
+        }).toString(".");
+        skipEndOfStatement();
+        return res;
     }
+
+    private void skipEndOfStatement() {
+        skip(tSemiColon,"';' expected after statement.");
+    }
+
+
+
+    private <T> PList<T> sep(RodTokenType sep,Supplier<T> r){
+        PList<T> res = PList.empty();
+        while(current.type != tEOF){
+            res = res.plus(r.get());
+            if(current.type != sep){
+                return res;
+            }
+            next();
+        }
+        return res;
+    }
+
     private void handleImport() {
 
     }
 
-
+    static public void main(String...args) throws Exception{
+        String test = PList.val(
+                "package be.schaubroeck;",
+                "value class App{",
+                "}"
+                ).toString("\n");
+        System.out.println(test);
+        PList<Token<RodTokenType>> tokens = new RodTokenizer().tokenize("test.rod",test);
+        tokens.forEach(System.out::println);
+        new RodParser("com.undefined",tokens).parseService();
+    }
 }
