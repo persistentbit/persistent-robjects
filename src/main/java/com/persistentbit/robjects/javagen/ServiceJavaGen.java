@@ -1,7 +1,9 @@
 package com.persistentbit.robjects.javagen;
 
 
+import com.persistentbit.core.Nullable;
 import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.sourcegen.SourceGen;
 import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.robjects.rod.RodParser;
@@ -9,12 +11,12 @@ import com.persistentbit.robjects.rod.RodTokenType;
 import com.persistentbit.robjects.rod.RodTokenizer;
 import com.persistentbit.robjects.rod.values.*;
 
-import javax.xml.transform.Source;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Created by petermuys on 14/09/16.
@@ -38,84 +40,150 @@ public class ServiceJavaGen {
 
     public PList<GeneratedJava> generateService(){
         PList<GeneratedJava> result = PList.empty();
-        result = result.plusAll(service.enums.map(e -> generateEnum(e)));
-        result = result.plusAll(service.valueClasses.map(vc -> generateValueClass(vc)));
-        result = result.plusAll(service.remoteClasses.map(rc -> generateRemoteClass(rc)));
+        result = result.plusAll(service.enums.map(e -> new Generator().generateEnum(e)));
+        result = result.plusAll(service.valueClasses.map(vc -> new Generator().generateValueClass(vc)));
+        result = result.plusAll(service.remoteClasses.map(rc -> new Generator().generateRemoteClass(rc)));
         return result.filterNulls().plist();
     }
 
-    public GeneratedJava    generateEnum(REnum e ){
-        SourceGen sg = new SourceGen();
-        sg.println("// GENERATED CODE: DO NOT CHANGE!");
-        sg.println("");
-        sg.println("package " + servicePackageName + ";");
-        sg.println("");
-        sg.bs("public enum " + e.name);{
-            sg.println(e.values.toString(","));
-        }sg.be();
-        return new GeneratedJava(servicePackageName,e.name,sg.writeToString());
-    }
+    private class Generator extends SourceGen{
+        private PSet<RClass>    imports = PSet.empty();
+        private SourceGen       header = new SourceGen();
+        private String          packageName;
 
-    public GeneratedJava    generateValueClass(RValueClass vc){
-        SourceGen sg = new SourceGen();
-        sg.println("// GENERATED CODE: DO NOT CHANGE!");
-        sg.println("");
-        sg.println("package " + servicePackageName + ";");
-        sg.println("");
-        sg.bs("public class " + toString(vc.typeSig));{
-            vc.properties.forEach(p -> {
-                sg.println(toString(p.valueType) + " " + p.name + ";");
+        public Generator() {
+            header.println("// GENERATED CODE: DO NOT CHANGE!");
+            header.println("");
+        }
+
+        public GeneratedJava    toGenJava(RClass cls){
+            SourceGen sg = new SourceGen();
+            header.println("package " + servicePackageName + ";");
+            header.println("");
+            sg.add(header);
+            imports.filter(i -> i.packageName.equals(servicePackageName) == false).forEach(i -> {
+                sg.println("import " + i.packageName + "." + i.className + ";");
             });
-            sg.println("");
-            sg.bs("public " + vc.typeSig.name + "(" +
-                    vc.properties.map(p -> toString(p.valueType.typeSig) + " " + p.name ).toString(", ")
-                    +")");{
+            sg.add(this);
+            return new GeneratedJava(cls,sg.writeToString());
+        }
+
+        public GeneratedJava    generateEnum(REnum e ){
+            bs("public enum " + e.name);{
+                println(e.values.toString(","));
+            }be();
+            return toGenJava(e.name);
+        }
+        private void addImport(RClass cls){
+            imports = imports.plus(cls);
+        }
+        private void addImport(Class<?> cls){
+            addImport(new RClass(cls.getPackage().getName(),cls.getSimpleName()));
+        }
+
+        public GeneratedJava    generateValueClass(RValueClass vc){
+            bs("public class " + toString(vc.typeSig));{
                 vc.properties.forEach(p -> {
-                    String fromValue = p.name;
-                    if(p.valueType.required){
-                        fromValue = "Objects.requireNonNull(" + p.name + ",\"" + p.name  + " in " + vc.typeSig.name + " can\'t be null\")";
-                    }
-                    sg.println("this." + p.name + " = " + fromValue + ";");
+
+                    println(toString(p.valueType) + " " + p.name + ";");
                 });
-            }sg.be();
-            PList<RProperty> l = vc.properties;
-            PList<String> nullValues = PList.empty();
-            while(l.lastOpt().isPresent() && l.lastOpt().get().valueType.required == false){
-                l = l.dropLast();
-                nullValues = nullValues.plus("null");
-                sg.bs("public " + vc.typeSig.name + "(" +
-                        l.map(p -> toString(p.valueType.typeSig) + " " + p.name ).toString(", ")
+                println("");
+                bs("public " + vc.typeSig.name.className + "(" +
+                        vc.properties.map(p -> toString(p.valueType.typeSig) + " " + p.name ).toString(", ")
                         +")");{
-                            sg.println("this(" + l.map(p -> p.name).plusAll(nullValues).toString(",") + ");");
-                }sg.be();
+                    vc.properties.forEach(p -> {
+                        String fromValue = p.name;
+                        if(p.valueType.required){
+                            addImport(Objects.class);
+                            fromValue = "Objects.requireNonNull(" + p.name + ",\"" + p.name  + " in " + vc.typeSig.name.className + " can\'t be null\")";
+                        }
+                        else {
 
+                            fromValue = "Optional.ofNullable(" + fromValue + ")";
+                        }
+                        println("this." + p.name + " = " + fromValue + ";");
+                    });
+                }be();
+                PList<RProperty> l = vc.properties;
+                PList<String> nullValues = PList.empty();
+                while(l.lastOpt().isPresent() && l.lastOpt().get().valueType.required == false){
+                    l = l.dropLast();
+                    nullValues = nullValues.plus("null");
+                    bs("public " + vc.typeSig.name + "(" +
+                            l.map(p -> toString(p.valueType.typeSig) + " " + p.name ).toString(", ")
+                            +")");{
+                        println("this(" + l.map(p -> p.name).plusAll(nullValues).toString(",") + ");");
+                    }be();
+
+                }
+
+                vc.properties.forEach(p -> {
+                    if(options.generateGetters){
+                        String rt = toString(p.valueType.typeSig);
+                        String vn = p.name;
+                        if(p.valueType.required == false){
+                            addImport(Optional.class);
+                            rt ="Optional<" + rt + ">";
+                            vn = "Optional.ofNullable(" + vn + ")";
+                        }
+                        println("public " + rt + " get" +firstUpper(p.name) + "() { return " + vn + "; }");
+                    }
+                    if(options.generateUpdaters){
+                        String s = "public " + vc.typeSig.name.className + "with" + firstUpper(p.name) + "( )";
+
+                    }
+                    println("");
+                });
+
+            }be();
+            return toGenJava(vc.typeSig.name);
+        }
+        private String toString(RTypeSig sig){
+            String gen = sig.generics.isEmpty() ? "" : sig.generics.map(g -> toString(g)).toString("<",",",">");
+            String pname = sig.name.packageName;
+            String name = sig.name.className;
+
+            switch(name){
+                case "Array": name = "PList"; addImport(PList.class); break;
+                case "Set": name = "PSet"; addImport(PSet.class); break;
+                default:
+                    addImport(new RClass(pname,name));
+                    break;
             }
-        }sg.be();
-        return new GeneratedJava(servicePackageName,vc.typeSig.name,sg.writeToString());
-    }
-    private String toString(RTypeSig sig){
-        String gen = sig.generics.isEmpty() ? "" : sig.generics.map(g -> toString(g)).toString("<",",",">");
-        String name = sig.name;
-        switch(name){
-            case "Array": name = "PList"; break;
+
+            return name + gen;
         }
-        return name + gen;
-    }
 
-    private String toString(RValueType vt){
-        String res = "";
-        if(vt.required == false){
-            res += "@Nullable ";
+        private String firstUpper(String s){
+            return s.substring(0,1).toUpperCase() + s.substring(1);
         }
-        String access = options.generateGetters ? "private" : "public";
 
-        return res + access + " final " + toString(vt.typeSig);
+        private String toString(RValueType vt){
+            String res = "";
+            String value = toString(vt.typeSig);
+            if(vt.required == false){
+                addImport(Nullable.class);
+
+                if(options.generateGetters == false){
+                    addImport(Optional.class);
+                    value = "Optional<" + value + ">";
+                } else {
+                    res += "@Nullable ";
+                }
+            }
+            String access = options.generateGetters ? "private" : "public";
+
+            return res + access + " final " + value;
+
+        }
+
+        public GeneratedJava    generateRemoteClass(RRemoteClass rc){
+            return null;
+        }
 
     }
 
-    public GeneratedJava    generateRemoteClass(RRemoteClass rc){
-        return null;
-    }
+
 
 
     static public void main(String...args) throws Exception{
@@ -130,7 +198,7 @@ public class ServiceJavaGen {
         RodParser parser = new RodParser("com.persistentbit.test",tokens);
         RService service = parser.parseService();
         System.out.println(service);
-        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(false),service);
+        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),service);
         gen.forEach(gj -> {
             System.out.println(gj.code);
             System.out.println("-----------------------------------");

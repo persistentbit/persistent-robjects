@@ -3,9 +3,6 @@ package com.persistentbit.robjects.rod;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Token;
-import com.persistentbit.core.utils.BaseValueClass;
-import com.persistentbit.core.utils.NoEqual;
-import com.persistentbit.robjects.describe.RemoteServiceDescription;
 import com.persistentbit.robjects.rod.values.*;
 
 import java.util.function.Supplier;
@@ -77,7 +74,7 @@ public class RodParser {
                 skip(tComma,"Expected ',' ");
             }
         }
-        return new RTypeSig(className,generics);
+        return new RTypeSig(new RClass(packageName,className),generics);
     }
     private void assertType(RodTokenType type, String msg){
         if(current.type != type){
@@ -216,7 +213,7 @@ public class RodParser {
             return valueName;
         });
         skip(tBlockEnd,"'}' expected to end enum definintion for '" + name + "'");
-        return new REnum(name,values);
+        return new REnum(new RClass(packageName,name),values);
     }
 
     static public void main(String...args) throws Exception{
