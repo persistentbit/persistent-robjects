@@ -37,7 +37,12 @@ value class RValueClass{
     properties: Array<RProperty>;
 }
 
-
+value class RServiceVersion{
+    majorVersion:Integer;
+    minorVersion:Integer;
+    patch:?Integer;
+}
+/*
 value class RService{
     enums:Array<REnum>;
     valueClasses:Array<RValueClass>;
@@ -47,3 +52,4 @@ value class RService{
 remote class RodCompiler{
     compile(name:String,code:String):RService;
 }
+*/

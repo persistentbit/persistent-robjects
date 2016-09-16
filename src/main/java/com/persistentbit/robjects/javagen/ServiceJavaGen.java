@@ -91,13 +91,16 @@ public class ServiceJavaGen {
                 println("");
                 //***** MAIN CONSTRUCTOR
                 bs("public " + vc.typeSig.name.className + "(" +
-                        vc.properties.map(p -> toString(p.valueType.typeSig) + " " + p.name ).toString(", ")
+                        vc.properties.map(p -> toString(p.valueType.typeSig,p.valueType.required) + " " + p.name ).toString(", ")
                         +")");{
                     vc.properties.forEach(p -> {
                         String fromValue = p.name;
                         if(p.valueType.required){
                             addImport(Objects.class);
-                            fromValue = "Objects.requireNonNull(" + p.name + ",\"" + p.name  + " in " + vc.typeSig.name.className + " can\'t be null\")";
+                            if(isPrimitive(p.valueType.typeSig) == false){
+                                fromValue = "Objects.requireNonNull(" + p.name + ",\"" + p.name  + " in " + vc.typeSig.name.className + " can\'t be null\")";
+                            }
+
                         }
                         else {
                             if(options.generateGetters == false) {
@@ -114,7 +117,7 @@ public class ServiceJavaGen {
                     l = l.dropLast();
                     nullValues = nullValues.plus("null");
                     bs("public " + vc.typeSig.name.className + "(" +
-                            l.map(p -> toString(p.valueType.typeSig) + " " + p.name ).toString(", ")
+                            l.map(p -> toString(p.valueType.typeSig,p.valueType.required) + " " + p.name ).toString(", ")
                             +")");{
                         println("this(" + l.map(p -> p.name).plusAll(nullValues).toString(",") + ");");
                     }be();
@@ -123,7 +126,7 @@ public class ServiceJavaGen {
                 //****** GETTERS AND UPDATERS
                 vc.properties.forEach(p -> {
                     if(options.generateGetters){
-                        String rt = toString(p.valueType.typeSig);
+                        String rt = toString(p.valueType.typeSig,p.valueType.required);
                         String vn = p.name;
                         if(p.valueType.required == false){
                             addImport(Optional.class);
@@ -133,7 +136,7 @@ public class ServiceJavaGen {
                         println("public " + rt + " get" +firstUpper(p.name) + "() { return " + vn + "; }");
                     }
                     if(options.generateUpdaters){
-                        String s = "public " + toString(vc.typeSig) + " with" + firstUpper(p.name) + "("+ toString(p.valueType.typeSig) + " " + p.name +") { return new ";
+                        String s = "public " + toString(vc.typeSig) + " with" + firstUpper(p.name) + "("+ toString(p.valueType.typeSig,p.valueType.required) + " " + p.name +") { return new ";
                         s += vc.typeSig.name.className;
                         if(vc.typeSig.generics.isEmpty()){
                             s += "<>";
@@ -146,11 +149,53 @@ public class ServiceJavaGen {
                     }
                     println("");
                 });
+                //******* EQUALS
+                println("@Override");
+                bs("public boolean equals(Object o)");{
+                    println("if (this == o) return true;");
+                    println("if (o == null || getClass() != o.getClass()) return false;");
+                    println("");
+                    println(vc.typeSig.name.className + " that = (" + vc.typeSig.name.className + ")o;");
+                    println("");
+                    vc.properties.forEach(p -> {
+                        String thisVal = p.name;
+                        String thatVal = "that." + thisVal;
+                        if(p.valueType.required){
+                            boolean isPrim = isPrimitive(p.valueType.typeSig);
+                            if(isPrim){
+                                if(p.valueType.typeSig.name.equals("float")){
+                                    println("if(Float.compare(" + thisVal + "," + thatVal + " != 0) return false;");
+                                } else if(p.valueType.typeSig.name.equals("double")){
+                                    println("if(Double.compare(" + thisVal + "," + thatVal + " != 0) return false;");
+                                } else {
+                                    println("if(" + thisVal + " != " + thatVal + ") return false;");
+                                }
+                            } else {
+                                println("if(!" + thisVal + ".equals(" + thatVal + ")) return false;");
+                            }
+                        } else {
+                            println("if(" + thisVal + "!= null ? !" + thisVal + ".equals(" + thatVal + ") : " + thatVal + " != null) return false;");
+                        }
+                    });
+                    println("return true;");
+                }be();
+                //******* HASHCODE
+                println("@Override");
+                bs("public int hashCode()");{
 
+                }be();
             }be();
             return toGenJava(vc.typeSig.name);
         }
         private String toString(RTypeSig sig){
+            return toString(sig,false);
+        }
+        private String toPrimString(RTypeSig sig){
+            return toString(sig,true);
+        }
+
+
+        private String toString(RTypeSig sig,boolean asPrimitive){
             String gen = sig.generics.isEmpty() ? "" : sig.generics.map(g -> toString(g)).toString("<",",",">");
             String pname = sig.name.packageName;
             String name = sig.name.className;
@@ -158,6 +203,12 @@ public class ServiceJavaGen {
             switch(name){
                 case "Array": name = "PList"; addImport(PList.class); break;
                 case "Set": name = "PSet"; addImport(PSet.class); break;
+                case "Byte": name = asPrimitive ? "byte" : name; break;
+                case "Short": name = asPrimitive ? "short" : name; break;
+                case "Integer": name = asPrimitive ? "int" : name; break;
+                case "Long": name = asPrimitive ? "long" : name; break;
+                case "Float": name = asPrimitive ? "float" : name; break;
+                case "Double": name = asPrimitive ? "double" : name; break;
                 default:
                     addImport(new RClass(pname,name));
                     break;
@@ -166,13 +217,17 @@ public class ServiceJavaGen {
             return name + gen;
         }
 
+        private boolean isPrimitive(RTypeSig sig){
+            return toString(sig,true).equals(toString(sig,false)) == false;
+        }
+
         private String firstUpper(String s){
             return s.substring(0,1).toUpperCase() + s.substring(1);
         }
 
         private String toString(RValueType vt){
             String res = "";
-            String value = toString(vt.typeSig);
+            String value = vt.required ? toPrimString(vt.typeSig) : toString(vt.typeSig);
             if(vt.required == false){
                 addImport(Nullable.class);
 
