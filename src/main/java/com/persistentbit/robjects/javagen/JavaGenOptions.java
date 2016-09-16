@@ -1,9 +1,11 @@
 package com.persistentbit.robjects.javagen;
 
+import com.persistentbit.core.utils.BaseValueClass;
+
 /**
  * Created by petermuys on 14/09/16.
  */
-public class JavaGenOptions {
+public class JavaGenOptions extends BaseValueClass{
     public final boolean generateGetters;
     public final boolean generateUpdaters;
 
@@ -13,6 +15,13 @@ public class JavaGenOptions {
     }
 
     public JavaGenOptions() {
-        this(true,true);
+        this(false,false);
+    }
+
+    public JavaGenOptions withGenerateGetters(boolean generateGetters){
+        return copyWith("generateGetters",generateGetters);
+    }
+    public JavaGenOptions withGenerateUpdaters(boolean generateUpdaters){
+        return copyWith("generateUpdaters",generateUpdaters);
     }
 }

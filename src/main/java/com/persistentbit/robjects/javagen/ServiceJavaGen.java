@@ -3,7 +3,9 @@ package com.persistentbit.robjects.javagen;
 
 import com.persistentbit.core.Nullable;
 import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PSet;
+import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.sourcegen.SourceGen;
 import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.robjects.rod.RodParser;
@@ -26,16 +28,17 @@ public class ServiceJavaGen {
     private final JavaGenOptions options;
     private final RService       service;
     private PList<GeneratedJava>    generatedJava = PList.empty();
-    //TODO
-    private final String servicePackageName = "com.persistentbit.test";
 
-    private ServiceJavaGen(JavaGenOptions options,RService service) {
+    private final String servicePackageName;
+
+    private ServiceJavaGen(JavaGenOptions options,String packageName,RService service) {
+        this.servicePackageName = packageName;
         this.options = options;
         this.service = service;
     }
 
-    static public PList<GeneratedJava>  generate(JavaGenOptions options,RService service){
-        return new ServiceJavaGen(options,service).generateService();
+    static public PList<GeneratedJava>  generate(JavaGenOptions options,String packageName,RService service){
+        return new ServiceJavaGen(options,packageName,service).generateService();
     }
 
     public PList<GeneratedJava> generateService(){
@@ -70,7 +73,7 @@ public class ServiceJavaGen {
         }
 
         public GeneratedJava    generateEnum(REnum e ){
-            bs("public enum " + e.name);{
+            bs("public enum " + e.name.className);{
                 println(e.values.toString(","));
             }be();
             return toGenJava(e.name);
@@ -147,7 +150,9 @@ public class ServiceJavaGen {
                         s+= "; }";
                         println(s);
                     }
-                    println("");
+                    if(options.generateGetters || options.generateUpdaters) {
+                        println("");
+                    }
                 });
                 //******* EQUALS
                 println("@Override");
@@ -155,8 +160,10 @@ public class ServiceJavaGen {
                     println("if (this == o) return true;");
                     println("if (o == null || getClass() != o.getClass()) return false;");
                     println("");
-                    println(vc.typeSig.name.className + " that = (" + vc.typeSig.name.className + ")o;");
-                    println("");
+                    if(vc.properties.isEmpty() == false) {
+                        println(vc.typeSig.name.className + " that = (" + vc.typeSig.name.className + ")o;");
+                        println("");
+                    }
                     vc.properties.forEach(p -> {
                         String thisVal = p.name;
                         String thatVal = "that." + thisVal;
@@ -182,6 +189,52 @@ public class ServiceJavaGen {
                 //******* HASHCODE
                 println("@Override");
                 bs("public int hashCode()");{
+                    if(vc.properties.isEmpty()){
+                        println("return 0;");
+                    } else {
+                        println("int result;");
+                        vc.properties.headMiddleEnd().forEach(t -> {
+                            if(t._1 == PStream.HeadMiddleEnd.head || t._1 == PStream.HeadMiddleEnd.headAndEnd){
+                                print("result = ");
+                            } else {
+                                print("result = 31 * result + ");
+                            }
+                            String value = t._2.name;
+                            String hash = value + ".hashCode()";
+
+                            if(t._2.valueType.required) {
+                                switch (t._2.valueType.typeSig.name.className) {
+                                    case "Float":
+                                        hash = "Float.hashCode(" + value + ")";
+                                        break;
+                                    case "Long":
+                                        hash = "Long.hashCode(" + value + ")";
+                                        break;
+                                    case "Double":
+                                        hash = "Double.hashCode(" + value + ")";
+                                        break;
+                                    case "Short":
+                                        hash = "Short.hashCode(" + value + ")";
+                                        break;
+                                    case "Byte":
+                                        hash = "Byte.hashCode(" + value + ")";
+                                        break;
+                                    case "Boolean":
+                                        hash = "Boolean.hashCode(" + value + ")";
+                                        break;
+                                    case "Integer":
+                                        hash = "Integer.hashCode(" + value + ")";
+                                        break;
+
+                                }
+
+                            } else {
+                                hash = "(" + value + " != null ? " + hash + ": 0)";
+                            }
+                            println(hash + ";");
+                        });
+                        println("return result;");
+                    }
 
                 }be();
             }be();
@@ -201,14 +254,20 @@ public class ServiceJavaGen {
             String name = sig.name.className;
 
             switch(name){
-                case "Array": name = "PList"; addImport(PList.class); break;
+                case "List": name = "PList"; addImport(PList.class); break;
                 case "Set": name = "PSet"; addImport(PSet.class); break;
+                case "Map": name= "PMap"; addImport(PMap.class); break;
+
+                case "Boolean": name = asPrimitive ? "boolean" : name; break;
                 case "Byte": name = asPrimitive ? "byte" : name; break;
                 case "Short": name = asPrimitive ? "short" : name; break;
                 case "Integer": name = asPrimitive ? "int" : name; break;
                 case "Long": name = asPrimitive ? "long" : name; break;
                 case "Float": name = asPrimitive ? "float" : name; break;
                 case "Double": name = asPrimitive ? "double" : name; break;
+
+                case "String": break;
+
                 default:
                     addImport(new RClass(pname,name));
                     break;
@@ -262,10 +321,11 @@ public class ServiceJavaGen {
         String rod = new String(Files.readAllBytes(path));
         RodTokenizer tokenizer = new RodTokenizer();
         PList<Token<RodTokenType>> tokens = tokenizer.tokenize(rodFileName,rod);
-        RodParser parser = new RodParser("com.persistentbit.test",tokens);
+        String packageName  = "com.persistentbit.test";
+        RodParser parser = new RodParser(packageName,tokens);
         RService service = parser.parseService();
         System.out.println(service);
-        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),service);
+        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),packageName,service);
         gen.forEach(gj -> {
             System.out.println(gj.code);
             System.out.println("-----------------------------------");

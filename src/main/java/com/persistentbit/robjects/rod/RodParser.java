@@ -205,13 +205,15 @@ public class RodParser {
         String name = current.text;
         next();
         skip(tBlockStart,"'{' expected for enum definition");
-
-        PList<String> values = sep(tComma,() -> {
-            assertType(tIdentifier,"enum value name expected");
-            String valueName = current.text;
-            next();
-            return valueName;
-        });
+        PList<String> values = PList.empty();
+        if(current.type != tBlockEnd) {
+                values = sep(tComma, () -> {
+                assertType(tIdentifier, "enum value name expected");
+                String valueName = current.text;
+                next();
+                return valueName;
+            });
+        }
         skip(tBlockEnd,"'}' expected to end enum definintion for '" + name + "'");
         return new REnum(new RClass(packageName,name),values);
     }

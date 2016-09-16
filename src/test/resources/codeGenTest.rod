@@ -1,0 +1,86 @@
+/*
+    Test ROD for the ROD parser and Java Code Generator.
+*/
+
+
+
+enum EnumTest1{
+    anEnumTestValue1,anEnumTestValue2, anEnumTestLastValue
+}
+
+enum EnumTest2{
+
+}
+
+value class TypesOfValueTest{
+    aByte: Byte;
+    aShort: Short;
+    anInt: Integer;
+    aLong: Long;
+    aFloat: Float;
+    aDouble: Double;
+    aString: String;
+    anEnum: EnumTest1;
+    aList: List<Integer>;
+    aSet: Set<Integer>;
+    aMap: Map<Integer,String>;
+    aBoolean: Boolean;
+
+}
+
+value class Name{
+    firstName:String;
+    middleName:?String;
+    lastName:String;
+}
+
+value class Email{
+    address:String;
+    name:?Name;
+}
+
+value class SimplePerson{
+    id:Integer;
+    name:Name;
+    email:Email;
+
+}
+
+value class OptionalsTypesOfValueTest{
+    aByte: ?Byte;
+    aShort: ?Short;
+    anInt: ?Integer;
+    aLong: ?Long;
+    aFloat: ?Float;
+    aDouble: ?Double;
+    aString: ?String;
+    anEnum: ?EnumTest1;
+    aList: ?List<Integer>;
+    aSet: ?Set<Integer>;
+    aMap: ?Map<Integer,Byte>;
+    aBoolean: ?Boolean;
+
+}
+
+value class AnEmptyValueClass{
+
+}
+
+value class Tuple2<T1,T2>{
+    _1:T1;
+    _2:T2;
+}
+
+value class GenericsTest<A,B>{
+    a:A;
+    ab:Tuple2<A,B>;
+    aEnum:Tuple2<A,EnumTest1>;
+    a_intB: Tuple2<A,Tuple2<Integer,B>>;
+    listA: List<A>;
+    mapAB: Map<A,B>;
+    optionalA: ?A;
+
+}
+
+
+
