@@ -54,7 +54,9 @@ public class RodParser {
                     throw new RodParserException(current.pos,"Expected a definition.");
             }
         }
-        return new RService(enums,values,remotes);
+        RService service = new RService(packageName,enums,values,remotes);
+
+        return service;
     }
 
     private RTypeSig parseTypeSignature() {
@@ -165,13 +167,22 @@ public class RodParser {
         skip(tClose,"')' expected after function parameters");
         skip(tColon,"':' expected to define the function return type");
         RValueType returnType = null;
+        boolean cached = false;
         if(current.type != tVoid){
             returnType = parseRValueType();
+            if(current.type == tCached) {
+                if(params.isEmpty() == false){
+                    throw new RodParserException(current.pos,"cached result is not supported on functions with parameters.");
+                }
+                cached = true;
+                next(); //skip cached
+            }
         } else {
             next();//skip void
         }
+
         skipEndOfStatement();
-        return new RFunction(name,params,returnType);
+        return new RFunction(name,params,returnType,cached);
     }
 
     private String parsePackage() {

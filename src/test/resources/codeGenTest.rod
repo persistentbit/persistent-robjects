@@ -82,13 +82,24 @@ value class GenericsTest<A,B>{
 
 }
 
+value class ServiceVersion{
+    major:Integer;
+    minor:Integer;
+    snapShot:Boolean;
+}
+
+value class ServiceInfo{
+    serviceName:String;
+    serviceVersion:ServiceVersion;
+}
+
 remote class UserSession{
-    user():Person;
-    update(person:Person):void;
+    user():SimplePerson;
+    update(person:SimplePerson):void;
 }
 
 remote class AppTest{
-    allUsers():PList<Person>;
-    loginToken(userName:String, passWord:String):?String;
-    userSession(loginToken:String):?UserSession;
+    getInfo():ServiceInfo cached;
+    getAllUsers():List<SimplePerson>;
+    login(userName:String, passWord:String):?UserSession;
 }

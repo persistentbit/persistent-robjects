@@ -8,6 +8,9 @@ import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.sourcegen.SourceGen;
 import com.persistentbit.core.tokenizer.Token;
+import com.persistentbit.robjects.annotations.Remotable;
+import com.persistentbit.robjects.annotations.RemoteCache;
+import com.persistentbit.robjects.rod.RServiceValidator;
 import com.persistentbit.robjects.rod.RodParser;
 import com.persistentbit.robjects.rod.RodTokenType;
 import com.persistentbit.robjects.rod.RodTokenizer;
@@ -43,6 +46,7 @@ public class ServiceJavaGen {
     }
 
     public PList<GeneratedJava> generateService(){
+        RServiceValidator.validate(service);
         PList<GeneratedJava> result = PList.empty();
         result = result.plusAll(service.enums.map(e -> new Generator().generateEnum(e)));
         result = result.plusAll(service.valueClasses.map(vc -> new Generator().generateValueClass(vc)));
@@ -305,6 +309,8 @@ public class ServiceJavaGen {
         }
 
         public GeneratedJava    generateRemoteClass(RRemoteClass rc){
+            addImport(Remotable.class);
+            println("@Remotable");
             bs("public interface " + rc.name.className); {
                 rc.functions.forEach(f -> {
                     String retType;
@@ -314,18 +320,18 @@ public class ServiceJavaGen {
                     } else {
                         retType = toString(f.resultType.typeSig);
                     }
+                    if(f.cached){
+                        addImport(RemoteCache.class);
+                        println("@RemoteCache");
+                    }
                     println("CompletableFuture<" + retType + ">\t" + f.name + "(" +
-                            f.params.map( p -> {
-                                return p.name + " " + toString(p.valueType.typeSig);
-                            }).toString(", ") + ");"
+                            f.params.map( p -> toString(p.valueType.typeSig) + " " + p.name).toString(", ") + ");"
                     );
                 });
 
             }be();
 
-            System.out.println(toGenJava(rc.name).code);
-
-            return null;
+            return toGenJava(rc.name);
         }
 
     }
