@@ -12,6 +12,8 @@ enum EnumTest2{
 
 }
 
+
+
 value class TypesOfValueTest{
     aByte: Byte;
     aShort: Short;
