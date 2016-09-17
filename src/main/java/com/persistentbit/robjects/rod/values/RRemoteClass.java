@@ -8,11 +8,11 @@ import com.persistentbit.core.utils.BaseValueClass;
  * Created by petermuys on 14/09/16.
  */
 public class RRemoteClass extends BaseValueClass {
-    public final RTypeSig typeSig;
+    public final RClass name;
     public final PList<RFunction> functions;
 
-    public RRemoteClass(RTypeSig typeSig, PList<RFunction> functions) {
-        this.typeSig = typeSig;
+    public RRemoteClass(RClass name, PList<RFunction> functions) {
+        this.name = name;
         this.functions = functions;
     }
 }

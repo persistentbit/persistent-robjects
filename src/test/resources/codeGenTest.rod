@@ -82,5 +82,13 @@ value class GenericsTest<A,B>{
 
 }
 
+remote class UserSession{
+    user():Person;
+    update(person:Person):void;
+}
 
-
+remote class AppTest{
+    allUsers():PList<Person>;
+    loginToken(userName:String, passWord:String):?String;
+    userSession(loginToken:String):?UserSession;
+}

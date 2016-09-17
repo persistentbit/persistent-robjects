@@ -138,7 +138,10 @@ public class RodParser {
     private RRemoteClass parseRemoteClass() {
         skip(tRemote,"'remote' expected");
         skip(tClass,"'class' expected");
-        RTypeSig sig = parseTypeSignature();
+        assertType(tIdentifier,"function name expected");
+        RClass name = new RClass(packageName,current.text);
+        next(); //skip name;
+
         PList<RFunction> functions = PList.empty();
         if(current.type == tBlockStart){
             next();
@@ -147,7 +150,7 @@ public class RodParser {
             }
             skip(tBlockEnd,"'}' expected");
         }
-        return new RRemoteClass(sig,functions);
+        return new RRemoteClass(name,functions);
     }
 
     private RFunction parseRFunction() {
@@ -164,6 +167,8 @@ public class RodParser {
         RValueType returnType = null;
         if(current.type != tVoid){
             returnType = parseRValueType();
+        } else {
+            next();//skip void
         }
         skipEndOfStatement();
         return new RFunction(name,params,returnType);

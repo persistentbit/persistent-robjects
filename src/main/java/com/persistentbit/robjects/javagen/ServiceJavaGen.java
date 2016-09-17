@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by petermuys on 14/09/16.
@@ -304,6 +305,26 @@ public class ServiceJavaGen {
         }
 
         public GeneratedJava    generateRemoteClass(RRemoteClass rc){
+            bs("public interface " + rc.name.className); {
+                rc.functions.forEach(f -> {
+                    String retType;
+                    addImport(CompletableFuture.class);
+                    if(f.resultType == null) {
+                        retType = "Object";
+                    } else {
+                        retType = toString(f.resultType.typeSig);
+                    }
+                    println("CompletableFuture<" + retType + ">\t" + f.name + "(" +
+                            f.params.map( p -> {
+                                return p.name + " " + toString(p.valueType.typeSig);
+                            }).toString(", ") + ");"
+                    );
+                });
+
+            }be();
+
+            System.out.println(toGenJava(rc.name).code);
+
             return null;
         }
 
