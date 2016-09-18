@@ -1,0 +1,29 @@
+
+value class Name{
+    firstName: String;
+    lastname: String;
+    middleName: ?String;
+}
+
+value class User {
+    id:Integer;
+    userName:String;
+    name:Name;
+}
+
+value class RodInfo{
+    appName:String;
+    version:String;
+    author:Name;
+}
+
+
+remote class UserSession{
+    getUser():User cached;
+
+}
+remote class RodTest{
+    login(userName:String, passWord:String):User;
+    getUserSession():?UserSession;
+    getInfo(): RodInfo cached;
+}

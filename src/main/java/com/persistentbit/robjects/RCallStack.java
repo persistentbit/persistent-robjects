@@ -30,10 +30,6 @@ public class RCallStack extends BaseValueClass {
         return callStack;
     }
 
-    public boolean verifySignature(String secret, JJWriter jsonWriter){
-        String msg = JJPrinter.print(false,jsonWriter.write(callStack))+secret;
-        return JJSigning.sign(msg,"SHA-256").equals(signature);
-    }
 
     public String getSignature() {
         return signature;
@@ -42,6 +38,10 @@ public class RCallStack extends BaseValueClass {
     static public RCallStack    createAndSign(PList<RMethodCall> methods,JJWriter jsonWriter,String secret){
         String msg = JJPrinter.print(false,jsonWriter.write(methods))+secret;
         return new RCallStack(JJSigning.sign(msg,"SHA-256"),methods);
+    }
+    public boolean verifySignature(String secret, JJWriter jsonWriter){
+        String msg = JJPrinter.print(false,jsonWriter.write(callStack))+secret;
+        return JJSigning.sign(msg,"SHA-256").equals(signature);
     }
 
 

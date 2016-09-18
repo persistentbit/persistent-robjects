@@ -29,8 +29,8 @@ public class TestRObjects {
     public void test() {
         JJMapper mapper = new JJMapper();
 
-        AppImpl appImpl = new AppImpl(mapper,new JJSigning("testAppSecret"));
-        RemoteService rserver = new RServer<>("Dit is het geheim",App.class,() -> appImpl);
+        new AppImpl(mapper,new JJSigning("testAppSecret"));
+        RemoteService rserver = new RServer<>("Dit is het geheim",App.class,Integer.class,(sm) -> new AppImpl(mapper,new JJSigning("testAppSecret")));
         rserver = new JSonRemoteService(rserver);
         App app = RProxy.create(rserver);
         AppVersion version = app.getVersion();

@@ -319,6 +319,10 @@ public class ServiceJavaGen {
                         retType = "Object";
                     } else {
                         retType = toString(f.resultType.typeSig);
+                        if(f.resultType.required == false){
+                            retType = "Optional<" + retType + ">";
+                            addImport(Optional.class);
+                        }
                     }
                     if(f.cached){
                         addImport(RemoteCache.class);
