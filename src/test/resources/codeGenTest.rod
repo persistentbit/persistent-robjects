@@ -90,10 +90,28 @@ value class ServiceVersion{
     snapShot:Boolean;
 }
 
+interface IEntity{
+    id:Integer;
+}
+
+
 value class ServiceInfo{
     serviceName:String;
     serviceVersion:ServiceVersion;
 }
+
+
+value class Invoice implements IEntity{
+    id:Integer;
+    invoiceNumber:String;
+}
+
+value class PersonEntity implements IEntity{
+    id:Integer;
+    name:Name;
+}
+
+
 
 remote class UserSession{
     user():SimplePerson;

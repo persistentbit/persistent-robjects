@@ -1,6 +1,7 @@
 package com.persistentbit.robjects.rod;
 
 import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.robjects.rod.values.*;
@@ -18,12 +19,34 @@ public class RServiceValidator {
     private void validate() {
         checkClassesDefined();
         checkOverloading();
+        checkInterfaces();
+    }
+
+    private String toString(RClass rClass){
+        return rClass.packageName + "." + rClass.className;
+    }
+
+    private void checkInterfaces() {
+        PMap<RClass,RInterfaceClass> il = service.interfaceClasses.groupByOneValue(ic -> ic.name);
+        service.valueClasses.forEach(vc -> {
+            vc.interfaceClasses.forEach(icName-> {
+                RInterfaceClass ic = il.getOrDefault(icName,null);
+                if(ic == null){
+                    throw new RServiceException("Can't find interface " +toString(icName) + " defined in value  class " + toString(vc.typeSig.name));
+                }
+                PList<RProperty> notFound =ic.properties.filter( p -> vc.properties.contains(p) == false);
+                if(notFound.isEmpty() == false){
+                    throw new RServiceException("Can't find properties in class " + toString(vc.typeSig.name) + " for interface " + toString(ic.name) + ": " + notFound.map(p -> p.name).toString(", "));
+                }
+            });
+        });
     }
 
     private void checkOverloading() {
         PList<RClass> dup =service.remoteClasses.map(rc -> rc.name)
                 .plusAll(service.valueClasses.map(vc->vc.typeSig.name))
                 .plusAll(service.enums.map(e -> e.name))
+                .plusAll(service.interfaceClasses.map(e->e.name))
                 .duplicates();
         if(dup.isEmpty() == false){
             throw new RServiceException("Duplicated type definitions: " + dup.map(c -> c.packageName +"." + c.className).toString(", "));
@@ -73,9 +96,11 @@ public class RServiceValidator {
         PSet<RClass>   defined  =   PSet.empty();
         needed = needed.plusAll(service.valueClasses.map(vc -> needed(vc)).flatten());
         needed = needed.plusAll(service.remoteClasses.map(rc -> needed(rc)).flatten());
+        needed = needed.plusAll(service.interfaceClasses.map(ic -> needed(ic)).flatten());
         defined = defined.plusAll(service.enums.map(e -> e.name));
         defined = defined.plusAll(service.valueClasses.map(vc -> vc.typeSig.name));
         defined = defined.plusAll(service.remoteClasses.map(rc -> rc.name));
+        defined = defined.plusAll(service.interfaceClasses.map(ic -> ic.name));
         PSet<RClass> buildIn = PSet.empty();
         buildIn = buildIn.plusAll(PSet.val("Byte","Short","Integer","Long","Float","Double","String","Boolean","List","Map","Set").map(n -> new RClass(service.packageName,n)));
         PSet<RClass> all = defined.plusAll(buildIn);
@@ -86,7 +111,11 @@ public class RServiceValidator {
     }
 
 
-
+    private PSet<RClass>    needed(RInterfaceClass ic){
+        PSet<RClass> res =PSet.empty();
+        res =  res.plusAll(ic.properties.map(p -> needed(p.valueType.typeSig)).flatten());
+        return res;
+    }
 
     private PSet<RClass>   needed(RRemoteClass rc){
         PSet<RClass> res = PSet.empty();

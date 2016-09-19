@@ -41,6 +41,7 @@ public class RodParser {
         PList<RValueClass>  values = PList.empty();
         PList<RRemoteClass> remotes = PList.empty();
         PList<REnum> enums = PList.empty();
+        PList<RInterfaceClass> interfaces = PList.empty();
         while(current.type != RodTokenType.tEOF){
             switch(current.type){
                 //case tImport: handleImport();
@@ -50,11 +51,13 @@ public class RodParser {
                     break;
                 case tEnum: enums = enums.plus(parseEnum());
                     break;
+                case tInterface: interfaces = interfaces.plus(parseInterface());
+                    break;
                 default:
-                    throw new RodParserException(current.pos,"Expected a definition.");
+                    throw new RodParserException(current.pos,"Expected a definition, not '" + current.text + "'");
             }
         }
-        RService service = new RService(packageName,enums,values,remotes);
+        RService service = new RService(packageName,enums,values,remotes,interfaces);
 
         return service;
     }
@@ -89,12 +92,38 @@ public class RodParser {
         next();
     }
 
+    private RClass parseRClass(){
+        String name = current.text;
+        skip(tIdentifier,"identifier expected!");
+        return new RClass(this.packageName,name);
+    }
+
+    private RInterfaceClass parseInterface() {
+        skip(tInterface,"'interface' expected");
+        RClass name =  parseRClass();
+        PList<RProperty> p = PList.empty();
+        if(current.type == tBlockStart){
+            next();
+            while(current.type!= tEOF && current.type != tBlockEnd){
+                p = p.plus(parseRProperty());
+            }
+            skip(tBlockEnd,"'}' expected");
+        }
+        return new RInterfaceClass(name,p);
+    }
 
     private RValueClass parseValueClass(){
 
         skip(tValue,"'value' expected");
         skip(tClass,"'class' expected");
         RTypeSig sig = parseTypeSignature();
+        PList<RClass> interfaces = PList.empty();
+        if(current.type == tImplements){
+            next();//skip implements;
+            interfaces = sep(tComma,()-> parseRClass());
+        }
+
+
         PList<RProperty> props = PList.empty();
         if(current.type == tBlockStart){
             next();
@@ -103,7 +132,7 @@ public class RodParser {
             }
             skip(tBlockEnd,"'}' expected");
         }
-        return new RValueClass(sig,props);
+        return new RValueClass(sig,props,interfaces);
     }
 
     private RValueType  parseRValueType() {

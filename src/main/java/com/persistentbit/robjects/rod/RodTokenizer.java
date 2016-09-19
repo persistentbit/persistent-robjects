@@ -44,6 +44,8 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
                 case "void": return new TokenFound<>(found.text,tVoid,found.ignore);
                 case "exception": return new TokenFound<>(found.text,tException,found.ignore);
                 case "throws": return new TokenFound<>(found.text,tThrows,found.ignore);
+                case "implements": return new TokenFound<>(found.text,tImplements,found.ignore);
+                case "interface": return new TokenFound<>(found.text,tInterface,found.ignore);
                 default: return found;
             }
         }));

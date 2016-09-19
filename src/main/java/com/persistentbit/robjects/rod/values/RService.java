@@ -11,11 +11,13 @@ public class RService extends BaseValueClass{
     public final PList<REnum> enums;
     public final PList<RValueClass> valueClasses;
     public final PList<RRemoteClass> remoteClasses;
+    public final PList<RInterfaceClass> interfaceClasses;
 
-    public RService(String packageName, PList<REnum> enums, PList<RValueClass> valueClasses, PList<RRemoteClass> remoteClasses) {
+    public RService(String packageName, PList<REnum> enums, PList<RValueClass> valueClasses, PList<RRemoteClass> remoteClasses,PList<RInterfaceClass> interfaceClasses) {
         this.packageName = packageName;
         this.enums = enums;
         this.valueClasses = valueClasses;
         this.remoteClasses = remoteClasses;
+        this.interfaceClasses = interfaceClasses;
     }
 }
