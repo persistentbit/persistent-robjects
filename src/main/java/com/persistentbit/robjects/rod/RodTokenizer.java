@@ -1,22 +1,11 @@
 package com.persistentbit.robjects.rod;
 
-import com.persistentbit.core.Tuple2;
-import com.persistentbit.core.collections.PList;
-import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.SimpleTokenizer;
 import com.persistentbit.core.tokenizer.TokenFound;
-import com.persistentbit.core.utils.BaseValueClass;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.SimpleTimeZone;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 import static com.persistentbit.robjects.rod.RodTokenType.*;
 
 /**
@@ -38,6 +27,10 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
         add("\\;",tSemiColon);
         add("\\{",tBlockStart);
         add("\\}",tBlockEnd);
+        add("\\=",tAssign);
+        add("\\-\\>",tMapMap);
+        add("\\[",tArrayStart);
+        add("\\]",tArrayEnd);
         add(SimpleTokenizer.regExMatcher("[a-zA-Z_][a-zA-Z0-9_]*",tIdentifier).map(found -> {
             switch (found.text){
                 case "package": return new TokenFound<>(found.text,tPackage,found.ignore);

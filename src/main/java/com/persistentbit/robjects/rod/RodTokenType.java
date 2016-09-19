@@ -6,5 +6,6 @@ package com.persistentbit.robjects.rod;
 public enum RodTokenType {
     tPackage, tImport, tFrom, tClass, tRemote, tValue, tGenStart, tGenEnd,tComma,tQuestion,tCached,tOpen,tClose,tColon,tSemiColon,
     tComment, tWhiteSpace, tNl,tIdentifier,tPoint,tEnum,tBlockStart, tBlockEnd,tEOF,tVoid,
-    tException,tThrows,tInterface,tImplements
+    tException,tThrows,tInterface,tImplements,tArrayStart,
+    tArrayEnd, tAssign, tMapMap
 }
