@@ -3,8 +3,6 @@ package com.persistentbit.robjects;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.sourcegen.SourcePath;
 import com.persistentbit.core.tokenizer.Token;
-import com.persistentbit.generated.runtest.RodTest;
-import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.robjects.javagen.GeneratedJava;
 import com.persistentbit.robjects.javagen.JavaGenOptions;
 import com.persistentbit.robjects.javagen.ServiceJavaGen;
@@ -12,8 +10,6 @@ import com.persistentbit.robjects.rod.RodParser;
 import com.persistentbit.robjects.rod.RodTokenType;
 import com.persistentbit.robjects.rod.RodTokenizer;
 import com.persistentbit.robjects.rod.values.RService;
-import com.persistentbit.robjects.runtestimpl.RodTestImpl;
-import com.persistentbit.robjects.runtestimpl.RodTestSessionData;
 import org.junit.Test;
 
 import java.io.File;
@@ -22,7 +18,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by petermuys on 18/09/16.
@@ -64,6 +59,7 @@ public class TestRunTest {
 
     @Test
     public void testRunServer() throws Exception{
+        /*
         RemoteService rServer = new RServer<>("ThisIsTheSecret",RodTest.class,RodTestSessionData.class,(sm)-> new RodTestImpl(sm));
         rServer = new JSonRemoteService(rServer);
         RodTest root = RProxy.create(rServer);
@@ -85,14 +81,11 @@ public class TestRunTest {
             return null;
         });
 
-        /*root.getUserSession().thenCompose(us -> us.get().getUser())
-                .thenAccept(user -> {
-                    System.out.println("Got User from UserSession");
-                });*/
+
 
         System.out.println("done");
         rServer.close();
-
+        */
     }
 
 }
