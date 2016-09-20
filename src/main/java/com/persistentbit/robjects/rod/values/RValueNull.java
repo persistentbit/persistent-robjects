@@ -4,8 +4,8 @@ import com.persistentbit.core.utils.BaseValueClass;
 
 /**
  * @author Peter Muys
- * @since 19/09/2016
+ * @since 20/09/2016
  */
-public class RLitArray extends BaseValueClass{
+public class RValueNull extends BaseValueClass implements RValue{
 
 }

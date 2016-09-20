@@ -31,6 +31,10 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
         add("\\-\\>",tMapMap);
         add("\\[",tArrayStart);
         add("\\]",tArrayEnd);
+        add("[0-9]*\\.?[0-9]*",tNumber);
+        add(RodTokenizer.stringMatcher(tString,'\'',false));
+        add(RodTokenizer.stringMatcher(tString,'\"',false));
+        add(RodTokenizer.stringMatcher(tString,'`',true));
         add(SimpleTokenizer.regExMatcher("[a-zA-Z_][a-zA-Z0-9_]*",tIdentifier).map(found -> {
             switch (found.text){
                 case "package": return new TokenFound<>(found.text,tPackage,found.ignore);
@@ -46,6 +50,10 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
                 case "throws": return new TokenFound<>(found.text,tThrows,found.ignore);
                 case "implements": return new TokenFound<>(found.text,tImplements,found.ignore);
                 case "interface": return new TokenFound<>(found.text,tInterface,found.ignore);
+                case "true": return new TokenFound<>(found.text,tTrue,found.ignore);
+                case "false": return new TokenFound<>(found.text,tFalse,found.ignore);
+                case "null": return new TokenFound<>(found.text,tNull,found.ignore);
+                case "new": return new TokenFound<>(found.text,tNew,found.ignore);
                 default: return found;
             }
         }));

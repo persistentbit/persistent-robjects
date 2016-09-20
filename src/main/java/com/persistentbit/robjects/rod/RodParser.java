@@ -1,6 +1,8 @@
 package com.persistentbit.robjects.rod;
 
+import com.persistentbit.core.Tuple2;
 import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.robjects.rod.values.*;
@@ -8,6 +10,7 @@ import com.persistentbit.robjects.rod.values.*;
 import java.util.function.Supplier;
 
 import static com.persistentbit.robjects.rod.RodTokenType.*;
+
 /**
  * Created by petermuys on 12/09/16.
  */
@@ -152,9 +155,76 @@ public class RodParser {
 
         skip(tColon,"':' expected after property name");
         RValueType valueType = parseRValueType();
+        RValue  defaultValue = null;
+        if(current.type == tAssign){
+            next();//skip '='
+            defaultValue = parseValue();
+        }
         skipEndOfStatement();
-        return new RProperty(name,valueType);
+        return new RProperty(name,valueType,defaultValue);
     }
+    private RValue  parseValue(){
+        switch (current.type){
+            case tArrayStart: return parseValueArray();
+            case tTrue:
+            case tFalse:
+                return parseValueBoolean();
+            case tNumber:   return parseValueNumber();
+            case tNew: return parseValueValueObject();
+            case tIdentifier: return parserValueEnum();
+            default:
+                throw new RodParserException(current.pos,"Expected a literal value");
+        }
+    }
+    private RValueValueObject parseValueValueObject() {
+        skip(tNew,"'new' expected");
+        RClass name = parseRClass();
+        skip(tOpen,"'(' expected if value class name");
+        POrderedMap<String,RValue> args =   POrderedMap.empty();
+        if(current.type != tClose){
+            args.plusAll(sep(tComma,() -> {
+                String propName = current.text;
+                skip(tIdentifier,"Expected property name.");
+                skip(tColon,"':' expected after property name.");
+                return new Tuple2<>(propName,parseValue());
+            }));
+        }
+        return new RValueValueObject(name,args);
+    }
+    private RValueEnum  parserValueEnum() {
+        RClass cls = parseRClass();
+        skip(RodTokenType.tPoint,"'.' expected after enum name");
+        String valueName = current.text;
+        skip(tIdentifier,"enum value name expected");
+        return new RValueEnum(cls,valueName);
+    }
+    private RValueNumber parseValueNumber() {
+        RValueNumber res = new RValueNumber(current.text);
+        skip(tNumber,"Number expected.");
+        return res;
+    }
+    private RValueArray parseValueArray() {
+        skip(tArrayStart,"'[' expected");
+        PList<RValue>   elements = PList.empty();
+        if(current.type != tArrayEnd){
+            elements =sep(tComma,this::parseValue);
+        }
+        skip(tArrayEnd,"']' expected");
+        return new RValueArray(elements);
+    }
+
+    private RValueBoolean   parseValueBoolean() {
+        if(current.type == tTrue){
+            next();
+            return new RValueBoolean(true);
+        }
+        if(current.type == tFalse){
+            next();
+            return new RValueBoolean(false);
+        }
+        throw new RodParserException(current.pos,"Expected a boolean value");
+    }
+
     private RFunctionParam  parseFunctionParam() {
         assertType(tIdentifier,"parameter name expected");
         String name = current.text;
@@ -262,6 +332,16 @@ public class RodParser {
         skip(tBlockEnd,"'}' expected to end enum definintion for '" + name + "'");
         return new REnum(new RClass(packageName,name),values);
     }
+
+    private RTypeSig    replaceType(RTypeSig type, RClass genericName, RTypeSig genericType){
+        if(type.name.equals(genericName)){
+            return genericType;
+        }
+        PList<RTypeSig> newGen = type.generics.map(gt -> replaceType(gt,genericName,genericType));
+        return new RTypeSig(type.name,newGen);
+    }
+
+
 
     static public void main(String...args) throws Exception{
         String test = PList.val(

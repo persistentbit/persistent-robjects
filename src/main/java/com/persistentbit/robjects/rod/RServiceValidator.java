@@ -145,6 +145,52 @@ public class RServiceValidator {
         return res.plusAll(sig.generics.map(g -> needed(g)).flatten());
     }
 
+
+    private boolean isEqual(RClass rcls,Class<?> jcls){
+        return (rcls.packageName + "." + rcls.className).equals(jcls.getName());
+    }
+    private boolean isAssignable(RTypeSig type, RValue value){
+        if(value instanceof RValueNull){
+            return true;
+        }
+        RClass name = type.name;
+        if(isEqual(name,String.class)){
+            return value instanceof RValueString;
+        }
+        switch(name.className){
+            case "String": return value instanceof RValueString;
+
+            case "Byte":
+            case "Short":
+            case "Integer":
+            case "Long":
+            case "Float":
+            case "Double":
+                return value instanceof  RValueNumber;
+            case "Boolean": return value instanceof RValueBoolean;
+            case "List":
+            case "Set":
+                return (value instanceof RValueArray) && isArrayAssignable(type,(RValueArray) value);
+            case "Map":
+                throw new RuntimeException("Not Yet");
+        }
+        if(value instanceof RValueEnum){
+            RValueEnum ve = (RValueEnum) value;
+            return service.enums.find(e -> e.name.equals(ve.enumClass) && e.values.contains(ve.enumValue) ).isPresent();
+        }
+        if(value instanceof RValueValueObject){
+
+        }
+
+    }
+    private boolean isArrayAssignable(RTypeSig type, RValueArray arrValue){
+        RTypeSig itemType = type.generics.head();
+        return arrValue.values.find( i -> isAssignable(itemType,i) == false).isPresent() == false;
+    }
+
+
+
+
     static public RService  validate(RService service){
         new RServiceValidator(service).validate();
         return service;

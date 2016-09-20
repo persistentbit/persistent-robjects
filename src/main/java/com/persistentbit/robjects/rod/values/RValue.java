@@ -2,7 +2,8 @@ package com.persistentbit.robjects.rod.values;
 
 /**
  * @author Peter Muys
- * @since 19/09/2016
+ * @since 20/09/2016
  */
-public class RLitString {
+public interface RValue {
+
 }
