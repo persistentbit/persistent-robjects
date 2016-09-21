@@ -4,6 +4,7 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.robjects.annotations.Remotable;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Peter Muys
@@ -11,6 +12,6 @@ import java.util.Optional;
  */
 @Remotable
 public interface UsersService {
-    PList<UserData> getAllUsers();
-    Optional<Integer> testOptional(Integer value);
+    CompletableFuture<PList<UserData>> getAllUsers();
+    CompletableFuture<Optional<Integer>> testOptional(Integer value);
 }

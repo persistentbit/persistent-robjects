@@ -3,6 +3,7 @@ package com.persistentbit.robjects.testapi;
 import com.persistentbit.core.collections.PList;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Peter Muys
@@ -10,14 +11,14 @@ import java.util.Optional;
  */
 public class UserServiceImpl implements UsersService{
     @Override
-    public PList<UserData> getAllUsers() {
+    public CompletableFuture<PList<UserData>> getAllUsers() {
         PList<UserData> res = PList.empty();
         res = res.plusAll(PList.forString().plusAll("user1","testUser1","user2","user3").map(n -> new UserData(n)));
-        return res;
+        return CompletableFuture.completedFuture(res);
     }
 
     @Override
-    public Optional<Integer> testOptional(Integer value) {
-        return Optional.ofNullable(value);
+    public CompletableFuture<Optional<Integer>> testOptional(Integer value) {
+        return CompletableFuture.completedFuture(Optional.ofNullable(value));
     }
 }

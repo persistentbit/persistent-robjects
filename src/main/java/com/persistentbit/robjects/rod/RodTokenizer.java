@@ -31,7 +31,7 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
         add("\\-\\>",tMapMap);
         add("\\[",tArrayStart);
         add("\\]",tArrayEnd);
-        add("[0-9]*\\.?[0-9]*",tNumber);
+        add("[0-9]+\\.?[0-9]*",tNumber);
         add(RodTokenizer.stringMatcher(tString,'\'',false));
         add(RodTokenizer.stringMatcher(tString,'\"',false));
         add(RodTokenizer.stringMatcher(tString,'`',true));

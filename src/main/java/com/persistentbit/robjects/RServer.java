@@ -14,10 +14,11 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 
@@ -57,6 +58,8 @@ public class RServer<R,SESSION> implements RemoteService{
         try {
             executor.awaitTermination(timeOut,timeUnit);
         } catch (InterruptedException e) {
+            log.severe(e.getMessage());
+
             throw new RObjException(e);
         }
     }
@@ -133,6 +136,12 @@ public class RServer<R,SESSION> implements RemoteService{
                 MethodDefinition md = new MethodDefinition(remotableClass,m);
                 if (m.getParameterCount() == 0 && m.getDeclaredAnnotation(RemoteCache.class) != null) {
                     Object value = m.invoke(obj);
+                    try{
+                        value = ((CompletableFuture)value).get();
+                    }catch (Exception e){
+                        log.severe(e.getMessage());
+                        throw new RuntimeException("Error getting cached value from " + remotableClass.getName() + " method: " + md.getMethodName());
+                    }
                     cachedMethods = cachedMethods.put(md, new ObjectWithTypeName(value));
                 } else {
                     remoteMethods = remoteMethods.plus(md);
@@ -140,6 +149,8 @@ public class RServer<R,SESSION> implements RemoteService{
             }
             return new RemoteObjectDefinition(remotableClass,remoteMethods, cachedMethods,call);
         } catch (Exception e){
+            log.severe(e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
 
@@ -156,6 +167,7 @@ public class RServer<R,SESSION> implements RemoteService{
             CompletableFuture<Object> methodResult = (CompletableFuture<Object>) m.invoke(obj, call.getArguments());
             return methodResult.get();
         }catch(Exception e){
+            log.severe(e.getMessage());
             throw new RObjException(e);
         }
 

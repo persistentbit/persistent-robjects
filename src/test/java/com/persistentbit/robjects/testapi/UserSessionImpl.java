@@ -3,6 +3,8 @@ package com.persistentbit.robjects.testapi;
 import com.persistentbit.core.Lazy;
 import com.persistentbit.core.Tuple2;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * @author Peter Muys
  * @since 1/09/2016
@@ -16,27 +18,29 @@ public class UserSessionImpl implements UserSession{
     }
 
     @Override
-    public UsersService getUsersService() {
-        return usersService.get();
+    public CompletableFuture<UsersService> getUsersService() {
+        return CompletableFuture.completedFuture(usersService.get());
     }
 
     @Override
-    public UserData getDetails() {
-        return new UserData(userName);
+    public CompletableFuture<UserData> getDetails() {
+        return CompletableFuture.completedFuture(new UserData(userName));
     }
 
     @Override
-    public Tuple2<Integer, String> createMeATuple(int v1, String v2) {
-        return new Tuple2<>(v1,v2);
+    public CompletableFuture<Tuple2<Integer, String>> createMeATuple(int v1, String v2) {
+        return CompletableFuture.completedFuture(new Tuple2<>(v1,v2));
     }
 
     @Override
-    public void testWithVoid() {
+    public CompletableFuture<Object> testWithVoid() {
         System.out.println("testWithVoid called on UserSession !!!");
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
-    public void showTuple(Tuple2<Integer, String> tupleParam) {
+    public CompletableFuture<Object> showTuple(Tuple2<Integer, String> tupleParam) {
         System.out.println("show tuple:" + tupleParam);
+        return CompletableFuture.completedFuture(null);
     }
 }

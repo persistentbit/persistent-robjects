@@ -1,6 +1,7 @@
 package com.persistentbit.robjects;
 
 import com.persistentbit.core.Immutable;
+import com.persistentbit.core.utils.ReflectionUtils;
 import com.persistentbit.jjson.mapping.JJReader;
 import com.persistentbit.jjson.mapping.impl.JJObjectReader;
 import com.persistentbit.jjson.nodes.JJNode;
@@ -8,11 +9,15 @@ import com.persistentbit.jjson.nodes.JJNodeNull;
 import com.persistentbit.jjson.nodes.JJNodeObject;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 @Immutable
 public class RCallResult {
+    static private Logger log = Logger.getLogger(RCallResult.class.getName());
     private final MethodDefinition          theCall;
     private final Object                    value;
     private final RemoteObjectDefinition    robject;
@@ -65,7 +70,14 @@ public class RCallResult {
                 if(valueNode.asNull().isPresent() == false){
 
                     Method m = RemotableMethods.getRemotableMethod(md);
-                    value = masterReader.read(valueNode, m.getReturnType(),m.getGenericReturnType());
+                    Class<?> returnType = m.getReturnType();
+                    Type genReturnType = m.getGenericReturnType();
+                    if(returnType == CompletableFuture.class){
+                        ParameterizedType pt = (ParameterizedType)genReturnType;
+                        genReturnType = pt.getActualTypeArguments()[0];
+                        returnType = ReflectionUtils.classFromType(genReturnType);
+                    }
+                    value = masterReader.read(valueNode, returnType,genReturnType);
                 }
                 RemoteObjectDefinition robject = masterReader.read(obj.get("robject").get(), RemoteObjectDefinition.class);
                 Exception exception = masterReader.read(obj.get("exception").get(),Exception.class);
@@ -73,6 +85,8 @@ public class RCallResult {
                 return new RCallResult(md,value,robject,exception,sessionData);
 
             } catch (Exception e){
+                log.severe(e.getMessage());
+                e.printStackTrace();
                 throw new RObjException(e);
             }
         }

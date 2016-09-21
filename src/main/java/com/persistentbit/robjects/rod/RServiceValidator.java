@@ -4,6 +4,7 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
+import com.persistentbit.robjects.RObjException;
 import com.persistentbit.robjects.rod.values.*;
 
 /**
@@ -179,9 +180,9 @@ public class RServiceValidator {
             return service.enums.find(e -> e.name.equals(ve.enumClass) && e.values.contains(ve.enumValue) ).isPresent();
         }
         if(value instanceof RValueValueObject){
-
+            throw new RuntimeException("Not Yet");
         }
-
+        throw new RObjException("Unknown type:" + type.name);
     }
     private boolean isArrayAssignable(RTypeSig type, RValueArray arrValue){
         RTypeSig itemType = type.generics.head();

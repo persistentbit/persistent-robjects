@@ -3,6 +3,8 @@ package com.persistentbit.robjects;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.sourcegen.SourcePath;
 import com.persistentbit.core.tokenizer.Token;
+import com.persistentbit.generated.runtest.RodTest;
+import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.robjects.javagen.GeneratedJava;
 import com.persistentbit.robjects.javagen.JavaGenOptions;
 import com.persistentbit.robjects.javagen.ServiceJavaGen;
@@ -10,6 +12,8 @@ import com.persistentbit.robjects.rod.RodParser;
 import com.persistentbit.robjects.rod.RodTokenType;
 import com.persistentbit.robjects.rod.RodTokenizer;
 import com.persistentbit.robjects.rod.values.RService;
+import com.persistentbit.robjects.runtestimpl.RodTestImpl;
+import com.persistentbit.robjects.runtestimpl.RodTestSessionData;
 import org.junit.Test;
 
 import java.io.File;
@@ -37,7 +41,7 @@ public class TestRunTest {
         RodParser parser = new RodParser(destPackage,tokens);
         RService service = parser.parseService();
         System.out.println(service);
-        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),destPackage,service);
+        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(true,false),destPackage,service);
         Path srcPath = SourcePath.findTestSourcePath(ServiceJavaGen.class, rodFileName);
 
         Path packagePath = srcPath.toAbsolutePath().resolve(destPackage.replace('.', File.separatorChar));
@@ -59,7 +63,7 @@ public class TestRunTest {
 
     @Test
     public void testRunServer() throws Exception{
-        /*
+
         RemoteService rServer = new RServer<>("ThisIsTheSecret",RodTest.class,RodTestSessionData.class,(sm)-> new RodTestImpl(sm));
         rServer = new JSonRemoteService(rServer);
         RodTest root = RProxy.create(rServer);
@@ -85,7 +89,7 @@ public class TestRunTest {
 
         System.out.println("done");
         rServer.close();
-        */
+
     }
 
 }

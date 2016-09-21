@@ -4,14 +4,14 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.logging.Logger;
 
 /**
  * An RProxy is a Interface Proxy for Remote Objects that uses a {@link RemoteService} to
  * execute the method calls.
  */
 public class RProxy implements InvocationHandler {
-
+    static private final Logger log =   Logger.getLogger(RProxy.class.getName());
 
     private final RemoteService server;
     private final RemoteObjectDefinition rod;
@@ -64,6 +64,7 @@ public class RProxy implements InvocationHandler {
         try{
             return create(server,new ClientSessionData(),server.getRoot().get().getRobject().get());
         }catch (Exception e){
+            log.severe(e.getMessage());
             throw new RObjException(e);
         }
     }
@@ -73,7 +74,7 @@ public class RProxy implements InvocationHandler {
         MethodDefinition md = new MethodDefinition(rod.getRemoteObjectClass(),method);
         if(rod.getRemoteCached().containsKey(md)){
             Object cached = rod.getRemoteCached().get(md).getValue();
-            return cached;
+            return CompletableFuture.completedFuture(cached);
         }
         //Create The Call
         RCall call = new RCall(clientSessionData.getSessionData(),rod.getCallStack(),new RMethodCall(md,args));

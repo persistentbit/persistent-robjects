@@ -6,6 +6,7 @@ import com.persistentbit.jjson.security.JJSigning;
 
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Peter Muys
@@ -20,8 +21,8 @@ public class AppImpl implements App{
     }
 
     @Override
-    public AppVersion getVersion() {
-        return new AppVersion("RName","1.1.5-" + DateFormat.getDateTimeInstance().format(new Date()), AppVersion.RunEnvironment.develop);
+    public CompletableFuture<AppVersion> getVersion() {
+        return CompletableFuture.completedFuture(new AppVersion("RName","1.1.5-" + DateFormat.getDateTimeInstance().format(new Date()), AppVersion.RunEnvironment.develop));
     }
 
     private static class LoginToken{
@@ -35,30 +36,30 @@ public class AppImpl implements App{
     }
 
     @Override
-    public String createLoginToken(String un, String pw) {
+    public CompletableFuture<String> createLoginToken(String un, String pw) {
         if(un.startsWith("test") && pw.startsWith("test")){
-            return signing.signAsString(mapper.write(new LoginToken(new Date(),un)));
+            return CompletableFuture.completedFuture(signing.signAsString(mapper.write(new LoginToken(new Date(),un))));
         }
-        return null;
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
-    public UserSession getUserSession(String loginToken) {
+    public CompletableFuture<UserSession> getUserSession(String loginToken) {
         try{
 
             if(loginToken == null){
-                return null;
+                return CompletableFuture.completedFuture(null);
             }
             JJNode node = signing.unsignedFromString(loginToken).orElse(null);
             if(node == null){
-                return null;
+                return CompletableFuture.completedFuture(null);
             }
             LoginToken t = mapper.read(node,LoginToken.class);
-            return new UserSessionImpl(t.userName);
+            return CompletableFuture.completedFuture(new UserSessionImpl(t.userName));
 
         } catch(Exception e){
-            //e.printStackTrace();
-            return null;
+            e.printStackTrace();
+            return CompletableFuture.completedFuture(null);
         }
     }
 }

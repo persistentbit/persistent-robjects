@@ -2,7 +2,6 @@ package com.persistentbit.robjects;
 
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.nodes.JJNode;
-import com.persistentbit.jjson.nodes.JJPrinter;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -34,11 +33,11 @@ public class JSonRemoteService implements RemoteService{
     @Override
     public CompletableFuture<RCallResult> call(RCall call) {
         JJNode callNode = mapper.write(call);
-        log.info(() -> "CALL: " +JJPrinter.print(true,callNode));
+        //log.info(() -> "CALL: " +JJPrinter.print(true,callNode));
         return service.call(mapper.read(callNode,RCall.class))
                 .thenApply(cr -> {
                     JJNode node = mapper.write(cr);
-                    log.info(() -> "RESULT: " +JJPrinter.print(true,node));
+                    //log.info(() -> "RESULT: " +JJPrinter.print(true,node));
                     RCallResult callResult = mapper.read(node,RCallResult.class);
                     return callResult;
                 });
