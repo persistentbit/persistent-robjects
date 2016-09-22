@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
@@ -101,13 +102,16 @@ public class RServer<R,SESSION> implements RemoteService{
             try {
                 Object result = call(rootSupplier.apply(sessionManager),call.getCallStack());
                 result = singleCall(result, call.getThisCall());
-
-                Class<?> remoteClass = result == null ? null : RemotableClasses.getRemotableClass(result.getClass());
+                Object resultNoOption = result;
+                if(result instanceof Optional){
+                    resultNoOption = ((Optional)result).orElseGet(null);
+                }
+                Class<?> remoteClass = result == resultNoOption ? null : RemotableClasses.getRemotableClass(resultNoOption.getClass());
                 if(remoteClass == null ){
                     return RCallResult.value(getSession(sessionManager),call.getThisCall().getMethodToCall(),result);
                 } else {
                     RCallStack newCallStack = RCallStack.createAndSign(call.getCallStack().getCallStack().plus(call.getThisCall()),mapper,secret);
-                    return RCallResult.robject(getSession(sessionManager),createROD(newCallStack,remoteClass,result));
+                    return RCallResult.robject(getSession(sessionManager),createROD(newCallStack,remoteClass,resultNoOption));
                 }
             }catch (Exception e){
                 log.severe(e.getMessage());

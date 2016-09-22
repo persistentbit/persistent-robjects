@@ -66,6 +66,7 @@ public class TestRunTest {
 
         RemoteService rServer = new RServer<>("ThisIsTheSecret",RodTest.class,RodTestSessionData.class,(sm)-> new RodTestImpl(sm));
         rServer = new JSonRemoteService(rServer);
+        //rServer = new RemoteServiceLogger(rServer);
         RodTest root = RProxy.create(rServer);
         root.getInfo().thenAccept(info -> {
             System.out.println("info:" + new JJMapper().write(info));

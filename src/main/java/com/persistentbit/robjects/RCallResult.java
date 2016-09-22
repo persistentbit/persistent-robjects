@@ -33,6 +33,17 @@ public class RCallResult {
         this.sessionData = sessionData;
     }
 
+    @Override
+    public String toString() {
+        return "RCallResult{" +
+                "theCall=" + theCall +
+                ", value=" + value +
+                ", robject=" + robject +
+                ", exception=" + exception +
+                ", sessionData=" + sessionData +
+                '}';
+    }
+
     public Optional<Object> getValue() {
         return Optional.ofNullable(value);
     }

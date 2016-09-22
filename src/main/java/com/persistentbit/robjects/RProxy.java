@@ -1,8 +1,12 @@
 package com.persistentbit.robjects;
 
+import com.persistentbit.core.utils.ReflectionUtils;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
@@ -70,6 +74,9 @@ public class RProxy implements InvocationHandler {
     }
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if(method.getName().equals("toString")){
+            return "RemoteObject[" + rod.getRemoteObjectClass().getName() + "]";
+        }
 
         MethodDefinition md = new MethodDefinition(rod.getRemoteObjectClass(),method);
         if(rod.getRemoteCached().containsKey(md)){
@@ -96,11 +103,14 @@ public class RProxy implements InvocationHandler {
 
                     //Must be remote object
                     RemoteObjectDefinition rod = result.getRobject().orElse(null);
-                    if (rod == null) {
-                        return null;
-                    }
+                    Object remResult = rod == null ? null : RProxy.create(server,clientSessionData,rod);
+                    ParameterizedType computable = (ParameterizedType)method.getGenericReturnType();
 
-                    return RProxy.create(server,clientSessionData,rod);
+                    if(ReflectionUtils.classFromType(computable.getActualTypeArguments()[0]) == Optional.class){
+                        remResult = Optional.ofNullable(remResult);
+                    }
+                    return remResult;
+
                 });
 
     }

@@ -23,6 +23,7 @@ public class RemotableClasses {
         if(cls == CompletableFuture.class){
             throw new RuntimeException("Unreference ComputableFuture");
         }
+
         Optional<Class<?>> res = remoteClasses.get(cls);
         if(res != null){
             return res.orElse(null);
