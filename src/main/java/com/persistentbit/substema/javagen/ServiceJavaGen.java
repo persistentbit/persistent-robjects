@@ -119,7 +119,9 @@ public class ServiceJavaGen {
         }
 
         public GeneratedJava    generateValueClass(RValueClass vc){
-            bs("public class " + toString(vc.typeSig));{
+            String impl = vc.interfaceClasses.isEmpty() ? "" :
+                    " implements " + vc.interfaceClasses.map(ic -> ic.className).toString(",");
+            bs("public class " + toString(vc.typeSig)+ impl);{
                 vc.properties.forEach(p -> {
 
                     println(toString(p.valueType) + " " + p.name + ";");
