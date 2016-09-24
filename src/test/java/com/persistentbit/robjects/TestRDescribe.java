@@ -14,7 +14,7 @@ import org.junit.Test;
 public class TestRDescribe {
     @Test
     public void test() {
-        RemoteServiceDescription des = new RemoteDescriber().descripeRemoteService(App.class);
-        System.out.println(JJPrinter.print(true,new JJMapper().write(des)));
+        //RemoteServiceDescription des = new RemoteDescriber().descripeRemoteService(App.class);
+        //System.out.println(JJPrinter.print(true,new JJMapper().write(des)));
     }
 }

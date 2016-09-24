@@ -1,6 +1,6 @@
 package com.persistentbit.robjects.runtestimpl;
 
-import com.persistentbit.generated.runtest.*;
+
 import com.persistentbit.robjects.RSessionManager;
 
 import java.time.LocalDateTime;
@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Created by petermuys on 18/09/16.
  */
-public class RodTestImpl implements RodTest {
+public class RodTestImpl{}/* implements RodTest {
     private final RSessionManager<RodTestSessionData> sessionManager;
     static private final User peter = new User(1234,"mup",new Name("Peter","Muys"));
     public RodTestImpl(RSessionManager<RodTestSessionData> sessionManager) {
@@ -43,4 +43,4 @@ public class RodTestImpl implements RodTest {
     public CompletableFuture<RodInfo> getInfo() {
         return CompletableFuture.completedFuture(rodInfo);
     }
-}
+}*/

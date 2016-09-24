@@ -3,7 +3,7 @@ package com.persistentbit.robjects;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.sourcegen.SourcePath;
 import com.persistentbit.core.tokenizer.Token;
-import com.persistentbit.generated.runtest.RodTest;
+
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.robjects.javagen.GeneratedJava;
 import com.persistentbit.robjects.javagen.JavaGenOptions;
@@ -63,7 +63,7 @@ public class TestRunTest {
 
     @Test
     public void testRunServer() throws Exception{
-
+        /*
         RemoteService rServer = new RServer<>("ThisIsTheSecret",RodTest.class,RodTestSessionData.class,(sm)-> new RodTestImpl(sm));
         rServer = new JSonRemoteService(rServer);
         //rServer = new RemoteServiceLogger(rServer);
@@ -90,7 +90,7 @@ public class TestRunTest {
 
         System.out.println("done");
         rServer.close();
-
+        */
     }
 
 }

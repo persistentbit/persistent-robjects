@@ -146,7 +146,7 @@ public class ServiceJavaGen {
                     if(options.generateUpdaters){
                         String s = "public " + toString(vc.typeSig) + " with" + firstUpper(p.name) + "("+ toString(p.valueType.typeSig,p.valueType.required) + " " + p.name +") { return new ";
                         s += vc.typeSig.name.className;
-                        if(vc.typeSig.generics.isEmpty()){
+                        if(vc.typeSig.generics.isEmpty() == false){
                             s += "<>";
                         }
                         s+= "(" + vc.properties.map(param -> {
