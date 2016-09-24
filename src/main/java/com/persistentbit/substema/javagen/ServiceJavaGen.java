@@ -51,6 +51,7 @@ public class ServiceJavaGen {
         result = result.plusAll(service.enums.map(e -> new Generator().generateEnum(e)));
         result = result.plusAll(service.valueClasses.map(vc -> new Generator().generateValueClass(vc)));
         result = result.plusAll(service.remoteClasses.map(rc -> new Generator().generateRemoteClass(rc)));
+        result = result.plusAll(service.interfaceClasses.map(ic -> new Generator().generateInterfaceClass(ic)));
         return result.filterNulls().plist();
     }
 
@@ -88,6 +89,33 @@ public class ServiceJavaGen {
         }
         private void addImport(Class<?> cls){
             addImport(new RClass(cls.getPackage().getName(),cls.getSimpleName()));
+        }
+
+        public GeneratedJava generateInterfaceClass(RInterfaceClass ic){
+            bs("public interface " + ic.name.className); {
+                //****** GETTERS AND UPDATERS
+                ic.properties.forEach(p -> {
+                    if(options.generateGetters){
+                        String rt = toString(p.valueType.typeSig,p.valueType.required);
+                        String vn = p.name;
+                        if(p.valueType.required == false){
+                            addImport(Optional.class);
+                            rt ="Optional<" + rt + ">";
+                            vn = "Optional.ofNullable(" + vn + ")";
+                        }
+                        println("public " + rt + " get" +firstUpper(p.name) + "();");
+                    }
+                    if(options.generateUpdaters){
+                        String s = "public " + ic.name.className + " with" + firstUpper(p.name) + "("+ toString(p.valueType.typeSig,p.valueType.required) + " " + p.name +");";
+
+                        println(s);
+                    }
+                    if(options.generateGetters || options.generateUpdaters) {
+                        println("");
+                    }
+                });
+            }be();
+            return toGenJava(ic.name);
         }
 
         public GeneratedJava    generateValueClass(RValueClass vc){
