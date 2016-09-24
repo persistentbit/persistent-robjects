@@ -3,18 +3,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.persistentbit</groupId>
-    <artifactId>persistent-robjects</artifactId>
+    <artifactId>substema</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>PERSISTENT-ROBJECTS</name>
-    <description>Remote java objects</description>
-    <url>https://github.com/persistentbit/persistent-robjects.git</url>
+    <name>SUBSTEMA</name>
+    <description>Remotable multi-language Services</description>
+    <url>https://github.com/persistentbit/substema.git</url>
 
 
     <scm>
-        <connection>scm:git:git@github.com:persistentbit/persistent-robjects.git</connection>
-        <url>scm:git:git@github.com:persistentbit/persistent-robjects.git</url>
-        <developerConnection>scm:git:git@github.com:persistentbit/persistent-robjects.git</developerConnection>
+        <connection>scm:git:git@github.com:persistentbit/substema.git</connection>
+        <url>scm:git:git@github.com:persistentbit/substema.git</url>
+        <developerConnection>scm:git:git@github.com:persistentbit/substema.git</developerConnection>
       <tag>HEAD</tag>
     </scm>
 
