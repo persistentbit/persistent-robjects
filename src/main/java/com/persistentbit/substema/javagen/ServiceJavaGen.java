@@ -374,7 +374,7 @@ public class ServiceJavaGen {
 
 
     static public void main(String...args) throws Exception{
-        String rodFileName= "com.persistentbit.robjects_rodparser_1.0.0.rod";
+        String rodFileName= "com.persistentbit.parser.substema";
         URL url = ServiceJavaGen.class.getResource("/" + rodFileName);
         System.out.println("URL: " + url);
         Path path = Paths.get(url.toURI());
