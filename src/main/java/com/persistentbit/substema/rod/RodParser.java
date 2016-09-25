@@ -4,6 +4,7 @@ import com.persistentbit.core.Tuple2;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.substema.rod.values.*;
 
@@ -22,7 +23,11 @@ public class RodParser {
     public RodParser(String packageName,PStream<Token<RodTokenType>> tokens){
         this.packageName = packageName;
         this.tokens = tokens;
-        next();
+        if(tokens.isEmpty()){
+            current = new Token<>(new Pos(packageName,1,1),tEOF,"");
+        } else {
+            next();
+        }
     }
     private Token<RodTokenType> next() {
         if(tokens.isEmpty()){
@@ -37,17 +42,18 @@ public class RodParser {
         return current;
     }
 
-    public RService    parseService() {
+    public RSubstema parseSubstema() {
         if(current.type == tPackage){
             packageName = parsePackage();
         }
+        PList<RImport> imports = PList.empty();
         PList<RValueClass>  values = PList.empty();
         PList<RRemoteClass> remotes = PList.empty();
         PList<REnum> enums = PList.empty();
         PList<RInterfaceClass> interfaces = PList.empty();
         while(current.type != RodTokenType.tEOF){
             switch(current.type){
-                //case tImport: handleImport();
+                case tImport: imports = imports.plus(parseImport());
                 case tValue: values = values.plus(parseValueClass());
                     break;
                 case tRemote: remotes = remotes.plus(parseRemoteClass());
@@ -60,9 +66,16 @@ public class RodParser {
                     throw new RodParserException(current.pos,"Expected a definition, not '" + current.text + "'");
             }
         }
-        RService service = new RService(packageName,enums,values,remotes,interfaces);
+        RSubstema service = new RSubstema(imports,packageName,enums,values,remotes,interfaces);
 
         return service;
+    }
+
+    private RImport parseImport() {
+        skip(tImport,"'import' expected.");
+        next();
+        String packageName = parsePackage();
+        return new RImport(packageName);
     }
 
     private RTypeSig parseTypeSignature() {
@@ -361,6 +374,6 @@ public class RodParser {
         System.out.println(test);
         PList<Token<RodTokenType>> tokens = new RodTokenizer().tokenize("test.rod",test);
         tokens.forEach(System.out::println);
-        new RodParser("com.undefined",tokens).parseService();
+        new RodParser("com.undefined",tokens).parseSubstema();
     }
 }

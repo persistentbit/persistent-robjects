@@ -11,9 +11,9 @@ import com.persistentbit.substema.rod.values.*;
  * Created by petermuys on 17/09/16.
  */
 public class RServiceValidator {
-    private final RService  service;
+    private final RSubstema service;
 
-    private RServiceValidator(RService service) {
+    private RServiceValidator(RSubstema service) {
         this.service = service;
     }
 
@@ -192,7 +192,7 @@ public class RServiceValidator {
 
 
 
-    static public RService  validate(RService service){
+    static public RSubstema validate(RSubstema service){
         new RServiceValidator(service).validate();
         return service;
     }

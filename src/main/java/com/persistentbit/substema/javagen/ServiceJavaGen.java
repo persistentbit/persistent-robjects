@@ -30,18 +30,18 @@ import java.util.concurrent.CompletableFuture;
 public class ServiceJavaGen {
 
     private final JavaGenOptions options;
-    private final RService       service;
+    private final RSubstema service;
     private PList<GeneratedJava>    generatedJava = PList.empty();
 
     private final String servicePackageName;
 
-    private ServiceJavaGen(JavaGenOptions options,String packageName,RService service) {
+    private ServiceJavaGen(JavaGenOptions options,String packageName,RSubstema service) {
         this.servicePackageName = packageName;
         this.options = options;
         this.service = service;
     }
 
-    static public PList<GeneratedJava>  generate(JavaGenOptions options,String packageName,RService service){
+    static public PList<GeneratedJava>  generate(JavaGenOptions options,String packageName,RSubstema service){
         return new ServiceJavaGen(options,packageName,service).generateService();
     }
 
@@ -384,7 +384,7 @@ public class ServiceJavaGen {
         PList<Token<RodTokenType>> tokens = tokenizer.tokenize(rodFileName,rod);
         String packageName  = "com.persistentbit.test";
         RodParser parser = new RodParser(packageName,tokens);
-        RService service = parser.parseService();
+        RSubstema service = parser.parseSubstema();
         System.out.println(service);
         PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),packageName,service);
         gen.forEach(gj -> {

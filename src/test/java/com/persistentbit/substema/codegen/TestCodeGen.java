@@ -9,7 +9,7 @@ import com.persistentbit.substema.javagen.ServiceJavaGen;
 import com.persistentbit.substema.rod.RodParser;
 import com.persistentbit.substema.rod.RodTokenType;
 import com.persistentbit.substema.rod.RodTokenizer;
-import com.persistentbit.substema.rod.values.RService;
+import com.persistentbit.substema.rod.values.RSubstema;
 import org.junit.Test;
 
 import java.io.File;
@@ -45,7 +45,7 @@ public class TestCodeGen {
         RodTokenizer tokenizer = new RodTokenizer();
         PList<Token<RodTokenType>> tokens = tokenizer.tokenize(rodFileName,rod);
         RodParser parser = new RodParser(destPackage,tokens);
-        RService service = parser.parseService();
+        RSubstema service = parser.parseSubstema();
         System.out.println(service);
         PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),destPackage,service);
         Path srcPath = SourcePath.findTestSourcePath(ServiceJavaGen.class, rodFileName);
