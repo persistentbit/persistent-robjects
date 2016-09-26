@@ -9,11 +9,26 @@ import com.persistentbit.core.utils.NoEqual;
  */
 public class RFunctionParam extends BaseValueClass {
     @NoEqual
-    public final String name;
-    public final RValueType valueType;
+    private final String name;
+    private final RValueType valueType;
 
     public RFunctionParam(String name, RValueType valueType) {
         this.name = name;
         this.valueType = valueType;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public RValueType getValueType() {
+        return valueType;
+    }
+
+    public RFunctionParam   withName(String name){
+        return copyWith("name",name);
+    }
+    public RFunctionParam withValueType(RValueType vt){
+        return copyWith("valueType",vt);
     }
 }

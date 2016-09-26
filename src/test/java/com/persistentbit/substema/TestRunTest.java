@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 public class TestRunTest {
     @Test
     public void generateCode() throws Exception{
+        /*
         String rodFileName= "runtest.rod";
         String destPackage = "com.persistentbit.generated.runtest";
         URL url = ServiceJavaGen.class.getResource("/" + rodFileName);
@@ -44,7 +45,7 @@ public class TestRunTest {
         Path packagePath = srcPath.toAbsolutePath().resolve(destPackage.replace('.', File.separatorChar));
         Files.createDirectories(packagePath);
         gen.forEach(gj -> {
-            Path filePath = packagePath.resolve(gj.name.className + ".java");
+            Path filePath = packagePath.resolve(gj.name.getClassName() + ".java");
 
             System.out.println("File: " + filePath.toString());
             try {
@@ -56,6 +57,7 @@ public class TestRunTest {
             System.out.println("-----------------------------------");
 
         });
+        */
     }
 
     @Test

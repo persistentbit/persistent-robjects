@@ -13,7 +13,7 @@ import com.persistentbit.substema.rod.values.RSubstema;
  */
 public class SubstemaCompiler {
 
-    public PList<RSubstema>    compile(DependencySupplier dependencies, PList<String> packagesToCompile){
+    static public PList<RSubstema>    compile(DependencySupplier dependencies, PList<String> packagesToCompile){
         Compiler c = new Compiler(dependencies);
         return packagesToCompile.map(p -> c.compile(p));
     }
@@ -52,7 +52,8 @@ public class SubstemaCompiler {
             res = res.withImports(
                     res.getImports().map(i -> new RImport(i.getPackageName(),compile(i.getPackageName())))
             );
-
+            res = ResolvePackageNames.resolve(res);
+            compiled = compiled.put(packageName,res);
             return res;
         }
     }

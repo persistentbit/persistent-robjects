@@ -36,7 +36,7 @@ public class TestCodeGen {
     }
 
     public void generateCode(JavaGenOptions options,String destPackage) throws Exception{
-        String rodFileName= "codeGenTest.rod";
+        /*String rodFileName= "codeGenTest.rod";
         URL url = ServiceJavaGen.class.getResource("/" + rodFileName);
         System.out.println("URL: " + url);
         Path path = Paths.get(url.toURI());
@@ -53,7 +53,7 @@ public class TestCodeGen {
         Path packagePath = srcPath.toAbsolutePath().resolve(destPackage.replace('.', File.separatorChar));
         Files.createDirectories(packagePath);
         gen.forEach(gj -> {
-            Path filePath = packagePath.resolve(gj.name.className + ".java");
+            Path filePath = packagePath.resolve(gj.name.getClassName() + ".java");
 
             System.out.println("File: " + filePath.toString());
             try {
@@ -65,5 +65,6 @@ public class TestCodeGen {
             System.out.println("-----------------------------------");
 
         });
+        */
     }
 }

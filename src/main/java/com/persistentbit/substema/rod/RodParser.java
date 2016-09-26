@@ -42,10 +42,12 @@ public class RodParser {
         return current;
     }
 
+
+
     public RSubstema parseSubstema() {
-        if(current.type == tPackage){
-            packageName = parsePackage();
-        }
+        /*if(current.type == tPackage){
+            packageName = parsePackageName();
+        }*/
         PList<RImport> imports = PList.empty();
         PList<RValueClass>  values = PList.empty();
         PList<RRemoteClass> remotes = PList.empty();
@@ -73,8 +75,8 @@ public class RodParser {
 
     private RImport parseImport() {
         skip(tImport,"'import' expected.");
-        next();
-        String packageName = parsePackage();
+        String packageName = parsePackageName();
+        skip(tSemiColon,"';' expected after import package name");
         return new RImport(packageName);
     }
 
@@ -95,7 +97,7 @@ public class RodParser {
                 skip(tComma,"Expected ',' ");
             }
         }
-        return new RTypeSig(new RClass(packageName,className),generics);
+        return new RTypeSig(new RClass("",className),generics);
     }
     private void assertType(RodTokenType type, String msg){
         if(current.type != type){
@@ -108,15 +110,15 @@ public class RodParser {
         next();
     }
 
-    private RClass parseRClass(){
+    private RClass parseRClass(String packageName){
         String name = current.text;
         skip(tIdentifier,"identifier expected!");
-        return new RClass(this.packageName,name);
+        return new RClass(packageName,name);
     }
 
     private RInterfaceClass parseInterface() {
         skip(tInterface,"'interface' expected");
-        RClass name =  parseRClass();
+        RClass name =  parseRClass(packageName);
         PList<RProperty> p = PList.empty();
         if(current.type == tBlockStart){
             next();
@@ -136,7 +138,7 @@ public class RodParser {
         PList<RClass> interfaces = PList.empty();
         if(current.type == tImplements){
             next();//skip implements;
-            interfaces = sep(tComma,()-> parseRClass());
+            interfaces = sep(tComma,()-> parseRClass(""));
         }
 
 
@@ -191,7 +193,7 @@ public class RodParser {
     }
     private RValueValueObject parseValueValueObject() {
         skip(tNew,"'new' expected");
-        RClass name = parseRClass();
+        RClass name = parseRClass("");
         skip(tOpen,"'(' expected if value class name");
         POrderedMap<String,RValue> args =   POrderedMap.empty();
         if(current.type != tClose){
@@ -205,7 +207,7 @@ public class RodParser {
         return new RValueValueObject(name,args);
     }
     private RValueEnum  parserValueEnum() {
-        RClass cls = parseRClass();
+        RClass cls = parseRClass(packageName);
         skip(RodTokenType.tPoint,"'.' expected after enum name");
         String valueName = current.text;
         skip(tIdentifier,"enum value name expected");
@@ -297,15 +299,15 @@ public class RodParser {
         return new RFunction(name,params,returnType,cached);
     }
 
-    private String parsePackage() {
-        skip(tPackage,"package expected");
+    private String parsePackageName() {
+        //skip(tPackage,"package expected");
         String res = sep(tPoint,() -> {
             assertType(tIdentifier,"name expected");
             String name = current.text;
             next();
             return name;
         }).toString(".");
-        skipEndOfStatement();
+
         return res;
     }
 
@@ -347,11 +349,11 @@ public class RodParser {
     }
 
     private RTypeSig    replaceType(RTypeSig type, RClass genericName, RTypeSig genericType){
-        if(type.name.equals(genericName)){
+        if(type.getName().equals(genericName)){
             return genericType;
         }
-        PList<RTypeSig> newGen = type.generics.map(gt -> replaceType(gt,genericName,genericType));
-        return new RTypeSig(type.name,newGen);
+        PList<RTypeSig> newGen = type.getGenerics().map(gt -> replaceType(gt,genericName,genericType));
+        return new RTypeSig(type.getName(),newGen);
     }
 
 

@@ -8,11 +8,26 @@ import com.persistentbit.core.utils.BaseValueClass;
  * @since 19/09/2016
  */
 public class RInterfaceClass extends BaseValueClass{
-    public final RClass name;
-    public final PList<RProperty> properties;
+    private final RClass name;
+    private final PList<RProperty> properties;
 
     public RInterfaceClass(RClass name, PList<RProperty> properties) {
         this.name = name;
         this.properties = properties;
+    }
+
+    public RClass getName() {
+        return name;
+    }
+
+    public PList<RProperty> getProperties() {
+        return properties;
+    }
+
+    public RInterfaceClass withName(RClass name){
+        return copyWith("name",name);
+    }
+    public RInterfaceClass withProperties(PList<RProperty> properties){
+        return copyWith("properties",properties);
     }
 }
