@@ -48,10 +48,10 @@ public class ServiceJavaGen {
     public PList<GeneratedJava> generateService(){
         RServiceValidator.validate(service);
         PList<GeneratedJava> result = PList.empty();
-        result = result.plusAll(service.enums.map(e -> new Generator().generateEnum(e)));
-        result = result.plusAll(service.valueClasses.map(vc -> new Generator().generateValueClass(vc)));
-        result = result.plusAll(service.remoteClasses.map(rc -> new Generator().generateRemoteClass(rc)));
-        result = result.plusAll(service.interfaceClasses.map(ic -> new Generator().generateInterfaceClass(ic)));
+        result = result.plusAll(service.getEnums().map(e -> new Generator().generateEnum(e)));
+        result = result.plusAll(service.getValueClasses().map(vc -> new Generator().generateValueClass(vc)));
+        result = result.plusAll(service.getRemoteClasses().map(rc -> new Generator().generateRemoteClass(rc)));
+        result = result.plusAll(service.getInterfaceClasses().map(ic -> new Generator().generateInterfaceClass(ic)));
         return result.filterNulls().plist();
     }
 
@@ -70,8 +70,8 @@ public class ServiceJavaGen {
             header.println("package " + servicePackageName + ";");
             header.println("");
             sg.add(header);
-            imports.filter(i -> i.packageName.equals(servicePackageName) == false).forEach(i -> {
-                sg.println("import " + i.packageName + "." + i.className + ";");
+            imports.filter(i -> i.getPackageName().equals(servicePackageName) == false).forEach(i -> {
+                sg.println("import " + i.getPackageName() + "." + i.getClassName() + ";");
             });
             sg.println("");
             sg.add(this);
@@ -79,7 +79,7 @@ public class ServiceJavaGen {
         }
 
         public GeneratedJava    generateEnum(REnum e ){
-            bs("public enum " + e.name.className);{
+            bs("public enum " + e.name.getClassName());{
                 println(e.values.toString(","));
             }be();
             return toGenJava(e.name);
@@ -92,7 +92,7 @@ public class ServiceJavaGen {
         }
 
         public GeneratedJava generateInterfaceClass(RInterfaceClass ic){
-            bs("public interface " + ic.name.className); {
+            bs("public interface " + ic.name.getClassName()); {
                 //****** GETTERS AND UPDATERS
                 ic.properties.forEach(p -> {
                     if(options.generateGetters){
@@ -106,7 +106,7 @@ public class ServiceJavaGen {
                         println("public " + rt + " get" +firstUpper(p.name) + "();");
                     }
                     if(options.generateUpdaters){
-                        String s = "public " + ic.name.className + " with" + firstUpper(p.name) + "("+ toString(p.valueType.typeSig,p.valueType.required) + " " + p.name +");";
+                        String s = "public " + ic.name.getClassName() + " with" + firstUpper(p.name) + "("+ toString(p.valueType.typeSig,p.valueType.required) + " " + p.name +");";
 
                         println(s);
                     }
@@ -120,7 +120,7 @@ public class ServiceJavaGen {
 
         public GeneratedJava    generateValueClass(RValueClass vc){
             String impl = vc.interfaceClasses.isEmpty() ? "" :
-                    " implements " + vc.interfaceClasses.map(ic -> ic.className).toString(",");
+                    " implements " + vc.interfaceClasses.map(ic -> ic.getClassName()).toString(",");
             bs("public class " + toString(vc.typeSig)+ impl);{
                 vc.properties.forEach(p -> {
 
@@ -128,7 +128,7 @@ public class ServiceJavaGen {
                 });
                 println("");
                 //***** MAIN CONSTRUCTOR
-                bs("public " + vc.typeSig.name.className + "(" +
+                bs("public " + vc.typeSig.name.getClassName() + "(" +
                         vc.properties.map(p -> toString(p.valueType.typeSig,p.valueType.required) + " " + p.name ).toString(", ")
                         +")");{
                     vc.properties.forEach(p -> {
@@ -136,7 +136,7 @@ public class ServiceJavaGen {
                         if(p.valueType.required){
                             addImport(Objects.class);
                             if(isPrimitive(p.valueType.typeSig) == false){
-                                fromValue = "Objects.requireNonNull(" + p.name + ",\"" + p.name  + " in " + vc.typeSig.name.className + " can\'t be null\")";
+                                fromValue = "Objects.requireNonNull(" + p.name + ",\"" + p.name  + " in " + vc.typeSig.name.getClassName() + " can\'t be null\")";
                             }
 
                         }
@@ -154,7 +154,7 @@ public class ServiceJavaGen {
                 while(l.lastOpt().isPresent() && l.lastOpt().get().valueType.required == false){
                     l = l.dropLast();
                     nullValues = nullValues.plus("null");
-                    bs("public " + vc.typeSig.name.className + "(" +
+                    bs("public " + vc.typeSig.name.getClassName() + "(" +
                             l.map(p -> toString(p.valueType.typeSig,p.valueType.required) + " " + p.name ).toString(", ")
                             +")");{
                         println("this(" + l.map(p -> p.name).plusAll(nullValues).toString(",") + ");");
@@ -175,7 +175,7 @@ public class ServiceJavaGen {
                     }
                     if(options.generateUpdaters){
                         String s = "public " + toString(vc.typeSig) + " with" + firstUpper(p.name) + "("+ toString(p.valueType.typeSig,p.valueType.required) + " " + p.name +") { return new ";
-                        s += vc.typeSig.name.className;
+                        s += vc.typeSig.name.getClassName();
                         if(vc.typeSig.generics.isEmpty() == false){
                             s += "<>";
                         }
@@ -196,7 +196,7 @@ public class ServiceJavaGen {
                     println("if (o == null || getClass() != o.getClass()) return false;");
                     println("");
                     if(vc.properties.isEmpty() == false) {
-                        println(vc.typeSig.name.className + " that = (" + vc.typeSig.name.className + ")o;");
+                        println(vc.typeSig.name.getClassName() + " that = (" + vc.typeSig.name.getClassName() + ")o;");
                         println("");
                     }
                     vc.properties.forEach(p -> {
@@ -238,7 +238,7 @@ public class ServiceJavaGen {
                             String hash = value + ".hashCode()";
 
                             if(t._2.valueType.required) {
-                                switch (t._2.valueType.typeSig.name.className) {
+                                switch (t._2.valueType.typeSig.name.getClassName()) {
                                     case "Float":
                                         hash = "Float.hashCode(" + value + ")";
                                         break;
@@ -285,8 +285,8 @@ public class ServiceJavaGen {
 
         private String toString(RTypeSig sig,boolean asPrimitive){
             String gen = sig.generics.isEmpty() ? "" : sig.generics.map(g -> toString(g)).toString("<",",",">");
-            String pname = sig.name.packageName;
-            String name = sig.name.className;
+            String pname = sig.name.getPackageName();
+            String name = sig.name.getClassName();
 
             switch(name){
                 case "List": name = "PList"; addImport(PList.class); break;
@@ -341,7 +341,7 @@ public class ServiceJavaGen {
         public GeneratedJava    generateRemoteClass(RRemoteClass rc){
             addImport(Remotable.class);
             println("@Remotable");
-            bs("public interface " + rc.name.className); {
+            bs("public interface " + rc.name.getClassName()); {
                 rc.functions.forEach(f -> {
                     String retType;
                     addImport(CompletableFuture.class);
