@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 /**
  * Created by petermuys on 14/09/16.
@@ -150,7 +151,17 @@ public class ServiceJavaGen {
                     });
                 }be();
                 //****** EXTRA CONSTRUCTORS FOR NULLABLE PROPERTIES
-                PList<RProperty> l = vc.getProperties();
+                PList<RProperty> req = vc.getProperties().filter(p -> isRequired(p));
+                if(req.size() != vc.getProperties().size()) {
+                    bs("public " + vc.getTypeSig().getName().getClassName() + "(" +
+                            req.map(p -> toString(p.getValueType().getTypeSig(), p.getValueType().isRequired()) + " " + p.getName()).toString(", ")
+                            + ")");
+                    {
+                        println("this(" + vc.getProperties().map(p -> isRequired(p) ? p.getName() : "null").toString(",") + ");");
+                    }
+                    be();
+                }
+                /*PList<RProperty> l = vc.getProperties();
                 PList<String> nullValues = PList.empty();
                 while(l.lastOpt().isPresent() && l.lastOpt().get().getValueType().isRequired() == false){
                     l = l.dropLast();
@@ -161,7 +172,7 @@ public class ServiceJavaGen {
                         println("this(" + l.map(p -> p.getName()).plusAll(nullValues).toString(",") + ");");
                     }be();
 
-                }
+                }*/
                 //****** GETTERS AND UPDATERS
                 vc.getProperties().forEach(p -> {
                     if(options.generateGetters){
@@ -289,13 +300,25 @@ public class ServiceJavaGen {
                                 println("return (Builder" + getBuilderGenerics(vc,PMap.<String,String>empty().put(p.getName(),"SET")) + ") this;");
                             }be();
                         });
-                        String onlyGen = vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName()).toString(",");
-                        onlyGen = onlyGen.isEmpty() ? "" : "<" + onlyGen + ">";
-                        bs("static public " + onlyGen + " " + toString(vc.getTypeSig()) + " build()");{
-                            be();}
+
+
+
 
 
                     }be();
+                String onlyGen = vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName()).toString(",");
+                onlyGen = onlyGen.isEmpty() ? "" : "<" + onlyGen + ">";
+                String not = getRequiredProps(vc).map(v -> "NOT").plusAll(vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName())).toString(",");
+                String set = getRequiredProps(vc).map(v -> "SET").plusAll(vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName())).toString(",");
+                not = not.isEmpty() ? not : "<" + not + ">";
+                set = set.isEmpty() ? set : "<" + set + ">";
+                addImport(Function.class);
+                String p = "Function<Builder" + not + ",Builder" + set + "> supplier";
+                bs("static public " + onlyGen + " " + toString(vc.getTypeSig()) + " build(" + p + ")");{
+
+                    println("Builder b = supplier.apply(new Builder"+(getBuilderGenerics(vc).isEmpty() ? "" : "<>") +  "());");
+                    println("return new "+ vc.getTypeSig().getName().getClassName() + "(" + vc.getProperties().map(v -> "b." + v.getName()).toString(", ") + ");");
+                    be();}
             }be();
             return toGenJava(vc.getTypeSig().getName());
         }
@@ -320,6 +343,9 @@ public class ServiceJavaGen {
             return requiredProperties.toString("<",",",">");
         }
 
+        private boolean isRequired(RProperty p){
+            return p.getDefaultValue().isPresent() == false && p.getValueType().isRequired();
+        }
 
         private String toString(RTypeSig sig){
             return toString(sig,false);
