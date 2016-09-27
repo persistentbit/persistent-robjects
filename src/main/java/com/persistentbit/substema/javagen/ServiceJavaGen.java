@@ -8,9 +8,10 @@ import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.sourcegen.SourceGen;
 import com.persistentbit.core.tokenizer.Token;
+import com.persistentbit.core.utils.builders.NOT;
+import com.persistentbit.core.utils.builders.SET;
 import com.persistentbit.substema.annotations.Remotable;
 import com.persistentbit.substema.annotations.RemoteCache;
-import com.persistentbit.substema.rod.RServiceValidator;
 import com.persistentbit.substema.rod.RodParser;
 import com.persistentbit.substema.rod.RodTokenType;
 import com.persistentbit.substema.rod.RodTokenizer;
@@ -124,7 +125,7 @@ public class ServiceJavaGen {
             bs("public class " + toString(vc.getTypeSig())+ impl);{
                 vc.getProperties().forEach(p -> {
 
-                    println(toString(p.getValueType()) + " " + p.getName() + ";");
+                    println(toString(p.getValueType(),true) + " " + p.getName() + ";");
                 });
                 println("");
                 //***** MAIN CONSTRUCTOR
@@ -272,9 +273,54 @@ public class ServiceJavaGen {
                     }
 
                 }be();
+                    //******* BUILDER
+
+                    bs("static public class Builder" + getBuilderGenerics(vc));{
+                        vc.getProperties().forEach(p -> {
+
+                            println(toString(p.getValueType(),false) + " " + p.getName() + ";");
+
+                        });
+                        println("");
+                        vc.getProperties().forEach(p ->{
+                            String gen = getBuilderGenerics(vc,PMap.<String,String>empty().put(p.getName(),"SET"));
+                            bs("public Builder" + gen + " set" + firstUpper(p.getName()) + "("+ toString(p.getValueType().getTypeSig(),p.getValueType().isRequired()) + " " + p.getName() + ")");{
+                                println("this." + p.getName() + " = " + p.getName() + ";");
+                                println("return (Builder" + getBuilderGenerics(vc,PMap.<String,String>empty().put(p.getName(),"SET")) + ") this;");
+                            }be();
+                        });
+                        String onlyGen = vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName()).toString(",");
+                        onlyGen = onlyGen.isEmpty() ? "" : "<" + onlyGen + ">";
+                        bs("static public " + onlyGen + " " + toString(vc.getTypeSig()) + " build()");{
+                            be();}
+
+
+                    }be();
             }be();
             return toGenJava(vc.getTypeSig().getName());
         }
+
+        private PList<RProperty>   getRequiredProps(RValueClass vc) {
+            return vc.getProperties().filter(p->p.getDefaultValue().isPresent() == false && p.getValueType().isRequired());
+        }
+
+        private String getBuilderGenerics(RValueClass vc){
+            return getBuilderGenerics(vc,PMap.empty());
+        }
+        private String getBuilderGenerics(RValueClass vc, PMap<String,String> namesReplace){
+            PList<String> requiredProperties = getRequiredProps(vc).zipWithIndex().map(t -> namesReplace.getOpt(t._2.getName()).orElse("_T" + (t._1+1))).plist();
+            if(requiredProperties.isEmpty()==false){
+                addImport(SET.class);
+                addImport(NOT.class);
+            }
+            requiredProperties = requiredProperties.plusAll(vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName()));
+            if(requiredProperties.isEmpty()){
+                return "";
+            }
+            return requiredProperties.toString("<",",",">");
+        }
+
+
         private String toString(RTypeSig sig){
             return toString(sig,false);
         }
@@ -319,7 +365,7 @@ public class ServiceJavaGen {
             return s.substring(0,1).toUpperCase() + s.substring(1);
         }
 
-        private String toString(RValueType vt){
+        private String toString(RValueType vt,boolean isFinal){
             String res = "";
             String value = vt.isRequired() ? toPrimString(vt.getTypeSig()) : toString(vt.getTypeSig());
             if(vt.isRequired() == false){
@@ -332,9 +378,9 @@ public class ServiceJavaGen {
                     res += "@Nullable ";
                 }
             }
-            String access = options.generateGetters ? "private" : "public";
-
-            return res + access + " final " + value;
+            String access =  options.generateGetters ? "private" : "public";
+            access += isFinal ?  " final " : " ";
+            return res + access  + value;
 
         }
 

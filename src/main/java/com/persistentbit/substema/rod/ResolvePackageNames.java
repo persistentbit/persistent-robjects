@@ -1,5 +1,6 @@
 package com.persistentbit.substema.rod;
 
+import com.persistentbit.core.Tuple2;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.utils.NotYet;
@@ -40,10 +41,14 @@ public class ResolvePackageNames {
         return ec;
     }
     private RValueClass resolve(RValueClass vc){
-        return vc.withInterfaceClasses(vc.getInterfaceClasses().map(rc -> full(rc)))
+        PMap<String,RClass> backup = resolvedNames;
+        resolvedNames = resolvedNames.plusAll(vc.getTypeSig().getGenerics().map(ts -> new Tuple2<String, RClass>(ts.getName().getClassName(),ts.getName().withPackageName(packageName))));
+        RValueClass result = vc.withInterfaceClasses(vc.getInterfaceClasses().map(rc -> full(rc)))
                 .withProperties(vc.getProperties().map(p -> resolve(p)))
                 .withTypeSig(resolve(vc.getTypeSig()))
                 ;
+        resolvedNames = backup;
+        return result;
     }
     private RTypeSig resolve(RTypeSig typeSig){
         return typeSig.withName(full(typeSig.getName())).withGenerics(typeSig.getGenerics().map(g-> resolve(g)));
