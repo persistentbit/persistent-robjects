@@ -43,7 +43,7 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
                 case "import":return new TokenFound<>(found.text,tImport,found.ignore);
                 case "cached":return new TokenFound<>(found.text,tCached,found.ignore);
                 case "enum":return new TokenFound<>(found.text,tEnum,found.ignore);
-                case "value" : return new TokenFound<>(found.text,tValue,found.ignore);
+                case "case" : return new TokenFound<>(found.text,tCase,found.ignore);
                 case "remote": return new TokenFound<>(found.text,tRemote,found.ignore);
                 case "void": return new TokenFound<>(found.text,tVoid,found.ignore);
                 case "exception": return new TokenFound<>(found.text,tException,found.ignore);

@@ -56,7 +56,7 @@ public class RodParser {
         while(current.type != RodTokenType.tEOF){
             switch(current.type){
                 case tImport: imports = imports.plus(parseImport());
-                case tValue: values = values.plus(parseValueClass());
+                case tCase: values = values.plus(parseValueClass());
                     break;
                 case tRemote: remotes = remotes.plus(parseRemoteClass());
                     break;
@@ -132,7 +132,7 @@ public class RodParser {
 
     private RValueClass parseValueClass(){
 
-        skip(tValue,"'value' expected");
+        skip(tCase,"'value' expected");
         skip(tClass,"'class' expected");
         RTypeSig sig = parseTypeSignature();
         PList<RClass> interfaces = PList.empty();
