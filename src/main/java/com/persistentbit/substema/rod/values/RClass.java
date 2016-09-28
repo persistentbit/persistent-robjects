@@ -29,6 +29,6 @@ public class RClass extends BaseValueClass{
         return new RClass(n,className);
     }
     public RClass withClassName(String n){
-        return new RClass(packageName,className);
+        return new RClass(packageName,n);
     }
 }
