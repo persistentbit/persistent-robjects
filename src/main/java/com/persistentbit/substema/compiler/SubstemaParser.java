@@ -1,4 +1,4 @@
-package com.persistentbit.substema.rod;
+package com.persistentbit.substema.compiler;
 
 import com.persistentbit.core.Tuple2;
 import com.persistentbit.core.collections.PList;
@@ -6,21 +6,22 @@ import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
-import com.persistentbit.substema.rod.values.*;
+import com.persistentbit.substema.compiler.values.*;
+import com.persistentbit.substema.compiler.values.expr.*;
 
 import java.util.function.Supplier;
 
-import static com.persistentbit.substema.rod.RodTokenType.*;
+import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
 
 /**
  * Created by petermuys on 12/09/16.
  */
-public class RodParser {
-    private PStream<Token<RodTokenType>> tokens;
-    private Token<RodTokenType> current;
+public class SubstemaParser {
+    private PStream<Token<SubstemaTokenType>> tokens;
+    private Token<SubstemaTokenType> current;
     private String packageName;
 
-    public RodParser(String packageName,PStream<Token<RodTokenType>> tokens){
+    public SubstemaParser(String packageName, PStream<Token<SubstemaTokenType>> tokens){
         this.packageName = packageName;
         this.tokens = tokens;
         if(tokens.isEmpty()){
@@ -29,10 +30,10 @@ public class RodParser {
             next();
         }
     }
-    private Token<RodTokenType> next() {
+    private Token<SubstemaTokenType> next() {
         if(tokens.isEmpty()){
-            if(current.type == RodTokenType.tEOF) {
-                throw new RodParserException(current.pos, "Unexpected End-Of-File");
+            if(current.type == SubstemaTokenType.tEOF) {
+                throw new SubstemaParserException(current.pos, "Unexpected End-Of-File");
             }
             current = new Token<>(current.pos,tEOF,"");
             return current;
@@ -45,15 +46,12 @@ public class RodParser {
 
 
     public RSubstema parseSubstema() {
-        /*if(current.type == tPackage){
-            packageName = parsePackageName();
-        }*/
         PList<RImport> imports = PList.empty();
         PList<RValueClass>  values = PList.empty();
         PList<RRemoteClass> remotes = PList.empty();
         PList<REnum> enums = PList.empty();
         PList<RInterfaceClass> interfaces = PList.empty();
-        while(current.type != RodTokenType.tEOF){
+        while(current.type != SubstemaTokenType.tEOF){
             switch(current.type){
                 case tImport: imports = imports.plus(parseImport());
                 case tCase: values = values.plus(parseValueClass());
@@ -65,7 +63,7 @@ public class RodParser {
                 case tInterface: interfaces = interfaces.plus(parseInterface());
                     break;
                 default:
-                    throw new RodParserException(current.pos,"Expected a definition, not '" + current.text + "'");
+                    throw new SubstemaParserException(current.pos,"Expected a definition, not '" + current.text + "'");
             }
         }
         RSubstema service = new RSubstema(imports,packageName,enums,values,remotes,interfaces);
@@ -99,13 +97,13 @@ public class RodParser {
         }
         return new RTypeSig(new RClass("",className),generics);
     }
-    private void assertType(RodTokenType type, String msg){
+    private void assertType(SubstemaTokenType type, String msg){
         if(current.type != type){
-            throw new RodParserException(current.pos,msg);
+            throw new SubstemaParserException(current.pos,msg);
         }
     }
 
-    private void skip(RodTokenType type,String msg){
+    private void skip(SubstemaTokenType type, String msg){
         assertType(type,msg);
         next();
     }
@@ -170,7 +168,7 @@ public class RodParser {
 
         skip(tColon,"':' expected after property name");
         RValueType valueType = parseRValueType();
-        RValue  defaultValue = null;
+        RConst defaultValue = null;
         if(current.type == tAssign){
             next();//skip '='
             defaultValue = parseValue();
@@ -178,7 +176,7 @@ public class RodParser {
         skipEndOfStatement();
         return new RProperty(name,valueType,defaultValue);
     }
-    private RValue  parseValue(){
+    private RConst parseValue(){
         switch (current.type){
             case tArrayStart: return parseValueArray();
             case tTrue:
@@ -188,14 +186,14 @@ public class RodParser {
             case tNew: return parseValueValueObject();
             case tIdentifier: return parserValueEnum();
             default:
-                throw new RodParserException(current.pos,"Expected a literal value");
+                throw new SubstemaParserException(current.pos,"Expected a literal value");
         }
     }
-    private RValueValueObject parseValueValueObject() {
+    private RConstValueObject parseValueValueObject() {
         skip(tNew,"'new' expected");
         RClass name = parseRClass("");
         skip(tOpen,"'(' expected if value class name");
-        POrderedMap<String,RValue> args =   POrderedMap.empty();
+        POrderedMap<String,RConst> args =   POrderedMap.empty();
         if(current.type != tClose){
             args.plusAll(sep(tComma,() -> {
                 String propName = current.text;
@@ -204,40 +202,40 @@ public class RodParser {
                 return new Tuple2<>(propName,parseValue());
             }));
         }
-        return new RValueValueObject(name,args);
+        return new RConstValueObject(name,args);
     }
-    private RValueEnum  parserValueEnum() {
+    private RConstEnum parserValueEnum() {
         RClass cls = parseRClass(packageName);
-        skip(RodTokenType.tPoint,"'.' expected after enum name");
+        skip(SubstemaTokenType.tPoint,"'.' expected after enum name");
         String valueName = current.text;
         skip(tIdentifier,"enum value name expected");
-        return new RValueEnum(cls,valueName);
+        return new RConstEnum(cls,valueName);
     }
-    private RValueNumber parseValueNumber() {
-        RValueNumber res = new RValueNumber(current.text);
+    private RConstNumber parseValueNumber() {
+        RConstNumber res = new RConstNumber(current.text);
         skip(tNumber,"Number expected.");
         return res;
     }
-    private RValueArray parseValueArray() {
+    private RConstArray parseValueArray() {
         skip(tArrayStart,"'[' expected");
-        PList<RValue>   elements = PList.empty();
+        PList<RConst>   elements = PList.empty();
         if(current.type != tArrayEnd){
             elements =sep(tComma,this::parseValue);
         }
         skip(tArrayEnd,"']' expected");
-        return new RValueArray(elements);
+        return new RConstArray(elements);
     }
 
-    private RValueBoolean   parseValueBoolean() {
+    private RConstBoolean parseValueBoolean() {
         if(current.type == tTrue){
             next();
-            return new RValueBoolean(true);
+            return new RConstBoolean(true);
         }
         if(current.type == tFalse){
             next();
-            return new RValueBoolean(false);
+            return new RConstBoolean(false);
         }
-        throw new RodParserException(current.pos,"Expected a boolean value");
+        throw new SubstemaParserException(current.pos,"Expected a boolean value");
     }
 
     private RFunctionParam  parseFunctionParam() {
@@ -286,7 +284,7 @@ public class RodParser {
             returnType = parseRValueType();
             if(current.type == tCached) {
                 if(params.isEmpty() == false){
-                    throw new RodParserException(current.pos,"cached result is not supported on functions with parameters.");
+                    throw new SubstemaParserException(current.pos,"cached result is not supported on functions with parameters.");
                 }
                 cached = true;
                 next(); //skip cached
@@ -317,7 +315,7 @@ public class RodParser {
 
 
 
-    private <T> PList<T> sep(RodTokenType sep,Supplier<T> r){
+    private <T> PList<T> sep(SubstemaTokenType sep, Supplier<T> r){
         PList<T> res = PList.empty();
         while(current.type != tEOF){
             res = res.plus(r.get());
@@ -374,8 +372,8 @@ public class RodParser {
                 "}"
                 ).toString("\n");
         System.out.println(test);
-        PList<Token<RodTokenType>> tokens = new RodTokenizer().tokenize("test.rod",test);
+        PList<Token<SubstemaTokenType>> tokens = new SubstemaTokenizer().tokenize("test.rod",test);
         tokens.forEach(System.out::println);
-        new RodParser("com.undefined",tokens).parseSubstema();
+        new SubstemaParser("com.undefined",tokens).parseSubstema();
     }
 }

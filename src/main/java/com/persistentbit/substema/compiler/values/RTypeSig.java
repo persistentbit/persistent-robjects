@@ -1,4 +1,4 @@
-package com.persistentbit.substema.rod.values;
+package com.persistentbit.substema.compiler.values;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
@@ -13,6 +13,9 @@ public class RTypeSig extends BaseValueClass {
     public RTypeSig(RClass name, PList<RTypeSig> generics) {
         this.name = name;
         this.generics = generics;
+    }
+    public RTypeSig(RClass name){
+        this(name,PList.empty());
     }
 
     public RClass getName() {

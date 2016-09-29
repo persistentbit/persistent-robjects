@@ -12,10 +12,10 @@ import com.persistentbit.core.utils.builders.NOT;
 import com.persistentbit.core.utils.builders.SET;
 import com.persistentbit.substema.annotations.Remotable;
 import com.persistentbit.substema.annotations.RemoteCache;
-import com.persistentbit.substema.rod.RodParser;
-import com.persistentbit.substema.rod.RodTokenType;
-import com.persistentbit.substema.rod.RodTokenizer;
-import com.persistentbit.substema.rod.values.*;
+import com.persistentbit.substema.compiler.SubstemaParser;
+import com.persistentbit.substema.compiler.SubstemaTokenType;
+import com.persistentbit.substema.compiler.SubstemaTokenizer;
+import com.persistentbit.substema.compiler.values.*;
 
 import java.net.URL;
 import java.nio.file.Files;
@@ -452,10 +452,10 @@ public class ServiceJavaGen {
         Path path = Paths.get(url.toURI());
         System.out.println("Path  = " + path);
         String rod = new String(Files.readAllBytes(path));
-        RodTokenizer tokenizer = new RodTokenizer();
-        PList<Token<RodTokenType>> tokens = tokenizer.tokenize(rodFileName,rod);
+        SubstemaTokenizer tokenizer = new SubstemaTokenizer();
+        PList<Token<SubstemaTokenType>> tokens = tokenizer.tokenize(rodFileName,rod);
         String packageName  = "com.persistentbit.test";
-        RodParser parser = new RodParser(packageName,tokens);
+        SubstemaParser parser = new SubstemaParser(packageName,tokens);
         RSubstema service = parser.parseSubstema();
         System.out.println(service);
         PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),packageName,service);

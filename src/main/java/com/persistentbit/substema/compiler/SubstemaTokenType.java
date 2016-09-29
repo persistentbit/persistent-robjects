@@ -1,9 +1,9 @@
-package com.persistentbit.substema.rod;
+package com.persistentbit.substema.compiler;
 
 /**
  * Created by petermuys on 12/09/16.
  */
-public enum RodTokenType {
+public enum SubstemaTokenType {
     tPackage, tImport, tFrom, tClass, tRemote, tCase, tGenStart, tGenEnd,tComma,tQuestion,tCached,tOpen,tClose,tColon,tSemiColon,
     tComment, tWhiteSpace, tNl,tIdentifier,tPoint,tEnum,tBlockStart, tBlockEnd,tEOF,tVoid,
     tException,tThrows,tInterface,tImplements,tArrayStart,

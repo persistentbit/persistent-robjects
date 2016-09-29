@@ -1,10 +1,11 @@
-package com.persistentbit.substema.rod;
+package com.persistentbit.substema.compiler;
 
 import com.persistentbit.core.Tuple2;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.utils.NotYet;
-import com.persistentbit.substema.rod.values.*;
+import com.persistentbit.substema.compiler.values.*;
+import com.persistentbit.substema.compiler.values.expr.RConst;
 
 import java.util.Optional;
 
@@ -64,10 +65,11 @@ public class ResolvePackageNames {
     private RValueType  resolve(RValueType vt){
         return vt.withTypeSig(resolve(vt.getTypeSig()));
     }
-    private RValue  resolve(RValue v){
+    private RConst resolve(RTypeSig expectedType, RConst v){
         if(v== null){
             return null;
         }
+        if(v instanceof )
         throw new NotYet();
     }
 
@@ -119,10 +121,10 @@ public class ResolvePackageNames {
         }
         all = all.filterNulls().plist();
         if(all.size()>1){
-            throw new RSubstemaException("Multiple definitions for " + clsName + ": " + all.toString(","));
+            throw new SubstemaException("Multiple definitions for " + clsName + ": " + all.toString(","));
         }
         if(all.isEmpty()){
-            throw new RSubstemaException("No  definitions found for " + clsName);
+            throw new SubstemaException("No  definitions found for " + clsName);
         }
         return all.head();
     }
@@ -140,8 +142,10 @@ public class ResolvePackageNames {
 
         res = res.filterNulls().plist();
         if(res.size() > 1){
-            throw new RSubstemaException("Multiple definitions found for " + className + ": " + res.toString(","));
+            throw new SubstemaException("Multiple definitions found for " + className + ": " + res.toString(","));
         }
         return res.headOpt();
     }
+
+
 }

@@ -1,6 +1,7 @@
-package com.persistentbit.substema.rod.values;
+package com.persistentbit.substema.compiler.values;
 
 import com.persistentbit.core.utils.BaseValueClass;
+import com.persistentbit.substema.compiler.values.expr.RConst;
 
 import java.util.Optional;
 
@@ -10,9 +11,9 @@ import java.util.Optional;
 public class RProperty extends BaseValueClass {
     private final String     name;
     private final RValueType valueType;
-    private final RValue defaultValue;
+    private final RConst defaultValue;
 
-    public RProperty(String name, RValueType valueType, RValue defaultValue) {
+    public RProperty(String name, RValueType valueType, RConst defaultValue) {
         this.name = name;
         this.valueType = valueType;
         this.defaultValue = defaultValue;
@@ -29,7 +30,7 @@ public class RProperty extends BaseValueClass {
         return valueType;
     }
 
-    public Optional<RValue> getDefaultValue() {
+    public Optional<RConst> getDefaultValue() {
         return Optional.ofNullable(defaultValue);
     }
 
@@ -39,7 +40,7 @@ public class RProperty extends BaseValueClass {
     public RProperty withValueType(RValueType vt){
         return copyWith("valueType",vt);
     }
-    public RProperty withDefaultValue(RValue value){
+    public RProperty withDefaultValue(RConst value){
         return copyWith("defaultValue",value);
     }
 }

@@ -1,14 +1,14 @@
-package com.persistentbit.substema.rod;
+package com.persistentbit.substema.compiler;
 
 import com.persistentbit.core.tokenizer.Pos;
 
 /**
  * Created by petermuys on 13/09/16.
  */
-public class RodParserException extends RuntimeException{
+public class SubstemaParserException extends RuntimeException{
     private final Pos pos;
 
-    public RodParserException(Pos pos,String message) {
+    public SubstemaParserException(Pos pos, String message) {
         super(asMessage(pos,message));
         this.pos = pos;
     }
@@ -16,12 +16,12 @@ public class RodParserException extends RuntimeException{
         return "Parser error in " +  pos + ": "+ msg;
     }
 
-    public RodParserException(Pos pos,String message, Throwable cause) {
+    public SubstemaParserException(Pos pos, String message, Throwable cause) {
         super(asMessage(pos,message),cause);
         this.pos = pos;
     }
 
-    public RodParserException(Pos pos,Throwable cause) {
+    public SubstemaParserException(Pos pos, Throwable cause) {
         this(pos,asMessage(pos,cause.getMessage()),cause);
     }
 

@@ -1,11 +1,12 @@
-package com.persistentbit.substema.rod;
+package com.persistentbit.substema.compiler;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.substema.RObjException;
-import com.persistentbit.substema.rod.values.*;
+import com.persistentbit.substema.compiler.values.*;
+import com.persistentbit.substema.compiler.values.expr.*;
 
 /**
  * Created by petermuys on 17/09/16.
@@ -33,11 +34,11 @@ public class RServiceValidator {
             vc.getInterfaceClasses().forEach(icName-> {
                 RInterfaceClass ic = il.getOrDefault(icName,null);
                 if(ic == null){
-                    throw new RSubstemaException("Can't find interface " +toString(icName) + " defined in value  class " + toString(vc.getTypeSig().getName()));
+                    throw new SubstemaException("Can't find interface " +toString(icName) + " defined in value  class " + toString(vc.getTypeSig().getName()));
                 }
                 PList<RProperty> notFound =ic.getProperties().filter( p -> vc.getProperties().contains(p) == false);
                 if(notFound.isEmpty() == false){
-                    throw new RSubstemaException("Can't find properties in class " + toString(vc.getTypeSig().getName()) + " for interface " + toString(ic.getName()) + ": " + notFound.map(p -> p.getName()).toString(", "));
+                    throw new SubstemaException("Can't find properties in class " + toString(vc.getTypeSig().getName()) + " for interface " + toString(ic.getName()) + ": " + notFound.map(p -> p.getName()).toString(", "));
                 }
             });
         });
@@ -50,7 +51,7 @@ public class RServiceValidator {
                 .plusAll(service.getInterfaceClasses().map(e->e.getName()))
                 .duplicates();
         if(dup.isEmpty() == false){
-            throw new RSubstemaException("Duplicated type definitions: " + dup.map(c -> c.getPackageName() +"." + c.getClassName()).toString(", "));
+            throw new SubstemaException("Duplicated type definitions: " + dup.map(c -> c.getPackageName() +"." + c.getClassName()).toString(", "));
         }
         service.getRemoteClasses().forEach(rc -> checkOverloading(rc));
         service.getValueClasses().forEach(vc -> checkOverloading(vc));
@@ -60,20 +61,20 @@ public class RServiceValidator {
         PList<String> dupFunNames = rc.getFunctions().map(f -> f.getName()).duplicates();
         PList<String> wrong = dupFunNames.filter(n -> rc.getFunctions().filter(f -> f.getName().equals(n)).map(f2-> f2.getParams().size()).duplicates().isEmpty() == false);
         if(wrong.isEmpty() == false){
-            throw new RSubstemaException("Remote class " + rc.getName().getClassName() + " has duplicated functions with the same parameter count: " + wrong.toString(", "));
+            throw new SubstemaException("Remote class " + rc.getName().getClassName() + " has duplicated functions with the same parameter count: " + wrong.toString(", "));
         }
         rc.getFunctions().forEach(f -> checkOverloading(rc,f));
     }
     private void checkOverloading(RRemoteClass rc,RFunction f){
         PList<String> dup = f.getParams().map(p -> p.getName()).duplicates();
         if(dup.isEmpty() == false){
-            throw new RSubstemaException("Remote class " + rc.getName().getClassName() + " function " + f.getName() + " has duplicated parameters");
+            throw new SubstemaException("Remote class " + rc.getName().getClassName() + " function " + f.getName() + " has duplicated parameters");
         }
     }
     private void checkOverloading(REnum e){
         PList<String> dup = e.values.duplicates();
         if(dup.isEmpty() == false){
-            throw new RSubstemaException("enum " + e.name.getClassName() + " has duplicated values: " + dup.toString(", "));
+            throw new SubstemaException("enum " + e.name.getClassName() + " has duplicated values: " + dup.toString(", "));
         }
     }
 
@@ -81,11 +82,11 @@ public class RServiceValidator {
     private void checkOverloading(RValueClass vc){
         PStream<String> dup = vc.getTypeSig().getGenerics().map(sig -> sig.getName().getClassName()).duplicates();
         if(dup.isEmpty() == false){
-            throw new RSubstemaException("value class " + vc.getTypeSig().getName().getClassName() + " has duplicated Generics parameters: " + dup.toString(", "));
+            throw new SubstemaException("value class " + vc.getTypeSig().getName().getClassName() + " has duplicated Generics parameters: " + dup.toString(", "));
         }
         dup = vc.getProperties().map(p->p.getName()).duplicates();
         if(dup.isEmpty() == false){
-            throw new RSubstemaException("value class " + vc.getTypeSig().getName().getClassName() + " has duplicated property names: " + dup.toString(", "));
+            throw new SubstemaException("value class " + vc.getTypeSig().getName().getClassName() + " has duplicated property names: " + dup.toString(", "));
         }
 
     }
@@ -107,7 +108,7 @@ public class RServiceValidator {
         PSet<RClass> all = defined.plusAll(buildIn);
         PSet<RClass> undef = needed.filter(c -> all.contains(c) == false);
         if(undef.isEmpty() == false){
-            throw new RSubstemaException("Following types are Undefined: " + undef.map(r -> toString(r)).toString(", "));
+            throw new SubstemaException("Following types are Undefined: " + undef.map(r -> toString(r)).toString(", "));
         }
     }
 
@@ -150,16 +151,16 @@ public class RServiceValidator {
     private boolean isEqual(RClass rcls,Class<?> jcls){
         return (rcls.getPackageName() + "." + rcls.getClassName()).equals(jcls.getName());
     }
-    private boolean isAssignable(RTypeSig type, RValue value){
-        if(value instanceof RValueNull){
+    private boolean isAssignable(RTypeSig type, RConst value){
+        if(value instanceof RConstNull){
             return true;
         }
         RClass name = type.getName();
         if(isEqual(name,String.class)){
-            return value instanceof RValueString;
+            return value instanceof RConstString;
         }
         switch(name.getClassName()){
-            case "String": return value instanceof RValueString;
+            case "String": return value instanceof RConstString;
 
             case "Byte":
             case "Short":
@@ -167,24 +168,24 @@ public class RServiceValidator {
             case "Long":
             case "Float":
             case "Double":
-                return value instanceof  RValueNumber;
-            case "Boolean": return value instanceof RValueBoolean;
+                return value instanceof RConstNumber;
+            case "Boolean": return value instanceof RConstBoolean;
             case "List":
             case "Set":
-                return (value instanceof RValueArray) && isArrayAssignable(type,(RValueArray) value);
+                return (value instanceof RConstArray) && isArrayAssignable(type,(RConstArray) value);
             case "Map":
                 throw new RuntimeException("Not Yet");
         }
-        if(value instanceof RValueEnum){
-            RValueEnum ve = (RValueEnum) value;
+        if(value instanceof RConstEnum){
+            RConstEnum ve = (RConstEnum) value;
             return service.getEnums().find(e -> e.name.equals(ve.enumClass) && e.values.contains(ve.enumValue) ).isPresent();
         }
-        if(value instanceof RValueValueObject){
+        if(value instanceof RConstValueObject){
             throw new RuntimeException("Not Yet");
         }
         throw new RObjException("Unknown type:" + type.getName());
     }
-    private boolean isArrayAssignable(RTypeSig type, RValueArray arrValue){
+    private boolean isArrayAssignable(RTypeSig type, RConstArray arrValue){
         RTypeSig itemType = type.getGenerics().head();
         return arrValue.values.find( i -> isAssignable(itemType,i) == false).isPresent() == false;
     }

@@ -1,4 +1,4 @@
-package com.persistentbit.substema.rod;
+package com.persistentbit.substema.compiler;
 
 import com.persistentbit.core.tokenizer.SimpleTokenizer;
 import com.persistentbit.core.tokenizer.TokenFound;
@@ -6,14 +6,14 @@ import com.persistentbit.core.tokenizer.TokenFound;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static com.persistentbit.substema.rod.RodTokenType.*;
+import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
 
 /**
  * Created by petermuys on 12/09/16.
  */
-public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
+public class SubstemaTokenizer extends SimpleTokenizer<SubstemaTokenType>{
 
-    public RodTokenizer(){
+    public SubstemaTokenizer(){
         add(regExMatcher("/\\*.*\\*/",tComment).ignore());
         add(regExMatcher("\\n",tNl).ignore());
         add("\\(",tOpen);
@@ -31,10 +31,10 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
         add("\\-\\>",tMapMap);
         add("\\[",tArrayStart);
         add("\\]",tArrayEnd);
-        add("[0-9]+\\.?[0-9]*",tNumber);
-        add(RodTokenizer.stringMatcher(tString,'\'',false));
-        add(RodTokenizer.stringMatcher(tString,'\"',false));
-        add(RodTokenizer.stringMatcher(tString,'`',true));
+        add("[0-9]+(\\.[0-9]*)?[LlFfDdBbSs]?",tNumber);
+        add(SubstemaTokenizer.stringMatcher(tString,'\'',false));
+        add(SubstemaTokenizer.stringMatcher(tString,'\"',false));
+        add(SubstemaTokenizer.stringMatcher(tString,'`',true));
         add(SimpleTokenizer.regExMatcher("[a-zA-Z_][a-zA-Z0-9_]*",tIdentifier).map(found -> {
             switch (found.text){
                 case "package": return new TokenFound<>(found.text,tPackage,found.ignore);
@@ -57,14 +57,14 @@ public class RodTokenizer extends SimpleTokenizer<RodTokenType>{
                 default: return found;
             }
         }));
-        add(RodTokenizer.regExMatcher("\\s+",tWhiteSpace).ignore());
+        add(SubstemaTokenizer.regExMatcher("\\s+",tWhiteSpace).ignore());
 
     }
 
     static public void main(String...args){
         try{
-            RodTokenizer tokenizer = new RodTokenizer();
-            String txt = new String(Files.readAllBytes(Paths.get(RodTokenizer.class.getResource("/app.rod").toURI())));
+            SubstemaTokenizer tokenizer = new SubstemaTokenizer();
+            String txt = new String(Files.readAllBytes(Paths.get(SubstemaTokenizer.class.getResource("/app.rod").toURI())));
             System.out.println(txt);
             tokenizer.tokenize("app.rod",txt).forEach(System.out::println);
 

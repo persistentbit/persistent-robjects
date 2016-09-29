@@ -1,7 +1,7 @@
 package com.persistentbit.substema;
 
-import com.persistentbit.substema.rod.RodTokenType;
-import com.persistentbit.substema.rod.RodTokenizer;
+import com.persistentbit.substema.compiler.SubstemaTokenType;
+import com.persistentbit.substema.compiler.SubstemaTokenizer;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -14,10 +14,10 @@ public class TestROD {
     @Test
     public void testRODParsing() {
         try{
-            RodTokenizer tokenizer = new RodTokenizer();
-            String txt = new String(Files.readAllBytes(Paths.get(RodTokenizer.class.getResource("/app.rod").toURI())));
+            SubstemaTokenizer tokenizer = new SubstemaTokenizer();
+            String txt = new String(Files.readAllBytes(Paths.get(SubstemaTokenizer.class.getResource("/app.rod").toURI())));
             System.out.println(txt);
-            tokenizer.tokenize("app.rod",txt).lazy().filter(t -> t.type != RodTokenType.tWhiteSpace).forEach(System.out::println);
+            tokenizer.tokenize("app.rod",txt).lazy().filter(t -> t.type != SubstemaTokenType.tWhiteSpace).forEach(System.out::println);
 
         }catch (Exception e){
             throw new RuntimeException(e);

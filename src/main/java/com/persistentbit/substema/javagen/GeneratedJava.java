@@ -1,6 +1,6 @@
 package com.persistentbit.substema.javagen;
 
-import com.persistentbit.substema.rod.values.RClass;
+import com.persistentbit.substema.compiler.values.RClass;
 
 /**
  * Created by petermuys on 14/09/16.
