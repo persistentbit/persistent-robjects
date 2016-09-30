@@ -4,9 +4,7 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
-import com.persistentbit.substema.RObjException;
 import com.persistentbit.substema.compiler.values.*;
-import com.persistentbit.substema.compiler.values.expr.*;
 
 /**
  * Created by petermuys on 17/09/16.
@@ -151,6 +149,7 @@ public class RServiceValidator {
     private boolean isEqual(RClass rcls,Class<?> jcls){
         return (rcls.getPackageName() + "." + rcls.getClassName()).equals(jcls.getName());
     }
+    /*
     private boolean isAssignable(RTypeSig type, RConst value){
         if(value instanceof RConstNull){
             return true;
@@ -178,7 +177,7 @@ public class RServiceValidator {
         }
         if(value instanceof RConstEnum){
             RConstEnum ve = (RConstEnum) value;
-            return service.getEnums().find(e -> e.name.equals(ve.enumClass) && e.values.contains(ve.enumValue) ).isPresent();
+            return service.getEnums().find(e -> e.name.equals(ve.getEnumClass()) && e.values.contains(ve.getEnumValue()) ).isPresent();
         }
         if(value instanceof RConstValueObject){
             throw new RuntimeException("Not Yet");
@@ -190,7 +189,7 @@ public class RServiceValidator {
         return arrValue.values.find( i -> isAssignable(itemType,i) == false).isPresent() == false;
     }
 
-
+*/
 
 
     static public RSubstema validate(RSubstema service){

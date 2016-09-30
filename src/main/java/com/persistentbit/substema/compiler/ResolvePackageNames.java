@@ -1,6 +1,6 @@
 package com.persistentbit.substema.compiler;
 
-import com.persistentbit.core.Tuple2;
+import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.utils.NotYet;
@@ -59,8 +59,7 @@ public class ResolvePackageNames {
 
     }
     private RProperty resolve(RProperty p){
-        return p.withDefaultValue(resolve(p.getDefaultValue().orElse(null)))
-                .withValueType(resolve(p.getValueType()));
+        return p.withValueType(resolve(p.getValueType()));
     }
     private RValueType  resolve(RValueType vt){
         return vt.withTypeSig(resolve(vt.getTypeSig()));
@@ -69,7 +68,7 @@ public class ResolvePackageNames {
         if(v== null){
             return null;
         }
-        if(v instanceof )
+
         throw new NotYet();
     }
 

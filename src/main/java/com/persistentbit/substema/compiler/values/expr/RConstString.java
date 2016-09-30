@@ -8,7 +8,10 @@ import com.persistentbit.core.utils.BaseValueClass;
  * @since 20/09/2016
  */
 public class RConstString extends BaseValueClass implements RConst {
-    public final String value;
+    private final String value;
 
 
+    public RConstString(String value) {
+        this.value = value;
+    }
 }

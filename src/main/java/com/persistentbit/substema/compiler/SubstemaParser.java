@@ -1,11 +1,12 @@
 package com.persistentbit.substema.compiler;
 
-import com.persistentbit.core.Tuple2;
+import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
+import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.*;
 
@@ -202,7 +203,7 @@ public class SubstemaParser {
                 return new Tuple2<>(propName,parseValue());
             }));
         }
-        return new RConstValueObject(name,args);
+        return new RConstValueObject(new RTypeSig(name),args);
     }
     private RConstEnum parserValueEnum() {
         RClass cls = parseRClass(packageName);
@@ -212,9 +213,11 @@ public class SubstemaParser {
         return new RConstEnum(cls,valueName);
     }
     private RConstNumber parseValueNumber() {
-        RConstNumber res = new RConstNumber(current.text);
-        skip(tNumber,"Number expected.");
-        return res;
+        //RConstNumber res = new RConstNumber(current.text);
+        //
+        //skip(tNumber,"Number expected.");
+        //return res;
+        throw new NotYet();
     }
     private RConstArray parseValueArray() {
         skip(tArrayStart,"'[' expected");

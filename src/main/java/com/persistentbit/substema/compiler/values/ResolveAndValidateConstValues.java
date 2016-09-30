@@ -1,14 +1,9 @@
 package com.persistentbit.substema.compiler.values;
 
-import com.persistentbit.core.Tuple2;
-import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.substema.compiler.SubstemaException;
 import com.persistentbit.substema.compiler.values.expr.*;
-
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  *
@@ -87,6 +82,9 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
                 return cantConvert(c);
             }
         }
+
+        throw new NotYet();
+        /*
         //We now have a valid value class
         //So now check that the supplied parameters are ok
         c.withPropValues(c.getPropValues().map(pv-> {
@@ -101,7 +99,7 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
         vc.getProperties().map(p -> {
             p.withDefaultValue()
         })
-
+        */
 
     }
 
@@ -115,6 +113,7 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
         if(left.equals(right)){
             return left;
         }
+        /*
         if(isNumberClass(left)){
             if(isNumberClass(right)){
                 return
@@ -122,7 +121,8 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
                 throw new Ro
             }
 
-        }
+        }*/
+        throw new NotYet();
     }
     static public final RClass stringRClass = new RClass("","String");
     static public final RClass booleanRClass = new RClass("","Boolean");

@@ -1,7 +1,7 @@
 package com.persistentbit.substema.testapi;
 
 import com.persistentbit.core.Lazy;
-import com.persistentbit.core.Tuple2;
+import com.persistentbit.core.tuples.Tuple2;
 
 import java.util.concurrent.CompletableFuture;
 
