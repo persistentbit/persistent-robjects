@@ -37,14 +37,14 @@ public class ServiceJavaGen {
 
     private final String servicePackageName;
 
-    private ServiceJavaGen(JavaGenOptions options,String packageName,RSubstema service) {
-        this.servicePackageName = packageName;
+    private ServiceJavaGen(JavaGenOptions options,RSubstema service) {
+        this.servicePackageName = service.getPackageName();
         this.options = options;
         this.service = service;
     }
 
-    static public PList<GeneratedJava>  generate(JavaGenOptions options,String packageName,RSubstema service){
-        return new ServiceJavaGen(options,packageName,service).generateService();
+    static public PList<GeneratedJava>  generate(JavaGenOptions options,RSubstema service){
+        return new ServiceJavaGen(options,service).generateService();
     }
 
     public PList<GeneratedJava> generateService(){
@@ -63,6 +63,7 @@ public class ServiceJavaGen {
         private String          packageName;
 
         public Generator() {
+            this.packageName = servicePackageName;
             header.println("// GENERATED CODE: DO NOT CHANGE!");
             header.println("");
         }
@@ -131,21 +132,27 @@ public class ServiceJavaGen {
                 println("");
                 //***** MAIN CONSTRUCTOR
                 bs("public " + vc.getTypeSig().getName().getClassName() + "(" +
-                        vc.getProperties().map(p -> toString(p.getValueType().getTypeSig(),p.getValueType().isRequired()) + " " + p.getName() ).toString(", ")
+                        vc.getProperties().map(p -> toString(p.getValueType().getTypeSig(),p.getValueType().isRequired() && p.getDefaultValue().isPresent() == false) + " " + p.getName() ).toString(", ")
                         +")");{
                     vc.getProperties().forEach(p -> {
                         String fromValue = p.getName();
-                        if(p.getValueType().isRequired()){
-                            addImport(Objects.class);
-                            if(isPrimitive(p.getValueType().getTypeSig()) == false){
-                                fromValue = "Objects.requireNonNull(" + p.getName() + ",\"" + p.getName()  + " in " + vc.getTypeSig().getName().getClassName() + " can\'t be null\")";
+                        if(p.getDefaultValue().isPresent()){
+
+                            fromValue = p.getName() + " != null ? " + fromValue + " : " + RConstToJava.toJava(packageName,rcls -> addImport(rcls),p.getDefaultValue().get());
+                        } else {
+                            if(p.getValueType().isRequired()){
+                                addImport(Objects.class);
+                                if(isPrimitive(p.getValueType().getTypeSig()) == false){
+                                    fromValue = "Objects.requireNonNull(" + p.getName() + ",\"" + p.getName()  + " in " + vc.getTypeSig().getName().getClassName() + " can\'t be null\")";
+                                }
+
+                            }
+                            else {
+                                if(options.generateGetters == false) {
+                                    fromValue = "Optional.ofNullable(" + fromValue + ")";
+                                }
                             }
 
-                        }
-                        else {
-                            if(options.generateGetters == false) {
-                                fromValue = "Optional.ofNullable(" + fromValue + ")";
-                            }
                         }
                         println("this." + p.getName() + " = " + fromValue + ";");
                     });
@@ -161,18 +168,7 @@ public class ServiceJavaGen {
                     }
                     be();
                 }
-                /*PList<RProperty> l = vc.getProperties();
-                PList<String> nullValues = PList.empty();
-                while(l.lastOpt().isPresent() && l.lastOpt().get().getValueType().isRequired() == false){
-                    l = l.dropLast();
-                    nullValues = nullValues.plus("null");
-                    bs("public " + vc.getTypeSig().getName().getClassName() + "(" +
-                            l.map(p -> toString(p.getValueType().getTypeSig(),p.getValueType().isRequired()) + " " + p.getName() ).toString(", ")
-                            +")");{
-                        println("this(" + l.map(p -> p.getName()).plusAll(nullValues).toString(",") + ");");
-                    }be();
 
-                }*/
                 //****** GETTERS AND UPDATERS
                 vc.getProperties().forEach(p -> {
                     if(options.generateGetters){
@@ -458,7 +454,7 @@ public class ServiceJavaGen {
         SubstemaParser parser = new SubstemaParser(packageName,tokens);
         RSubstema service = parser.parseSubstema();
         System.out.println(service);
-        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),packageName,service);
+        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),service);
         gen.forEach(gj -> {
             System.out.println(gj.code);
             System.out.println("-----------------------------------");

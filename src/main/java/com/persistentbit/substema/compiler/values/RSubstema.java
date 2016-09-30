@@ -50,4 +50,7 @@ public class RSubstema extends BaseValueClass{
     public RSubstema    withImports(PList<RImport> imports){
         return copyWith("imports",imports);
     }
+    public RSubstema    witnValueClasses(PList<RValueClass> l){
+        return copyWith("valueClasses",l);
+    }
 }

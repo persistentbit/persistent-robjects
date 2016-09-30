@@ -28,7 +28,7 @@ public class ResolvePackageNames {
     }
 
     public RSubstema resolve(){
-        return new RSubstema(
+        RSubstema res = new RSubstema(
                 org.getImports(),
                 org.getPackageName(),
                 org.getEnums().map(ec-> resolve(ec)),
@@ -36,6 +36,7 @@ public class ResolvePackageNames {
                 org.getRemoteClasses().map(rc -> resolve(rc)),
                 org.getInterfaceClasses().map(ic -> resolve(ic))
         );
+        return ResolveAndValidateConstValues.resolveAndValidate(res, rcls -> rcls.getPackageName().isEmpty() ? findName(res,rcls.getClassName()).get() : rcls);
     }
 
     private REnum   resolve(REnum ec){

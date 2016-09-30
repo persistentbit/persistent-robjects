@@ -8,11 +8,13 @@ import com.persistentbit.substema.compiler.values.RTypeSig;
  * @since 20/09/2016
  */
 public class RConstBoolean extends BaseValueClass implements RConst {
-    public final boolean value;
+    private final boolean value;
 
     public RConstBoolean(boolean value) {
         this.value = value;
     }
 
-
+    public boolean isValue() {
+        return value;
+    }
 }

@@ -14,4 +14,8 @@ public class RConstString extends BaseValueClass implements RConst {
     public RConstString(String value) {
         this.value = value;
     }
+
+    public String getValue() {
+        return value;
+    }
 }

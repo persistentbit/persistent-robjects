@@ -186,6 +186,12 @@ public class SubstemaParser {
             case tNumber:   return parseValueNumber();
             case tNew: return parseValueValueObject();
             case tIdentifier: return parserValueEnum();
+            case tNull: next(); return RConstNull.Null;
+            case tString: {
+                String value = current.text;
+                next();
+                return new RConstString(value);
+            }
             default:
                 throw new SubstemaParserException(current.pos,"Expected a literal value");
         }
@@ -193,16 +199,17 @@ public class SubstemaParser {
     private RConstValueObject parseValueValueObject() {
         skip(tNew,"'new' expected");
         RClass name = parseRClass("");
-        skip(tOpen,"'(' expected if value class name");
+        skip(tOpen,"'(' expected after value class name");
         POrderedMap<String,RConst> args =   POrderedMap.empty();
         if(current.type != tClose){
-            args.plusAll(sep(tComma,() -> {
+            args = args.plusAll(sep(tComma,() -> {
                 String propName = current.text;
                 skip(tIdentifier,"Expected property name.");
                 skip(tColon,"':' expected after property name.");
                 return new Tuple2<>(propName,parseValue());
             }));
         }
+        skip(tClose,"')' expected after value class aruments");
         return new RConstValueObject(new RTypeSig(name),args);
     }
     private RConstEnum parserValueEnum() {

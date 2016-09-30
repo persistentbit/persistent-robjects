@@ -1,9 +1,16 @@
 package com.persistentbit.substema.compiler.values;
 
+import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PSet;
+import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.substema.compiler.SubstemaException;
 import com.persistentbit.substema.compiler.values.expr.*;
+import com.persistentbit.substema.javagen.JavaGenUtils;
+
+import java.util.function.Function;
 
 /**
  *
@@ -11,20 +18,38 @@ import com.persistentbit.substema.compiler.values.expr.*;
 public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
     private final RTypeSig  expectedType;
     private final RSubstema substema;
+    private final Function<RClass,RClass> resolveClassName;
 
 
-    private ResolveAndValidateConstValues(RTypeSig expectedType, RSubstema substema) {
+    private ResolveAndValidateConstValues(RTypeSig expectedType, RSubstema substema,Function<RClass,RClass> resolveClassName) {
         this.expectedType = expectedType;
         this.substema = substema;
+        this.resolveClassName = resolveClassName;
     }
 
-    static public RConst  resolveAndValidate(RTypeSig expectedType, RConst value,RSubstema substema){
-        return new ResolveAndValidateConstValues(expectedType,substema).visit(value);
+    static public RSubstema resolveAndValidate(RSubstema substema,Function<RClass,RClass> resolveClassName){
+        PList<RValueClass> vcl = substema.getValueClasses().map( vc->
+            vc.withProperties(vc.getProperties().map(p ->
+                p.withDefaultValue(p.getDefaultValue().map( dv ->
+                    resolveAndValidate(p.getValueType().getTypeSig(),dv,substema,resolveClassName)
+                    ).orElse(null)   ))
+            )
+        );
+
+        return substema.witnValueClasses(vcl);
+
+    }
+
+
+
+
+    static public RConst  resolveAndValidate(RTypeSig expectedType, RConst value,RSubstema substema,Function<RClass,RClass> resolveClassName){
+        return new ResolveAndValidateConstValues(expectedType,substema,resolveClassName).visit(value);
     }
 
     @Override
     public RConst visit(RConstBoolean c) {
-        if(expectedType.getName().equals(c)){
+        if(expectedType.getName().equals(booleanRClass)){
             return c;
         }
         return cantConvert(c);
@@ -61,18 +86,24 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
         return cantConvert(c);
     }
 
+
+    private RTypeSig resolveTypeSig(RTypeSig typeSig){
+        typeSig = typeSig.withName(resolveClassName.apply(typeSig.getName()));
+        typeSig = typeSig.withGenerics(typeSig.getGenerics().map(ts-> resolveTypeSig(ts)));
+        return typeSig;
+    }
+
     @Override
     public RConst visit(RConstValueObject c) {
         if(c.getTypeSig().getGenerics().isEmpty() == false){
             throw new SubstemaException("Generics are currently not supported in constant values:" + c);
         }
-        RValueClass vc = substema.getValueClasses().find(v -> v.getTypeSig().getName().equals(c) && v.getTypeSig().getGenerics().isEmpty()).orElse(null);
-        if(vc == null){
-            throw new SubstemaException("Unknown constant value class for " + c);
-        }
+        RTypeSig resolvedTypeSig = resolveTypeSig(c.getTypeSig());
+        RValueClass vc = substema.getValueClasses().find(v -> v.getTypeSig().equals(resolvedTypeSig) && v.getTypeSig().getGenerics().isEmpty()).orElseThrow(()->new SubstemaException("Unknown constant value class for " + c));
+
         boolean isInterfaceExpected = substema.getInterfaceClasses().find(i-> i.getName().equals(expectedType.getName())).isPresent();
 
-        if(c.getTypeSig().equals(expectedType) == false){
+        if(resolvedTypeSig.equals(expectedType) == false){
             if(isInterfaceExpected == false){
                 return cantConvert(c);
             }
@@ -82,30 +113,36 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
                 return cantConvert(c);
             }
         }
+        PStream<String> allNotDefinedRequiredProperties = vc.getProperties()
+                .filter(p -> p.getDefaultValue().isPresent() == false && p.getValueType().isRequired())
+                .map(p-> p.getName()).filterNotContainedIn(c.getPropValues().keys());
+        if(allNotDefinedRequiredProperties.isEmpty() == false){
+            throw new SubstemaException("Required properties missing in " + JavaGenUtils.toString(substema.getPackageName(),resolvedTypeSig) + ": " + allNotDefinedRequiredProperties.toString(", "));
+        }
 
-        throw new NotYet();
-        /*
-        //We now have a valid value class
-        //So now check that the supplied parameters are ok
-        c.withPropValues(c.getPropValues().map(pv-> {
-            RTypeSig paramExpectedType = vc.getProperties().find(p -> p.getName().equals(pv._1)).map(vcp -> vcp.getValueType().getTypeSig()).orElse(null);
-            if(paramExpectedType == null){
-                throw new SubstemaException("Unknown property " + pv._1 + " in " + c);
-            }
-            RConst paramValue = ResolveAndValidateConstValues.resolveAndValidate(paramExpectedType,pv._2,substema);
-            return new Tuple2<>(pv._1,paramValue);
+        PStream<String> allUnknownValues = c.getPropValues().keys().filterNotContainedIn(vc.getProperties().map(t->t.getName()));
+        if(allUnknownValues.isEmpty() == false){
+            throw new SubstemaException("Unknown properties in " + JavaGenUtils.toString(substema.getPackageName(),resolvedTypeSig) + ": " + allUnknownValues.toString(", "));
+        }
 
-        }).plist().groupByOneValue(t->t._1,t->t._2).po);
-        vc.getProperties().map(p -> {
-            p.withDefaultValue()
-        })
-        */
+        //We now know that the required parameters are there.
+        //so now we are going to convert them to the correct type
+
+        POrderedMap<String,RConst> converted = POrderedMap.empty();
+
+        converted = converted.plusAll(c.getPropValues().map(t -> {
+                RTypeSig expected = vc.getProperties().find(p -> p.getName().equals(t._1)).map(p -> p.getValueType().getTypeSig()).get();
+                return t.with_2( resolveAndValidate(expected,t._2,substema,resolveClassName));
+        }));
+        return c.withTypeSig(resolvedTypeSig).withPropValues(converted);
+
 
     }
 
     @Override
     public RConst visit(RConstArray c) {
-        return null;
+        RTypeSig expected = expectedType.getGenerics().head();
+        return c.withValues(c.getValues().map(v -> resolveAndValidate(expected,v,substema,resolveClassName)));
     }
 
 

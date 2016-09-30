@@ -29,8 +29,6 @@ public interface RConstVisitor<R> {
         } else if(value instanceof RConstValueObject){
             return visit((RConstValueObject)value);
 
-        } else if(value instanceof RConstArray){
-            return visit((RConstArray) value);
         } else {
             throw new SubstemaException("Unknown RConst type: " + value.getClass().getName());
         }

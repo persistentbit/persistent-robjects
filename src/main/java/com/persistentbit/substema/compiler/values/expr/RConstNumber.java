@@ -24,5 +24,11 @@ public class RConstNumber extends BaseValueClass implements RConst {
         return copyWith("numberType",numberType);
     }
 
+    public String getNumberAsString() {
+        return numberAsString;
+    }
 
+    public RClass getNumberType() {
+        return numberType;
+    }
 }

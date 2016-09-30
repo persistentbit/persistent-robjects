@@ -15,4 +15,11 @@ public class RConstArray extends BaseValueClass implements RConst {
         this.values = values;
     }
 
+    public PList<RConst> getValues() {
+        return values;
+    }
+
+    public RConstArray withValues(PList<RConst> values){
+        return copyWith("values",values);
+    }
 }
