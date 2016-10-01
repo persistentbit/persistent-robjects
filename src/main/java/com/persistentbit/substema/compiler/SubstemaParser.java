@@ -7,9 +7,13 @@ import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.core.utils.NotYet;
+import com.persistentbit.core.utils.StringUtils;
+import com.persistentbit.core.utils.functional.Function2;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.*;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
@@ -183,6 +187,8 @@ public class SubstemaParser {
             case tTrue:
             case tFalse:
                 return parseValueBoolean();
+            case tMin:
+            case tPlus:
             case tNumber:   return parseValueNumber();
             case tNew: return parseValueValueObject();
             case tIdentifier: return parserValueEnum();
@@ -219,12 +225,57 @@ public class SubstemaParser {
         skip(tIdentifier,"enum value name expected");
         return new RConstEnum(cls,valueName);
     }
+
     private RConstNumber parseValueNumber() {
-        //RConstNumber res = new RConstNumber(current.text);
-        //
-        //skip(tNumber,"Number expected.");
-        //return res;
-        throw new NotYet();
+        boolean negative = false;
+        if(current.type == tPlus){
+            next();
+        } else if(current.type == tMin){
+            negative = true;
+            next();
+        }
+        if(current.type != tNumber){
+            throw new SubstemaParserException(current.pos,"Expected a number");
+        }
+        RClass cls = SubstemaUtils.integerRClass;
+        String txt = (negative ? "-" : "") + current.text.toLowerCase();
+        Function2<Long,Long,Boolean> check = (min, max) -> {
+            long value = Long.parseLong(txt);
+            return min <= value && value <= max;
+        };
+        Number value;
+        if(txt.endsWith("l")){
+            cls = SubstemaUtils.longRClass;
+            value = Long.parseLong(StringUtils.dropLast(txt,1));
+        } else if(txt.contains("f")){
+            cls = SubstemaUtils.floatRClass;
+            value = Float.parseFloat(StringUtils.dropLast(txt,1));
+        } else if(txt.contains("s")){
+            cls = SubstemaUtils.shortRClass;
+            if(check.apply((long)Short.MIN_VALUE,(long)Short.MAX_VALUE) == false){
+                throw new SubstemaParserException(current.pos,"Value " + txt + " is to big or to small to be a Short");
+            }
+            value = Short.parseShort(StringUtils.dropLast(txt,1));
+        } else if(txt.contains("b")){
+            cls = SubstemaUtils.byteRClass;
+            if(check.apply((long)Byte.MIN_VALUE,(long)Byte.MAX_VALUE) == false){
+                throw new SubstemaParserException(current.pos,"Value " + txt + " is to big or to small to be a Byte");
+            }
+            value = Byte.parseByte(StringUtils.dropLast(txt,1));
+        } else if(txt.contains("d") || txt.contains(".")){
+            cls = SubstemaUtils.doubleRClass;
+            value = Double.parseDouble(StringUtils.dropLast(txt,1));
+        } else {
+            if(check.apply((long)Integer.MIN_VALUE,(long)Integer.MAX_VALUE) == false){
+                cls = SubstemaUtils.longRClass;
+                value = Long.parseLong(txt);
+            } else {
+                value = Integer.parseInt(txt);
+            }
+
+        }
+        next(); //skip number
+        return new RConstNumber(cls,value);
     }
     private RConstArray parseValueArray() {
         skip(tArrayStart,"'[' expected");
@@ -344,7 +395,7 @@ public class SubstemaParser {
         next();
         skip(tBlockStart,"'{' expected for enum definition");
         PList<String> values = PList.empty();
-        if(current.type != tBlockEnd) {
+        if(current.type != tSemiColon) {
                 values = sep(tComma, () -> {
                 assertType(tIdentifier, "enum value name expected");
                 String valueName = current.text;
@@ -352,6 +403,7 @@ public class SubstemaParser {
                 return valueName;
             });
         }
+        next();//skip ;
         skip(tBlockEnd,"'}' expected to end enum definintion for '" + name + "'");
         return new REnum(new RClass(packageName,name),values);
     }

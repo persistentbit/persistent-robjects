@@ -37,7 +37,7 @@ public class RConstToJava implements RConstVisitor<String>{
 
     @Override
     public String visit(RConstNumber c) {
-        return c.getNumberAsString();
+        return "" + c.getNumber();
     }
 
     @Override
@@ -65,7 +65,7 @@ public class RConstToJava implements RConstVisitor<String>{
         result += JavaGenUtils.genericsToString(defaultPackageName,c.getTypeSig()).orElse("");
         String varName = "_b" + (lambdaVarIndex++);
         result += "build(" + varName + " -> " + varName;
-        String setters = c.getPropValues().map(p -> "set" + StringUtils.firstCapital(p._1) + "(" + visit(p._2) + ")").toString(".");
+        String setters = c.getPropValues().map(p -> "set" + StringUtils.firstUpperCase(p._1) + "(" + visit(p._2) + ")").toString(".");
         result += setters.isEmpty() ? "" : "." + setters;
         result += ")";
 

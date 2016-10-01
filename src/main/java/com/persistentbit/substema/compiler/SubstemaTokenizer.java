@@ -31,6 +31,8 @@ public class SubstemaTokenizer extends SimpleTokenizer<SubstemaTokenType>{
         add("\\-\\>",tMapMap);
         add("\\[",tArrayStart);
         add("\\]",tArrayEnd);
+        add("-",tMin);
+        add("\\+",tPlus);
         add("[0-9]+(\\.[0-9]*)?[LlFfDdBbSs]?",tNumber);
         add(SubstemaTokenizer.stringMatcher(tString,'\'',false));
         add(SubstemaTokenizer.stringMatcher(tString,'\"',false));

@@ -13,48 +13,42 @@ import com.persistentbit.substema.compiler.values.RSubstema;
  */
 public class SubstemaCompiler {
 
-    static public PList<RSubstema>    compile(DependencySupplier dependencies, PList<String> packagesToCompile){
-        Compiler c = new Compiler(dependencies);
-        return packagesToCompile.map(p -> c.compile(p));
+    private final DependencySupplier dependencies;
+    private PMap<String,RSubstema> parsed = PMap.empty();
+    private PMap<String,RSubstema> compiled = PMap.empty();
+
+    public SubstemaCompiler(DependencySupplier dependencies) {
+        this.dependencies = dependencies;
     }
-    static private class Compiler{
-        private final DependencySupplier dependencies;
-        private PMap<String,RSubstema> parsed = PMap.empty();
-        private PMap<String,RSubstema> compiled = PMap.empty();
 
-        public Compiler(DependencySupplier dependencies) {
-            this.dependencies = dependencies;
-        }
-
-        public RSubstema    parse(String packageName){
-            RSubstema res = parsed.getOpt(packageName).orElse(null);
-            if(res != null){
-                return res;
-            }
-            String code = dependencies.apply(packageName).orElse(null);
-            if(code == null){
-                throw new SubstemaException("Can't find code for package " + packageName );
-            };
-            SubstemaParser parser = new SubstemaParser(packageName,new SubstemaTokenizer().tokenize(packageName,code));
-            res =parser.parseSubstema();
-            parsed = parsed.put(packageName,res);
+    public RSubstema    parse(String packageName){
+        RSubstema res = parsed.getOpt(packageName).orElse(null);
+        if(res != null){
             return res;
         }
+        String code = dependencies.apply(packageName).orElse(null);
+        if(code == null){
+            throw new SubstemaException("Can't find code for package " + packageName );
+        };
+        SubstemaParser parser = new SubstemaParser(packageName,new SubstemaTokenizer().tokenize(packageName,code));
+        res =parser.parseSubstema();
+        parsed = parsed.put(packageName,res);
+        return res;
+    }
 
-        public RSubstema compile(String packageName){
-            RSubstema res = compiled.getOpt(packageName).orElse(null);
-            if(res != null){
-                return res;
-            }
-            res = parse(packageName);
-            PList<RSubstema> dependencies = DependencyResolver.resolve(res,s ->s.getImports().map(i -> parse(i.getPackageName()))
-            );
-            res = res.withImports(
-                    res.getImports().map(i -> new RImport(i.getPackageName(),compile(i.getPackageName())))
-            );
-            res = ResolvePackageNames.resolve(res);
-            compiled = compiled.put(packageName,res);
+    public RSubstema compile(String packageName){
+        RSubstema res = compiled.getOpt(packageName).orElse(null);
+        if(res != null){
             return res;
         }
+        res = parse(packageName);
+        PList<RSubstema> dependencies = DependencyResolver.resolve(res,s ->s.getImports().map(i -> parse(i.getPackageName()))
+        );
+        res = res.withImports(
+                res.getImports().map(i -> new RImport(i.getPackageName(),compile(i.getPackageName())))
+        );
+        res = ResolvePackageNames.resolve(res);
+        compiled = compiled.put(packageName,res);
+        return res;
     }
 }

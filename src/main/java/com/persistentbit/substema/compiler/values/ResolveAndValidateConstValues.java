@@ -7,6 +7,7 @@ import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.substema.compiler.SubstemaException;
+import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.expr.*;
 import com.persistentbit.substema.javagen.JavaGenUtils;
 
@@ -49,7 +50,7 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
 
     @Override
     public RConst visit(RConstBoolean c) {
-        if(expectedType.getName().equals(booleanRClass)){
+        if(expectedType.getName().equals(SubstemaUtils.booleanRClass)){
             return c;
         }
         return cantConvert(c);
@@ -67,20 +68,33 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
 
     @Override
     public RConst visit(RConstNumber c) {
-        throw new NotYet();
+        RClass exp = expectedType.getName();
+        RClass ccls = c.getNumberType();
+        if(exp.equals(c.getNumberType())){
+            return c;
+        }
+        if(exp.equals(SubstemaUtils.longRClass) && ccls.equals(SubstemaUtils.integerRClass)){
+            return new RConstNumber(exp,c.getNumber().longValue());
+        }
+        if(exp.equals(SubstemaUtils.floatRClass) && ccls.equals(SubstemaUtils.doubleRClass)){
+            return new RConstNumber(exp,c.getNumber().floatValue());
+        }
+        return cantConvert(c);
+
     }
 
     @Override
     public RConst visit(RConstEnum c) {
+        RClass cls = resolveClassName.apply(c.getEnumClass());
         return substema.getEnums()
-                .find(e -> c.getEnumClass().equals(e.name) && e.values.contains(c.getEnumValue()))
+                .find(e -> cls.equals(e.name) && e.values.contains(c.getEnumValue()))
                 .map(e -> (RConst)c)
                 .orElse(cantConvert(c));
     }
 
     @Override
     public RConst visit(RConstString c) {
-        if(expectedType.getName().equals(stringRClass)){
+        if(expectedType.getName().equals(SubstemaUtils.stringRClass)){
             return c;
         }
         return cantConvert(c);
@@ -146,39 +160,5 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
     }
 
 
-    private RClass findCommon(RClass left,RClass right){
-        if(left.equals(right)){
-            return left;
-        }
-        /*
-        if(isNumberClass(left)){
-            if(isNumberClass(right)){
-                return
-            } else {
-                throw new Ro
-            }
 
-        }*/
-        throw new NotYet();
-    }
-    static public final RClass stringRClass = new RClass("","String");
-    static public final RClass booleanRClass = new RClass("","Boolean");
-    static public final RClass listRClass = new RClass("","List");
-    static public final RClass setRClass = new RClass("","Set");
-    static public final RClass mapRClass = new RClass("","Map");
-    static public final RClass integerRClass = new RClass("","Integer");
-    static public final RClass byteRClass = new RClass("","Byte");
-    static public final RClass shortRClass = new RClass("","Short");
-    static public final RClass longRClass = new RClass("","Long");
-    static public final RClass floatRClass = new RClass("","Float");
-    static public final RClass doubleRClass = new RClass("","Double");
-
-
-    static public final PSet<RClass> numberClasses = PSet.val(
-            byteRClass,shortRClass,integerRClass,longRClass,
-            floatRClass,doubleRClass
-    );
-    static public boolean isNumberClass(RClass cls){
-        return numberClasses.contains(cls);
-    }
 }

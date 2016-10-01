@@ -9,11 +9,11 @@ import com.persistentbit.substema.compiler.values.RTypeSig;
  * @since 20/09/2016
  */
 public class RConstNumber extends BaseValueClass implements RConst {
-    private final String numberAsString;
+    private final Number number;
     private final RClass numberType;
 
-    public RConstNumber(RClass numberType,String numberAsString) {
-        this.numberAsString = numberAsString;
+    public RConstNumber(RClass numberType,Number number) {
+        this.number = number;
         this.numberType = numberType;
     }
 
@@ -24,8 +24,8 @@ public class RConstNumber extends BaseValueClass implements RConst {
         return copyWith("numberType",numberType);
     }
 
-    public String getNumberAsString() {
-        return numberAsString;
+    public Number getNumber() {
+        return number;
     }
 
     public RClass getNumberType() {
