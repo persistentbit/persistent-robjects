@@ -6,14 +6,11 @@ import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
-import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.core.utils.StringUtils;
-import com.persistentbit.core.utils.functional.Function2;
+import com.persistentbit.core.function.Function2;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.*;
 
-import java.util.function.BooleanSupplier;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
@@ -58,7 +55,7 @@ public class SubstemaParser {
         PList<RInterfaceClass> interfaces = PList.empty();
         while(current.type != SubstemaTokenType.tEOF){
             switch(current.type){
-                case tImport: imports = imports.plus(parseImport());
+                case tImport: imports = imports.plus(parseImport());break;
                 case tCase: values = values.plus(parseValueClass());
                     break;
                 case tRemote: remotes = remotes.plus(parseRemoteClass());
