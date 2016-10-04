@@ -1,9 +1,12 @@
 package com.persistentbit.substema.javagen;
 
+import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.RClass;
 import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.compiler.values.RTypeSig;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -23,6 +26,12 @@ public class JavaGenUtils {
 
     static public String toString(String defaultPackage,RClass cls){
         if(cls.getPackageName().equals(defaultPackage) || cls.getPackageName().isEmpty()){
+            if(cls.getClassName().equals(SubstemaUtils.dateRClass)){
+                return LocalDate.class.getSimpleName();
+            }
+            if(cls.getClassName().equals(SubstemaUtils.dateTimeRClass)){
+                return LocalDateTime.class.getSimpleName();
+            }
             return cls.getClassName();
         }
         return cls.getPackageName() + "." + cls.getClassName();
