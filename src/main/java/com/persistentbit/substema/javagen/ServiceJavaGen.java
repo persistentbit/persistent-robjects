@@ -12,6 +12,7 @@ import com.persistentbit.core.utils.builders.NOT;
 import com.persistentbit.core.utils.builders.SET;
 import com.persistentbit.substema.annotations.Remotable;
 import com.persistentbit.substema.annotations.RemoteCache;
+import com.persistentbit.substema.compiler.SubstemaException;
 import com.persistentbit.substema.compiler.SubstemaParser;
 import com.persistentbit.substema.compiler.SubstemaTokenType;
 import com.persistentbit.substema.compiler.SubstemaTokenizer;
@@ -21,6 +22,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -360,6 +363,8 @@ public class ServiceJavaGen {
                 case "List": name = "PList"; addImport(PList.class); break;
                 case "Set": name = "PSet"; addImport(PSet.class); break;
                 case "Map": name= "PMap"; addImport(PMap.class); break;
+                case "Date": name = "LocalDate"; addImport(LocalDate.class);break;
+                case "DateTime": name= "LocalDateTime"; addImport(LocalDateTime.class);break;
 
                 case "Boolean": name = asPrimitive ? "boolean" : name; break;
                 case "Byte": name = asPrimitive ? "byte" : name; break;
@@ -372,6 +377,9 @@ public class ServiceJavaGen {
                 case "String": break;
 
                 default:
+                    if(pname.isEmpty()){
+                        throw new SubstemaException("Don't know interal class " + name);
+                    }
                     addImport(new RClass(pname,name));
                     break;
             }

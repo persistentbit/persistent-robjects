@@ -19,15 +19,24 @@ public class SubstemaUtils {
     static public final RClass longRClass = new RClass("","Long");
     static public final RClass floatRClass = new RClass("","Float");
     static public final RClass doubleRClass = new RClass("","Double");
+    static public final RClass dateRClass = new RClass("","Date");
+    static public final RClass dateTimeRClass = new RClass("","DateTime");
+
+    static public final PSet<RClass> dateClasses = PSet.val(dateRClass,dateTimeRClass);
+
 
     static public final PSet<RClass> collectionClasses = PSet.val(listRClass,setRClass,mapRClass);
+
+    static public boolean isDateClass(RClass cls){
+        return dateClasses.contains(cls);
+    }
 
     static public boolean isCollectionClass(RClass cls){
         return collectionClasses.contains(cls);
     }
 
     static public boolean isSubstemaClass(RClass cls){
-        return isNumberClass(cls) || isCollectionClass(cls) || cls.equals(stringRClass);
+        return isNumberClass(cls) || isCollectionClass(cls) || cls.equals(stringRClass) || isDateClass(cls);
     }
 
     static public final PSet<RClass> numberClasses = PSet.val(

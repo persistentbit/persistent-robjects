@@ -102,6 +102,8 @@ public class ResolvePackageNames {
             case "List":
             case "Set":
             case "Map":
+            case "Date":
+            case "DateTime":
                 return cls;
         }
 
