@@ -36,7 +36,7 @@ public class SubstemaUtils {
     }
 
     static public boolean isSubstemaClass(RClass cls){
-        return isNumberClass(cls) || isCollectionClass(cls) || cls.equals(stringRClass) || isDateClass(cls);
+        return isNumberClass(cls) || isCollectionClass(cls) || cls.equals(stringRClass)|| cls.equals(booleanRClass) || isDateClass(cls);
     }
 
     static public final PSet<RClass> numberClasses = PSet.val(

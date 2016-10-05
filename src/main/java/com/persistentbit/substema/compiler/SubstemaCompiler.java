@@ -3,9 +3,9 @@ package com.persistentbit.substema.compiler;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.dependencies.DependencyResolver;
-import com.persistentbit.substema.dependencies.DependencySupplier;
 import com.persistentbit.substema.compiler.values.RImport;
 import com.persistentbit.substema.compiler.values.RSubstema;
+import com.persistentbit.substema.dependencies.DependencySupplier;
 
 /**
  * @author Peter Muys
@@ -29,7 +29,7 @@ public class SubstemaCompiler {
         String code = dependencies.apply(packageName).orElse(null);
         if(code == null){
             throw new SubstemaException("Can't find code for package " + packageName );
-        };
+        }
         SubstemaParser parser = new SubstemaParser(packageName,new SubstemaTokenizer().tokenize(packageName,code));
         res =parser.parseSubstema();
         parsed = parsed.put(packageName,res);
