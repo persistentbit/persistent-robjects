@@ -90,22 +90,10 @@ public class ResolvePackageNames {
             return cls;
         }
         String clsName = cls.getClassName();
-        switch(clsName){
-            case "String":
-            case "Byte":
-            case "Short":
-            case "Integer":
-            case "Long":
-            case "Float":
-            case "Double":
-            case "Boolean":
-            case "List":
-            case "Set":
-            case "Map":
-            case "Date":
-            case "DateTime":
-                return cls;
+        if (SubstemaUtils.isSubstemaClass(cls)) {
+            return cls;
         }
+
 
         RClass  res = resolvedNames.getOpt(clsName).orElse(null);
         if(res != null){
