@@ -85,10 +85,10 @@ public class ServiceJavaGen {
         }
 
         public GeneratedJava    generateEnum(REnum e ){
-            bs("public enum " + e.name.getClassName());{
-                println(e.values.toString(","));
+            bs("public enum " + e.getName().getClassName());{
+                println(e.getValues().toString(","));
             }be();
-            return toGenJava(e.name);
+            return toGenJava(e.getName());
         }
         private void addImport(RClass cls){
             imports = imports.plus(cls);

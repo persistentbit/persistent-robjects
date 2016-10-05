@@ -45,7 +45,7 @@ public class RServiceValidator {
     private void checkOverloading() {
         PList<RClass> dup =service.getRemoteClasses().map(rc -> rc.getName())
                 .plusAll(service.getValueClasses().map(vc->vc.getTypeSig().getName()))
-                .plusAll(service.getEnums().map(e -> e.name))
+                .plusAll(service.getEnums().map(e -> e.getName()))
                 .plusAll(service.getInterfaceClasses().map(e->e.getName()))
                 .duplicates();
         if(dup.isEmpty() == false){
@@ -70,9 +70,9 @@ public class RServiceValidator {
         }
     }
     private void checkOverloading(REnum e){
-        PList<String> dup = e.values.duplicates();
+        PList<String> dup = e.getValues().duplicates();
         if(dup.isEmpty() == false){
-            throw new SubstemaException("enum " + e.name.getClassName() + " has duplicated values: " + dup.toString(", "));
+            throw new SubstemaException("enum " + e.getName().getClassName() + " has duplicated values: " + dup.toString(", "));
         }
     }
 
@@ -97,7 +97,7 @@ public class RServiceValidator {
         needed = needed.plusAll(service.getValueClasses().map(vc -> needed(vc)).flatten());
         needed = needed.plusAll(service.getRemoteClasses().map(rc -> needed(rc)).flatten());
         needed = needed.plusAll(service.getInterfaceClasses().map(ic -> needed(ic)).flatten());
-        defined = defined.plusAll(service.getEnums().map(e -> e.name));
+        defined = defined.plusAll(service.getEnums().map(e -> e.getName()));
         defined = defined.plusAll(service.getValueClasses().map(vc -> vc.getTypeSig().getName()));
         defined = defined.plusAll(service.getRemoteClasses().map(rc -> rc.getName()));
         defined = defined.plusAll(service.getInterfaceClasses().map(ic -> ic.getName()));

@@ -7,11 +7,19 @@ import com.persistentbit.core.utils.BaseValueClass;
  * Created by petermuys on 14/09/16.
  */
 public class REnum extends BaseValueClass {
-    public final RClass name;
-    public final PList<String> values;
+    private final RClass name;
+    private final PList<String> values;
 
     public REnum(RClass name, PList<String> values) {
         this.name = name;
         this.values = values;
+    }
+
+    public RClass getName() {
+        return name;
+    }
+
+    public PList<String> getValues() {
+        return values;
     }
 }

@@ -2,10 +2,7 @@ package com.persistentbit.substema.compiler.values;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.POrderedMap;
-import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
-import com.persistentbit.core.tuples.Tuple2;
-import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.substema.compiler.SubstemaException;
 import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.expr.*;
@@ -87,7 +84,7 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
     public RConst visit(RConstEnum c) {
         RClass cls = resolveClassName.apply(c.getEnumClass());
         return substema.getEnums()
-                .find(e -> cls.equals(e.name) && e.values.contains(c.getEnumValue()))
+                .find(e -> cls.equals(e.getName()) && e.getValues().contains(c.getEnumValue()))
                 .map(e -> (RConst)c)
                 .orElse(cantConvert(c));
     }

@@ -1,8 +1,8 @@
 package com.persistentbit.substema.compiler;
 
-import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
+import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.RConst;
@@ -140,7 +140,7 @@ public class ResolvePackageNames {
         res = res.plus(stema.getValueClasses().find( c -> c.getTypeSig().getName().getClassName().equals(className)).map(i -> i.getTypeSig().getName()).orElse(null));
         res = res.plus(stema.getRemoteClasses().find( c -> c.getName().getClassName().equals(className)).map(i -> i.getName()).orElse(null));
 
-        res = res.plus(stema.getEnums().find(e -> e.name.getClassName().equals(className)).map(i -> i.name).orElse(null));
+        res = res.plus(stema.getEnums().find(e -> e.getName().getClassName().equals(className)).map(i -> i.getName()).orElse(null));
 
         res = res.filterNulls().plist();
         if(res.size() > 1){
