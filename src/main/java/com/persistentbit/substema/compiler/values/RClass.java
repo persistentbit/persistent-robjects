@@ -1,5 +1,6 @@
 package com.persistentbit.substema.compiler.values;
 
+import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 
 import java.util.Objects;
@@ -11,6 +12,7 @@ import java.util.Objects;
 public class RClass extends BaseValueClass{
     private final String packageName;
     private final String className;
+
 
     public RClass(String packageName, String className) {
         this.packageName = Objects.requireNonNull(packageName);
@@ -26,9 +28,11 @@ public class RClass extends BaseValueClass{
     }
 
     public RClass withPackageName(String n){
-        return new RClass(n,className);
+        return copyWith("packageName", n);
     }
     public RClass withClassName(String n){
-        return new RClass(packageName,n);
+        return copyWith("className",n);
     }
+
+
 }

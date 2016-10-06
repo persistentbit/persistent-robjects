@@ -10,10 +10,12 @@ import com.persistentbit.core.utils.BaseValueClass;
 public class RRemoteClass extends BaseValueClass {
     private final RClass name;
     private final PList<RFunction> functions;
+    private final PList<RAnnotation> annotations;
 
-    public RRemoteClass(RClass name, PList<RFunction> functions) {
+    public RRemoteClass(RClass name, PList<RFunction> functions,PList<RAnnotation> annotations) {
         this.name = name;
         this.functions = functions;
+        this.annotations = annotations;
     }
 
     public RClass getName() {
@@ -22,6 +24,10 @@ public class RRemoteClass extends BaseValueClass {
 
     public PList<RFunction> getFunctions() {
         return functions;
+    }
+
+    public PList<RAnnotation> getAnnotations() {
+        return annotations;
     }
 
     public RRemoteClass withName(RClass name){

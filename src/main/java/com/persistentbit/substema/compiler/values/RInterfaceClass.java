@@ -10,10 +10,12 @@ import com.persistentbit.core.utils.BaseValueClass;
 public class RInterfaceClass extends BaseValueClass{
     private final RClass name;
     private final PList<RProperty> properties;
+    private final PList<RAnnotation> annotations;
 
-    public RInterfaceClass(RClass name, PList<RProperty> properties) {
+    public RInterfaceClass(RClass name, PList<RProperty> properties,PList<RAnnotation> annotations) {
         this.name = name;
         this.properties = properties;
+        this.annotations = annotations;
     }
 
     public RClass getName() {
@@ -29,5 +31,9 @@ public class RInterfaceClass extends BaseValueClass{
     }
     public RInterfaceClass withProperties(PList<RProperty> properties){
         return copyWith("properties",properties);
+    }
+
+    public PList<RAnnotation> getAnnotations() {
+        return annotations;
     }
 }

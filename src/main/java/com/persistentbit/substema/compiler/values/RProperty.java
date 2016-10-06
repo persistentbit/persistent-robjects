@@ -1,5 +1,6 @@
 package com.persistentbit.substema.compiler.values;
 
+import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 import com.persistentbit.substema.compiler.values.expr.RConst;
 
@@ -12,14 +13,16 @@ public class RProperty extends BaseValueClass {
     private final String     name;
     private final RValueType valueType;
     private final RConst defaultValue;
+    private final PList<RAnnotation> annotations;
 
-    public RProperty(String name, RValueType valueType, RConst defaultValue) {
+    public RProperty(String name, RValueType valueType, RConst defaultValue, PList<RAnnotation> annotations) {
         this.name = name;
         this.valueType = valueType;
         this.defaultValue = defaultValue;
+        this.annotations = annotations;
     }
-    public RProperty(String name, RValueType valueType){
-        this(name,valueType,null);
+    public RProperty(String name, RValueType valueType,PList<RAnnotation> annotations){
+        this(name,valueType,null,annotations);
     }
 
     public String getName() {
@@ -28,6 +31,10 @@ public class RProperty extends BaseValueClass {
 
     public RValueType getValueType() {
         return valueType;
+    }
+
+    public PList<RAnnotation> getAnnotations() {
+        return annotations;
     }
 
     public Optional<RConst> getDefaultValue() {

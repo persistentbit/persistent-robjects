@@ -33,6 +33,7 @@ public class SubstemaTokenizer extends SimpleTokenizer<SubstemaTokenType>{
         add("\\]",tArrayEnd);
         add("-",tMin);
         add("\\+",tPlus);
+        add("@",tAt);
         add("[0-9]+(\\.[0-9]*)?[LlFfDdBbSs]?",tNumber);
         add(SubstemaTokenizer.stringMatcher(tString,'\'',false));
         add(SubstemaTokenizer.stringMatcher(tString,'\"',false));
@@ -56,6 +57,7 @@ public class SubstemaTokenizer extends SimpleTokenizer<SubstemaTokenType>{
                 case "false": return new TokenFound<>(found.text,tFalse,found.ignore);
                 case "null": return new TokenFound<>(found.text,tNull,found.ignore);
                 case "new": return new TokenFound<>(found.text,tNew,found.ignore);
+                case "annotation": return new TokenFound<>(found.text,tAnnotation,found.ignore);
                 default: return found;
             }
         }));

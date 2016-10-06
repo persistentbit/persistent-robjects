@@ -9,19 +9,23 @@ import java.util.Optional;
 
 /**
  * Created by petermuys on 14/09/16.
+ * TODO
  */
 public class RFunction extends BaseValueClass {
     private final String name;
     private final PList<RFunctionParam> params;
     private final boolean cached;
     @Nullable  private final RValueType resultType;
+    private final PList<RAnnotation> annotations;
 
-    public RFunction(String name, PList<RFunctionParam> params, RValueType resultType,boolean cached) {
+    public RFunction(String name, PList<RFunctionParam> params, RValueType resultType,boolean cached,PList<RAnnotation> annotations) {
         this.name = name;
         this.params = params;
         this.resultType = resultType;
         this.cached = cached;
+        this.annotations = annotations;
     }
+
 
     public String getName() {
         return name;
@@ -37,6 +41,10 @@ public class RFunction extends BaseValueClass {
 
     public Optional<RValueType> getResultType() {
         return Optional.ofNullable(resultType);
+    }
+
+    public PList<RAnnotation> getAnnotations() {
+        return annotations;
     }
 
     public RFunction    withName(String name){

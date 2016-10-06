@@ -1,5 +1,6 @@
 package com.persistentbit.substema.compiler.values;
 
+import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 import com.persistentbit.core.utils.NoEqual;
 
@@ -11,10 +12,12 @@ public class RFunctionParam extends BaseValueClass {
     @NoEqual
     private final String name;
     private final RValueType valueType;
+    private final PList<RAnnotation> annotations;
 
-    public RFunctionParam(String name, RValueType valueType) {
+    public RFunctionParam(String name, RValueType valueType,PList<RAnnotation> annotations) {
         this.name = name;
         this.valueType = valueType;
+        this.annotations = annotations;
     }
 
     public String getName() {
@@ -30,5 +33,9 @@ public class RFunctionParam extends BaseValueClass {
     }
     public RFunctionParam withValueType(RValueType vt){
         return copyWith("valueType",vt);
+    }
+
+    public PList<RAnnotation> getAnnotations() {
+        return annotations;
     }
 }

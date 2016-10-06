@@ -6,6 +6,7 @@ import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
+import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.core.utils.StringUtils;
 import com.persistentbit.core.function.Function2;
 import com.persistentbit.substema.compiler.values.*;
@@ -46,7 +47,11 @@ public class SubstemaParser {
     }
 
 
-
+    /**
+     * Main function to parse a Substema File.<br>
+     *
+     * @return The parsed RSubstema.
+     */
     public RSubstema parseSubstema() {
         PList<RImport> imports = PList.empty();
         PList<RValueClass>  values = PList.empty();
@@ -54,15 +59,20 @@ public class SubstemaParser {
         PList<REnum> enums = PList.empty();
         PList<RInterfaceClass> interfaces = PList.empty();
         while(current.type != SubstemaTokenType.tEOF){
+            PList<RAnnotation> annotations = parseAnnotations();
             switch(current.type){
-                case tImport: imports = imports.plus(parseImport());break;
-                case tCase: values = values.plus(parseValueClass());
+                case tImport:
+                    if(annotations.isEmpty() == false){
+                        throw new SubstemaParserException(current.pos,"Did not expect annotations for an import statement");
+                    }
+                    imports = imports.plus(parseImport());break;
+                case tCase: values = values.plus(parseValueClass(annotations));
                     break;
-                case tRemote: remotes = remotes.plus(parseRemoteClass());
+                case tRemote: remotes = remotes.plus(parseRemoteClass(annotations));
                     break;
-                case tEnum: enums = enums.plus(parseEnum());
+                case tEnum: enums = enums.plus(parseEnum(annotations));
                     break;
-                case tInterface: interfaces = interfaces.plus(parseInterface());
+                case tInterface: interfaces = interfaces.plus(parseInterface(annotations));
                     break;
                 default:
                     throw new SubstemaParserException(current.pos,"Expected a definition, not '" + current.text + "'");
@@ -73,6 +83,24 @@ public class SubstemaParser {
         return service;
     }
 
+    /**
+     * Try to parse annotations at the current position.<br>
+     * If none are found, then an empty PList is returned.<br>
+     * @return The List of parsed RAnnotations
+     */
+    private PList<RAnnotation> parseAnnotations(){
+        PList<RAnnotation> result = PList.empty();
+        while(current.type == tAt){
+            next();//skip @
+            throw new NotYet("Parsing of annotation");
+        }
+        return result;
+    }
+
+
+    /**
+     * Parse an Import statement
+     */
     private RImport parseImport() {
         skip(tImport,"'import' expected.");
         String packageName = parsePackageName();
@@ -116,21 +144,21 @@ public class SubstemaParser {
         return new RClass(packageName,name);
     }
 
-    private RInterfaceClass parseInterface() {
+    private RInterfaceClass parseInterface(PList<RAnnotation> annotations) {
         skip(tInterface,"'interface' expected");
         RClass name =  parseRClass(packageName);
         PList<RProperty> p = PList.empty();
         if(current.type == tBlockStart){
             next();
             while(current.type!= tEOF && current.type != tBlockEnd){
-                p = p.plus(parseRProperty());
+                p = p.plus(parseRProperty(parseAnnotations()));
             }
             skip(tBlockEnd,"'}' expected");
         }
-        return new RInterfaceClass(name,p);
+        return new RInterfaceClass(name,p,annotations);
     }
 
-    private RValueClass parseValueClass(){
+    private RValueClass parseValueClass(PList<RAnnotation> annotations){
 
         skip(tCase,"'value' expected");
         skip(tClass,"'class' expected");
@@ -146,11 +174,11 @@ public class SubstemaParser {
         if(current.type == tBlockStart){
             next();
             while(current.type!= tEOF && current.type != tBlockEnd){
-                props = props.plus(parseRProperty());
+                props = props.plus(parseRProperty(parseAnnotations()));
             }
             skip(tBlockEnd,"'}' expected");
         }
-        return new RValueClass(sig,props,interfaces);
+        return new RValueClass(sig,props,interfaces,annotations);
     }
 
     private RValueType  parseRValueType() {
@@ -163,7 +191,7 @@ public class SubstemaParser {
         return new RValueType(sig,required);
     }
 
-    private RProperty   parseRProperty() {
+    private RProperty   parseRProperty(PList<RAnnotation> annotations) {
         assertType(tIdentifier,"property name expected");
         String name = current.text;
         next(); //skip name;
@@ -176,7 +204,7 @@ public class SubstemaParser {
             defaultValue = parseValue();
         }
         skipEndOfStatement();
-        return new RProperty(name,valueType,defaultValue);
+        return new RProperty(name,valueType,defaultValue,annotations);
     }
     private RConst parseValue(){
         switch (current.type){
@@ -296,7 +324,7 @@ public class SubstemaParser {
         throw new SubstemaParserException(current.pos,"Expected a boolean value");
     }
 
-    private RFunctionParam  parseFunctionParam() {
+    private RFunctionParam  parseFunctionParam(PList<RAnnotation> annotations) {
         assertType(tIdentifier,"parameter name expected");
         String name = current.text;
         next(); //skip name;
@@ -304,10 +332,10 @@ public class SubstemaParser {
         skip(tColon,"':' expected after parameter name");
         RValueType valueType = parseRValueType();
 
-        return new RFunctionParam(name,valueType);
+        return new RFunctionParam(name,valueType,annotations);
     }
 
-    private RRemoteClass parseRemoteClass() {
+    private RRemoteClass parseRemoteClass(PList<RAnnotation> annotations) {
         skip(tRemote,"'remote' expected");
         skip(tClass,"'class' expected");
         assertType(tIdentifier,"function name expected");
@@ -318,21 +346,21 @@ public class SubstemaParser {
         if(current.type == tBlockStart){
             next();
             while(current.type!= tEOF && current.type != tBlockEnd){
-                functions = functions.plus(parseRFunction());
+                functions = functions.plus(parseRFunction(parseAnnotations()));
             }
             skip(tBlockEnd,"'}' expected");
         }
-        return new RRemoteClass(name,functions);
+        return new RRemoteClass(name,functions,annotations);
     }
 
-    private RFunction parseRFunction() {
+    private RFunction parseRFunction(PList<RAnnotation> annotations) {
         assertType(tIdentifier,"function name expected");
         String name = current.text;
         next(); //skip name;
         skip(tOpen,"'(' expected after function name");
         PList<RFunctionParam> params = PList.empty();
         if(current.type == tIdentifier) {
-            params = sep(tComma, () -> parseFunctionParam());
+            params = sep(tComma, () -> parseFunctionParam(parseAnnotations()));
         }
         skip(tClose,"')' expected after function parameters");
         skip(tColon,"':' expected to define the function return type");
@@ -352,7 +380,7 @@ public class SubstemaParser {
         }
 
         skipEndOfStatement();
-        return new RFunction(name,params,returnType,cached);
+        return new RFunction(name,params,returnType,cached,annotations);
     }
 
     private String parsePackageName() {
@@ -385,7 +413,7 @@ public class SubstemaParser {
         return res;
     }
 
-    private REnum parseEnum(){
+    private REnum parseEnum(PList<RAnnotation> annotations){
         skip(tEnum,"'enum' expected");
         assertType(tIdentifier,"enum name expected.");
         String name = current.text;
@@ -402,7 +430,7 @@ public class SubstemaParser {
         }
         next();//skip ;
         skip(tBlockEnd,"'}' expected to end enum definintion for '" + name + "'");
-        return new REnum(new RClass(packageName,name),values);
+        return new REnum(new RClass(packageName,name),values,annotations);
     }
 
     private RTypeSig    replaceType(RTypeSig type, RClass genericName, RTypeSig genericType){

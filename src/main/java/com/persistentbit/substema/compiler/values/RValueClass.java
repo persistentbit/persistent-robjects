@@ -10,11 +10,13 @@ public class RValueClass extends BaseValueClass {
     private final RTypeSig typeSig;
     private final PList<RProperty> properties;
     private final PList<RClass> interfaceClasses;
+    private final PList<RAnnotation> annotations;
 
-    public RValueClass(RTypeSig typeSig, PList<RProperty> properties,PList<RClass> interfaceClasses) {
+    public RValueClass(RTypeSig typeSig, PList<RProperty> properties,PList<RClass> interfaceClasses,PList<RAnnotation> annotations) {
         this.typeSig = typeSig;
         this.properties = properties;
         this.interfaceClasses = interfaceClasses;
+        this.annotations = annotations;
     }
 
     public RTypeSig getTypeSig() {
@@ -27,6 +29,10 @@ public class RValueClass extends BaseValueClass {
 
     public PList<RClass> getInterfaceClasses() {
         return interfaceClasses;
+    }
+
+    public PList<RAnnotation> getAnnotations() {
+        return annotations;
     }
 
     public RValueClass withTypeSig(RTypeSig typeSig){
