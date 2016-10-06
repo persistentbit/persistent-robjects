@@ -50,4 +50,5 @@ public class RProperty extends BaseValueClass {
     public RProperty withDefaultValue(RConst value){
         return copyWith("defaultValue",value);
     }
+    public RProperty withAnnotations(PList<RAnnotation> annotations) { return copyWith("annotations",annotations);}
 }

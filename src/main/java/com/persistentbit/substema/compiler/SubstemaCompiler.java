@@ -6,6 +6,8 @@ import com.persistentbit.core.dependencies.DependencyResolver;
 import com.persistentbit.substema.compiler.values.RImport;
 import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.dependencies.DependencySupplier;
+import com.persistentbit.substema.dependencies.SupplierDef;
+import com.persistentbit.substema.dependencies.SupplierType;
 
 /**
  * @author Peter Muys
@@ -18,7 +20,7 @@ public class SubstemaCompiler {
     private PMap<String,RSubstema> compiled = PMap.empty();
 
     public SubstemaCompiler(DependencySupplier dependencies) {
-        this.dependencies = dependencies;
+        this.dependencies = dependencies.withSuppliers(dependencies.getSuppliers().plus(new SupplierDef(SupplierType.resource,"/")));
     }
 
     public RSubstema    parse(String packageName){
@@ -47,7 +49,7 @@ public class SubstemaCompiler {
         res = res.withImports(
                 res.getImports().map(i -> new RImport(i.getPackageName(),compile(i.getPackageName())))
         );
-        res = ResolvePackageNames.resolve(res);
+        res = ResolvePackageNames.resolve(this,res);
         compiled = compiled.put(packageName,res);
         return res;
     }

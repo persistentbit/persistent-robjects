@@ -16,15 +16,19 @@ import java.util.Optional;
 public class ResolvePackageNames {
     private final String packageName;
     private final RSubstema org;
+    private final SubstemaCompiler compiler;
     private  PMap<String,RClass>   resolvedNames = PMap.empty();
 
-    private ResolvePackageNames(RSubstema org) {
+
+    private ResolvePackageNames(SubstemaCompiler compiler,RSubstema org) {
         this.org = org;
         this.packageName = org.getPackageName();
+        this.compiler = compiler;
+
     }
 
-    static public RSubstema    resolve(RSubstema compiled){
-        return new ResolvePackageNames(compiled).resolve();
+    static public RSubstema    resolve(SubstemaCompiler compiler,RSubstema compiled){
+        return new ResolvePackageNames(compiler,compiled).resolve();
     }
 
     public RSubstema resolve(){
@@ -34,24 +38,44 @@ public class ResolvePackageNames {
                 org.getEnums().map(ec-> resolve(ec)),
                 org.getValueClasses().map(vc -> resolve(vc)),
                 org.getRemoteClasses().map(rc -> resolve(rc)),
-                org.getInterfaceClasses().map(ic -> resolve(ic))
+                org.getInterfaceClasses().map(ic -> resolve(ic)),
+                org.getAnnotationDefs().map(ad-> resolve(ad))
         );
-        return ResolveAndValidateConstValues.resolveAndValidate(res, rcls -> rcls.getPackageName().isEmpty() ? findName(res,rcls.getClassName()).get() : rcls);
+        return ResolveAndValidateConstValues.resolveAndValidate(res,
+                rcls -> rcls.getPackageName().isEmpty()
+                        ? findName(res,rcls.getClassName()).get() : rcls);
     }
+
+    private RAnnotationDef resolve(RAnnotationDef ad){
+        return ad;
+    }
+
 
     private REnum   resolve(REnum ec){
         return ec;
     }
     private RValueClass resolve(RValueClass vc){
         PMap<String,RClass> backup = resolvedNames;
-        resolvedNames = resolvedNames.plusAll(vc.getTypeSig().getGenerics().map(ts -> new Tuple2<String, RClass>(ts.getName().getClassName(),ts.getName().withPackageName(packageName))));
+        resolvedNames = resolvedNames.plusAll(
+                vc.getTypeSig().getGenerics().map(
+                        ts -> new Tuple2<>(ts.getName().getClassName(),ts.getName().withPackageName(packageName)
+                        )
+                )
+        );
         RValueClass result = vc.withInterfaceClasses(vc.getInterfaceClasses().map(rc -> full(rc)))
                 .withProperties(vc.getProperties().map(p -> resolve(p)))
                 .withTypeSig(resolve(vc.getTypeSig()))
+                .withAnnotations(resolve(vc.getAnnotations()))
                 ;
         resolvedNames = backup;
         return result;
     }
+
+    private PList<RAnnotation> resolve(PList<RAnnotation> annotations){
+        return annotations.map(an -> an.withName(full(an.getName())));
+    }
+
+
     private RTypeSig resolve(RTypeSig typeSig){
         return typeSig.withName(full(typeSig.getName())).withGenerics(typeSig.getGenerics().map(g-> resolve(g)));
     }
@@ -60,7 +84,7 @@ public class ResolvePackageNames {
 
     }
     private RProperty resolve(RProperty p){
-        return p.withValueType(resolve(p.getValueType()));
+        return p.withValueType(resolve(p.getValueType())).withAnnotations(resolve(p.getAnnotations()));
     }
     private RValueType  resolve(RValueType vt){
         return vt.withTypeSig(resolve(vt.getTypeSig()));
@@ -114,6 +138,11 @@ public class ResolvePackageNames {
             throw new SubstemaException("Multiple definitions for " + clsName + ": " + all.toString(","));
         }
         if(all.isEmpty()){
+            RSubstema implicitAnnotations = compiler.compile("com.persistentbit.substema.annotations");
+            all = all.plus(findName(implicitAnnotations,clsName).orElse(null));
+            all = all.filterNulls().plist();
+        }
+        if(all.isEmpty()){
             throw new SubstemaException("No  definitions found for " + clsName);
         }
         return all.head();
@@ -129,6 +158,8 @@ public class ResolvePackageNames {
         res = res.plus(stema.getRemoteClasses().find( c -> c.getName().getClassName().equals(className)).map(i -> i.getName()).orElse(null));
 
         res = res.plus(stema.getEnums().find(e -> e.getName().getClassName().equals(className)).map(i -> i.getName()).orElse(null));
+
+        res = res.plus(stema.getAnnotationDefs().find(e -> e.getName().getClassName().equals(className)).map(i -> i.getName()).orElse(null));
 
         res = res.filterNulls().plist();
         if(res.size() > 1){

@@ -1,12 +1,12 @@
 package com.persistentbit.substema.compiler;
 
+import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
-import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.core.utils.StringUtils;
 import com.persistentbit.core.function.Function2;
 import com.persistentbit.substema.compiler.values.*;
@@ -46,6 +46,14 @@ public class SubstemaParser {
         return current;
     }
 
+    /**
+     * Peek at the next token value, without changing the current token.<br>
+     * @return The next token or tEOF if there are no more tokens.
+     */
+    private Token<SubstemaTokenType> peek(){
+         return tokens.headOpt().orElseGet(() -> new Token<>(current.pos,tEOF,""));
+    }
+
 
     /**
      * Main function to parse a Substema File.<br>
@@ -58,6 +66,7 @@ public class SubstemaParser {
         PList<RRemoteClass> remotes = PList.empty();
         PList<REnum> enums = PList.empty();
         PList<RInterfaceClass> interfaces = PList.empty();
+        PList<RAnnotationDef> annotationDefs = PList.empty();
         while(current.type != SubstemaTokenType.tEOF){
             PList<RAnnotation> annotations = parseAnnotations();
             switch(current.type){
@@ -74,17 +83,52 @@ public class SubstemaParser {
                     break;
                 case tInterface: interfaces = interfaces.plus(parseInterface(annotations));
                     break;
+                case tAnnotation:
+                    if(annotations.isEmpty() == false){
+                        throw new SubstemaParserException(current.pos,"Dit not expect annotations for an annotation definition");
+                    }
+                    annotationDefs = annotationDefs.plus(parseAnnotionDef());break;
                 default:
                     throw new SubstemaParserException(current.pos,"Expected a definition, not '" + current.text + "'");
             }
         }
-        RSubstema service = new RSubstema(imports,packageName,enums,values,remotes,interfaces);
+        RSubstema service = new RSubstema(imports,packageName,enums,values,remotes,interfaces,annotationDefs);
 
         return service;
     }
 
     /**
-     * Try to parse annotations at the current position.<br>
+     * Parse an annotation definition.<br>
+     * Example: <br>
+     * {@code<code>
+     *     annotation AnnotationName{
+     *         property1:Type = default1;
+     *         property2:Type;
+     *         property3:?Type;
+     *     }
+     *
+     * </code>
+     * }
+     *
+     *
+     * @return
+     */
+    private RAnnotationDef parseAnnotionDef(){
+        skip(tAnnotation,"'annotation' keyword expected");
+        RClass cls = parseRClass(packageName);
+        PList<RProperty> props = PList.empty();
+        if(current.type == tBlockStart){
+            next();
+            while(current.type!= tEOF && current.type != tBlockEnd){
+                props = props.plus(parseRProperty(parseAnnotations()));
+            }
+            skip(tBlockEnd,"'}' expected for the end of the annotation definition of " + cls.getClassName());
+        }
+        return new RAnnotationDef(cls,props);
+     }
+
+    /**
+     * Try to parse a list of annotations values at the current position.<br>
      * If none are found, then an empty PList is returned.<br>
      * @return The List of parsed RAnnotations
      */
@@ -92,10 +136,39 @@ public class SubstemaParser {
         PList<RAnnotation> result = PList.empty();
         while(current.type == tAt){
             next();//skip @
-            throw new NotYet("Parsing of annotation");
+            RClass name = parseRClass("");
+            PMap<String,RConst> values = PMap.empty();
+
+            if(current.type == tOpen){
+                next();
+                if(current.type != tClose){
+                    values = values.plusAll(sep(tComma, () -> {
+                        String propName = null;
+
+                        if(peek().type == tAssign){
+                            propName = current.text;
+                            skip(tIdentifier,"propery name expected for annotation " + name);
+
+                        } //else{
+                        //if(isFirstDefault == false){
+                        //    throw new SubstemaParserException(current.pos,"There can be maximum 1 default value");
+                        //}
+                        //isFirstDefault = false;
+                        //}
+
+                        RConst value = parseConst();
+                        return Tuple2.of(propName,value);
+                    }));
+                }
+
+                skip(tClose,"')' expected to close the annotation " + name);
+            }
+
+            result = result.plus(new RAnnotation(name,values));
         }
         return result;
     }
+
 
 
     /**
@@ -138,6 +211,11 @@ public class SubstemaParser {
         next();
     }
 
+    /**
+     * parse the Class name and create a RClass with the given packageName and the parsed class Name
+     * @param packageName The packageName for the RClass
+     * @return a new RClass
+     */
     private RClass parseRClass(String packageName){
         String name = current.text;
         skip(tIdentifier,"identifier expected!");
@@ -158,6 +236,11 @@ public class SubstemaParser {
         return new RInterfaceClass(name,p,annotations);
     }
 
+    /**
+     * Parse a case class definition.
+     * @param annotations
+     * @return
+     */
     private RValueClass parseValueClass(PList<RAnnotation> annotations){
 
         skip(tCase,"'value' expected");
@@ -201,12 +284,17 @@ public class SubstemaParser {
         RConst defaultValue = null;
         if(current.type == tAssign){
             next();//skip '='
-            defaultValue = parseValue();
+            defaultValue = parseConst();
         }
         skipEndOfStatement();
         return new RProperty(name,valueType,defaultValue,annotations);
     }
-    private RConst parseValue(){
+
+    /**
+     * Parse a value literal.<br>
+     * @return The literal.
+     */
+    private RConst parseConst(){
         switch (current.type){
             case tArrayStart: return parseValueArray();
             case tTrue:
@@ -221,7 +309,7 @@ public class SubstemaParser {
             case tString: {
                 String value = current.text;
                 next();
-                return new RConstString(value);
+                return new RConstString(value.substring(1,value.length()-1));
             }
             default:
                 throw new SubstemaParserException(current.pos,"Expected a literal value");
@@ -237,7 +325,7 @@ public class SubstemaParser {
                 String propName = current.text;
                 skip(tIdentifier,"Expected property name.");
                 skip(tColon,"':' expected after property name.");
-                return new Tuple2<>(propName,parseValue());
+                return new Tuple2<>(propName, parseConst());
             }));
         }
         skip(tClose,"')' expected after value class aruments");
@@ -306,7 +394,7 @@ public class SubstemaParser {
         skip(tArrayStart,"'[' expected");
         PList<RConst>   elements = PList.empty();
         if(current.type != tArrayEnd){
-            elements =sep(tComma,this::parseValue);
+            elements =sep(tComma,this::parseConst);
         }
         skip(tArrayEnd,"']' expected");
         return new RConstArray(elements);
@@ -400,7 +488,13 @@ public class SubstemaParser {
     }
 
 
-
+    /**
+     * Parse a list of values, separated by the supplied seperation token type.<br>
+     * @param sep   The token type of the seperator
+     * @param r The parser for 1 value
+     * @param <T>   The type of the value parsers.
+     * @return the list of parsed items.
+     */
     private <T> PList<T> sep(SubstemaTokenType sep, Supplier<T> r){
         PList<T> res = PList.empty();
         while(current.type != tEOF){

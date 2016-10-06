@@ -39,6 +39,10 @@ public class RValueClass extends BaseValueClass {
         return copyWith("typeSig",typeSig);
     }
 
+    public RValueClass withAnnotations(PList<RAnnotation> annotations){
+        return copyWith("annotations",annotations);
+    }
+
     public RValueClass withProperties(PList<RProperty> properties){
         return copyWith("properties",properties);
     }

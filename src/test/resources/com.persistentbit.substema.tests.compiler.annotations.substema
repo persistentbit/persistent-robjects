@@ -1,0 +1,29 @@
+
+
+
+annotation Table{
+    tableName:?String;
+}
+
+annotation Column{
+    columnName:?String;
+}
+
+annotation AutoGen{
+
+}
+
+annotation VarChar{
+    length:Integer = 256;
+}
+
+@Table("users")
+@Doc("Dit is een tabel met users")
+case class Users{
+    @AutoGen
+    id:Long;
+    @VarChar(80)
+    userName:String;
+    @NoToString()
+    info:?String;
+}

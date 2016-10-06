@@ -2,10 +2,13 @@ package com.persistentbit.substema.dependencies;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
+import com.persistentbit.core.utils.BaseValueClass;
 
 import java.io.*;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.Optional;
@@ -17,13 +20,21 @@ import java.util.zip.ZipFile;
  * Created by petermuys on 25/09/16.
  */
 
-public class DependencySupplier implements Function<String,Optional<String>> {
+public class DependencySupplier extends BaseValueClass implements Function<String,Optional<String>> {
     static public final String substemaDefFileExtension = ".substema";
     private final PList<SupplierDef> suppliers;
     private PMap<String,String> resolved = PMap.empty();
 
     public DependencySupplier(PList<SupplierDef> suppliers) {
         this.suppliers = suppliers;
+    }
+
+    public DependencySupplier withSuppliers(PList<SupplierDef> suppliers){
+        return copyWith("suppliers",suppliers);
+    }
+
+    public PList<SupplierDef> getSuppliers() {
+        return suppliers;
     }
 
     @Override
@@ -40,6 +51,7 @@ public class DependencySupplier implements Function<String,Optional<String>> {
             switch (def.getType()){
                 case archive: found = resolveArchive(def,packageName);break;
                 case folder: found = resolveFolder(def,packageName);break;
+                case resource: found = resolveDependency(def,packageName);break;
                 default: throw new RuntimeException("Unknown dependency supplier type: " + def.getType());
             }
             if(found != null){
@@ -74,6 +86,19 @@ public class DependencySupplier implements Function<String,Optional<String>> {
 
         } catch (IOException e) {
             throw new RuntimeException("Error handling archive " + f.getAbsolutePath(),e);
+        }
+    }
+
+    private String resolveDependency(SupplierDef def, String packageName){
+        URL in = this.getClass().getResource(def.getPath() + packageName + ".substema");
+        if(in == null){
+
+            return null;
+        }
+        try{
+            return new String(Files.readAllBytes(Paths.get(in.toURI())));
+        } catch (Exception e){
+            throw new RuntimeException("Error getting resource for " + in.toString());
         }
     }
 

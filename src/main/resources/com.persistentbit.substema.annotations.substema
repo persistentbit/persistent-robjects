@@ -1,0 +1,10 @@
+
+annotation NoToString{}
+annotation ToStringName{
+    name:String;
+}
+annotation NoEquals{}
+annotation Doc{
+    info:String;
+}
+

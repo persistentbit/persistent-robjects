@@ -12,11 +12,10 @@ import com.persistentbit.core.utils.builders.NOT;
 import com.persistentbit.core.utils.builders.SET;
 import com.persistentbit.substema.annotations.Remotable;
 import com.persistentbit.substema.annotations.RemoteCache;
-import com.persistentbit.substema.compiler.SubstemaException;
-import com.persistentbit.substema.compiler.SubstemaParser;
-import com.persistentbit.substema.compiler.SubstemaTokenType;
-import com.persistentbit.substema.compiler.SubstemaTokenizer;
+import com.persistentbit.substema.compiler.*;
 import com.persistentbit.substema.compiler.values.*;
+import com.persistentbit.substema.compiler.values.expr.RConst;
+import com.persistentbit.substema.compiler.values.expr.RConstString;
 
 import java.net.URL;
 import java.nio.file.Files;
@@ -124,9 +123,28 @@ public class ServiceJavaGen {
             return toGenJava(ic.getName());
         }
 
+        /**
+         * Generate java for a Case Class (or value class)
+         * @param vc The RValueClass to generate code for
+         * @return  The generated Java code
+         */
         public GeneratedJava    generateValueClass(RValueClass vc){
+            //Lets first generate the javadoc (if any)
+            PList<RAnnotation> docs = getAnnotations(vc.getAnnotations(), SubstemaUtils.docRClass);
+            if(docs.isEmpty() == false){
+                println("/**");
+                docs.forEach(d -> {
+                    PMap<String,RConst> props = d.getProperties();
+                    RConstString info = (RConstString)props.getOpt("info").orElseGet(() -> props.get(null));
+                    println(" * " + info.getValue());
+                });
+                println(" */");
+            }
+
+
             String impl = vc.getInterfaceClasses().isEmpty() ? "" :
                     " implements " + vc.getInterfaceClasses().map(ic -> ic.getClassName()).toString(",");
+
             bs("public class " + toString(vc.getTypeSig())+ impl);{
                 vc.getProperties().forEach(p -> {
 
@@ -446,6 +464,15 @@ public class ServiceJavaGen {
 
     }
 
+    /**
+     * Filter an annotationList using the annotation RClass name
+     * @param al The list with annotations
+     * @param anCls The RClass to filter
+     * @return The list with annotations with the same RClass
+     */
+    public PList<RAnnotation> getAnnotations(PList<RAnnotation> al, RClass anCls){
+        return al.filter(an -> an.getName().equals(anCls));
+    }
 
 
 

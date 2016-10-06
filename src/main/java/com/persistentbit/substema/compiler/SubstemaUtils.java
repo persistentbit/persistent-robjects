@@ -8,6 +8,11 @@ import com.persistentbit.substema.compiler.values.RClass;
  */
 public class SubstemaUtils {
 
+    static public final String annotationsPackage = "com.persistentbit.substema.annotations";
+
+    static public final RClass docRClass = new RClass(annotationsPackage,"Doc");
+    static public final RClass noToString = new RClass(annotationsPackage,"NoToString");
+
     static public final RClass stringRClass = new RClass("","String");
     static public final RClass booleanRClass = new RClass("","Boolean");
     static public final RClass listRClass = new RClass("","List");

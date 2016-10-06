@@ -13,14 +13,16 @@ public class RSubstema extends BaseValueClass{
     private final PList<RValueClass> valueClasses;
     private final PList<RRemoteClass> remoteClasses;
     private final PList<RInterfaceClass> interfaceClasses;
+    private final PList<RAnnotationDef> annotationDefs;
 
-    public RSubstema(PList<RImport> imports,String packageName, PList<REnum> enums, PList<RValueClass> valueClasses, PList<RRemoteClass> remoteClasses, PList<RInterfaceClass> interfaceClasses) {
+    public RSubstema(PList<RImport> imports,String packageName, PList<REnum> enums, PList<RValueClass> valueClasses, PList<RRemoteClass> remoteClasses, PList<RInterfaceClass> interfaceClasses,PList<RAnnotationDef> annotationDefs) {
         this.imports = imports;
         this.packageName = packageName;
         this.enums = enums;
         this.valueClasses = valueClasses;
         this.remoteClasses = remoteClasses;
         this.interfaceClasses = interfaceClasses;
+        this.annotationDefs = annotationDefs;
     }
 
     public String getPackageName() {
@@ -45,6 +47,10 @@ public class RSubstema extends BaseValueClass{
 
     public PList<RInterfaceClass> getInterfaceClasses() {
         return interfaceClasses;
+    }
+
+    public PList<RAnnotationDef> getAnnotationDefs() {
+        return annotationDefs;
     }
 
     public RSubstema    withImports(PList<RImport> imports){
