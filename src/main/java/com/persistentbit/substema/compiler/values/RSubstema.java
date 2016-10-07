@@ -25,6 +25,11 @@ public class RSubstema extends BaseValueClass{
         this.annotationDefs = annotationDefs;
     }
 
+    @Override
+    public String toString() {
+        return "RSubstema[" + packageName + "]";
+    }
+
     public String getPackageName() {
         return packageName;
     }

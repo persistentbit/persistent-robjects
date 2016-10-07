@@ -44,6 +44,11 @@ public class AnnotationsUtils {
         return annotations.filter(a -> a.getName().equals(cls));
     }
 
+    public Optional<RAnnotation> getOneAnnotation(PList<RAnnotation> annotations, RClass cls){
+        PList<RAnnotation> l = getAnnotation(annotations,cls);
+        return l.headOpt();
+    }
+
     /**
      * Check if an annotation is defined in a list of annotations
      * @param annotations the list of annotations

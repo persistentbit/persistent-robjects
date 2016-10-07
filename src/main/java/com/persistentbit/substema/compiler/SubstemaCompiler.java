@@ -18,10 +18,24 @@ public class SubstemaCompiler {
     private final DependencySupplier dependencies;
     private PMap<String,RSubstema> parsed = PMap.empty();
     private PMap<String,RSubstema> compiled = PMap.empty();
+    private final PList<String> implicitImportPackages;
 
+    public SubstemaCompiler(DependencySupplier dependencies, PList<String> implicitImportPackages) {
+        this.dependencies = dependencies.withSuppliers(dependencies.getSuppliers().plus(new SupplierDef(SupplierType.resource,"/")));
+        this.implicitImportPackages = implicitImportPackages;
+    }
     public SubstemaCompiler(DependencySupplier dependencies) {
         this.dependencies = dependencies.withSuppliers(dependencies.getSuppliers().plus(new SupplierDef(SupplierType.resource,"/")));
+        this.implicitImportPackages = PList.empty();
     }
+    public SubstemaCompiler withImplicitImportPackages(PList<String> implicitImportPackages){
+        return new SubstemaCompiler(dependencies,implicitImportPackages);
+    }
+
+    public PList<String>    getImplicitImportPackages(){
+        return implicitImportPackages;
+    }
+
 
     public RSubstema    parse(String packageName){
         RSubstema res = parsed.getOpt(packageName).orElse(null);
@@ -33,17 +47,25 @@ public class SubstemaCompiler {
             throw new SubstemaException("Can't find code for package " + packageName );
         }
         SubstemaParser parser = new SubstemaParser(packageName,new SubstemaTokenizer().tokenize(packageName,code));
-        res =parser.parseSubstema();
+        res = parser.parseSubstema();
+        for(String implicit : implicitImportPackages){
+            if(packageName.equals(implicit) == false && res.getImports().find(i -> i.getPackageName().equals(implicit)).isPresent() == false){
+                res = res.withImports(res.getImports().plus(new RImport(packageName)));
+            }
+        }
+
         parsed = parsed.put(packageName,res);
         return res;
     }
 
     public RSubstema compile(String packageName){
+        //System.out.println("Compiling " + packageName);
         RSubstema res = compiled.getOpt(packageName).orElse(null);
         if(res != null){
             return res;
         }
         res = parse(packageName);
+
         PList<RSubstema> dependencies = DependencyResolver.resolve(res,s ->s.getImports().map(i -> parse(i.getPackageName()))
         );
         res = res.withImports(
