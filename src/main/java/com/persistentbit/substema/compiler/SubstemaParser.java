@@ -130,41 +130,59 @@ public class SubstemaParser {
     /**
      * Try to parse a list of annotations values at the current position.<br>
      * If none are found, then an empty PList is returned.<br>
+     * if a doc token <<....>> is found than this is transformed to a @Doc annotation<br>
      * @return The List of parsed RAnnotations
      */
     private PList<RAnnotation> parseAnnotations(){
         PList<RAnnotation> result = PList.empty();
-        while(current.type == tAt){
-            next();//skip @
-            RClass name = parseRClass("");
-            PMap<String,RConst> values = PMap.empty();
+        while(current.type == tAt || current.type == tDoc){
+            if(current.type == tDoc){
+                result = result.plus(
+                        new RAnnotation(
+                                SubstemaUtils.docRClass,
+                                PMap.<String,RConst>empty().put(
+                                        "info",
+                                        new RConstString(
+                                                StringUtils.escapeToJavaString(current.text.substring(2,current.text.length()-4))
 
-            if(current.type == tOpen){
-                next();
-                if(current.type != tClose){
-                    values = values.plusAll(sep(tComma, () -> {
-                        String propName = null;
+                                        )
+                                )
+                        )
+                );
+                next();//Skip doc token
+            } else {
+                next();//skip @
+                RClass name = parseRClass("");
+                PMap<String,RConst> values = PMap.empty();
 
-                        if(peek().type == tAssign){
-                            propName = current.text;
-                            skip(tIdentifier,"propery name expected for annotation " + name);
+                if(current.type == tOpen){
+                    next();
+                    if(current.type != tClose){
+                        values = values.plusAll(sep(tComma, () -> {
+                            String propName = null;
 
-                        } //else{
-                        //if(isFirstDefault == false){
-                        //    throw new SubstemaParserException(current.pos,"There can be maximum 1 default value");
-                        //}
-                        //isFirstDefault = false;
-                        //}
+                            if(peek().type == tAssign){
+                                propName = current.text;
+                                skip(tIdentifier,"propery name expected for annotation " + name);
 
-                        RConst value = parseConst();
-                        return Tuple2.of(propName,value);
-                    }));
+                            } //else{
+                            //if(isFirstDefault == false){
+                            //    throw new SubstemaParserException(current.pos,"There can be maximum 1 default value");
+                            //}
+                            //isFirstDefault = false;
+                            //}
+
+                            RConst value = parseConst();
+                            return Tuple2.of(propName,value);
+                        }));
+                    }
+
+                    skip(tClose,"')' expected to close the annotation " + name);
                 }
-
-                skip(tClose,"')' expected to close the annotation " + name);
+                result = result.plus(new RAnnotation(name,values));
             }
 
-            result = result.plus(new RAnnotation(name,values));
+
         }
         return result;
     }

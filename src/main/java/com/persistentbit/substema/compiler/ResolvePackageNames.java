@@ -138,12 +138,12 @@ public class ResolvePackageNames {
             throw new SubstemaException("Multiple definitions for " + clsName + ": " + all.toString(","));
         }
         if(all.isEmpty()){
-            RSubstema implicitAnnotations = compiler.compile("com.persistentbit.substema.annotations");
+            RSubstema implicitAnnotations = compiler.compile(SubstemaUtils.annotationsPackage);
             all = all.plus(findName(implicitAnnotations,clsName).orElse(null));
             all = all.filterNulls().plist();
         }
         if(all.isEmpty()){
-            throw new SubstemaException("No  definitions found for " + clsName);
+            throw new SubstemaException("No  definitions found for " + cls);
         }
         return all.head();
     }

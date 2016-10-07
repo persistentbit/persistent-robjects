@@ -1,9 +1,27 @@
+/*
+    Main file with all annotations that are implicit imported when resolving
+    a Substema RClass.
 
+*/
+
+
+/*
+    When this annotation is used on a case class property,
+    then the toString will ignore this property to construct the result
+*/
 annotation NoToString{}
-annotation ToStringName{
-    name:String;
-}
+
+/*
+    When this annotation is used on a case class property,
+    then the equals/hashcode function of the case class will ignore this property
+*/
 annotation NoEquals{}
+
+/*
+    This annotation represent a documentation string.
+    Every << ..doc.. >>  construction in the substema
+    is converted by the substema compiler to a @Doc annotation
+*/
 annotation Doc{
     info:String;
 }

@@ -21,7 +21,7 @@ public class TestCodeGen {
 
     public void generateCode(JavaGenOptions options,String destPackage) throws Exception{
         /*String rodFileName= "codeGenTest.rod";
-        URL url = ServiceJavaGen.class.getResource("/" + rodFileName);
+        URL url = SubstemaJavaGen.class.getResource("/" + rodFileName);
         System.out.println("URL: " + url);
         Path path = Paths.get(url.toURI());
         System.out.println("Path  = " + path);
@@ -31,8 +31,8 @@ public class TestCodeGen {
         SubstemaParser parser = new SubstemaParser(destPackage,tokens);
         RSubstema service = parser.parseSubstema();
         System.out.println(service);
-        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),destPackage,service);
-        Path srcPath = SourcePath.findTestSourcePath(ServiceJavaGen.class, rodFileName);
+        PList<GeneratedJava> gen = SubstemaJavaGen.generate(new JavaGenOptions(),destPackage,service);
+        Path srcPath = SourcePath.findTestSourcePath(SubstemaJavaGen.class, rodFileName);
 
         Path packagePath = srcPath.toAbsolutePath().resolve(destPackage.replace('.', File.separatorChar));
         Files.createDirectories(packagePath);

@@ -6,8 +6,8 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.logging.PLog;
 import com.persistentbit.core.sourcegen.SourceGen;
-import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.core.utils.builders.NOT;
 import com.persistentbit.core.utils.builders.SET;
 import com.persistentbit.substema.annotations.Remotable;
@@ -17,10 +17,9 @@ import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.RConst;
 import com.persistentbit.substema.compiler.values.expr.RConstString;
 
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -29,74 +28,123 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 /**
- * Created by petermuys on 14/09/16.
+ * //TODO add docs and cleanup
+ * @since 14/09/16
  */
-public class ServiceJavaGen {
-
+public class SubstemaJavaGen {
+    static private PLog log = PLog.get(SubstemaJavaGen.class);
     private final JavaGenOptions options;
-    private final RSubstema service;
+    private final RSubstema substema;
+
+    private final SubstemaCompiler  compiler;
     private PList<GeneratedJava>    generatedJava = PList.empty();
 
-    private final String servicePackageName;
 
-    private ServiceJavaGen(JavaGenOptions options,RSubstema service) {
-        this.servicePackageName = service.getPackageName();
+
+    /**
+     * Internal constructor for the java generator
+     * @param compiler The compiler used for external dependencies
+     * @param options The code generator options
+     * @param substema The main substema
+     */
+    private SubstemaJavaGen(SubstemaCompiler compiler,JavaGenOptions options, RSubstema substema) {
         this.options = options;
-        this.service = service;
+        this.substema = substema;
+        this.compiler   =   compiler;
+
     }
 
-    static public PList<GeneratedJava>  generate(JavaGenOptions options,RSubstema service){
-        return new ServiceJavaGen(options,service).generateService();
+    /**
+     * Generate all the java classes for a given substema and
+     * returns them as a list
+     * @param compiler  The compiler for external definitions
+     * @param options   The java generator options
+     * @param substema  The substema to generate java classes for
+     * @return  The List of {@link GeneratedJava} java sources
+     */
+    static public PList<GeneratedJava>  generate(SubstemaCompiler compiler,JavaGenOptions options,RSubstema substema){
+        return new SubstemaJavaGen(compiler,options,substema).generateSubstema();
     }
 
-    public PList<GeneratedJava> generateService(){
-        //RServiceValidator.validate(service);
+    /**
+     * Generate java using {@link #generate(SubstemaCompiler, JavaGenOptions, RSubstema)} and
+     * then write the files to a local folder
+     * @param compiler  The compiler for external definitions
+     * @param options   The java generator options
+     * @param substema  The substema to generate java classes for
+     * @param outputFolder The root folder where the generated java will be written under
+     */
+    static public void generateAndWriteToFiles(SubstemaCompiler compiler,JavaGenOptions options,RSubstema substema, File outputFolder){
+        PList<GeneratedJava> result = generate(compiler,options,substema);
+
+        result.forEach(g -> {
+            //Package name to path string
+            String packagePath = g.name
+                    .getPackageName()
+                    .replace('.', File.separatorChar)
+            ;
+            //create folders...
+            File dest = new File(outputFolder,packagePath);
+            if(dest.exists() == false){ dest.mkdirs(); }
+
+
+            dest = new File(dest,g.name.getClassName() + ".java");
+            log.info("Generating " + dest.getAbsolutePath());
+            try(FileWriter fw = new FileWriter(dest)){
+                fw.write(g.code);
+            }catch (IOException io){
+                log.error(io);
+                throw new RuntimeException("Can't write to " + dest.getAbsolutePath());
+            }
+        });
+    }
+
+    /**
+     * Main function of the java generator
+     * @return  The list of {@link GeneratedJava} sources
+     */
+    public PList<GeneratedJava> generateSubstema(){
         PList<GeneratedJava> result = PList.empty();
-        result = result.plusAll(service.getEnums().map(e -> new Generator().generateEnum(e)));
-        result = result.plusAll(service.getValueClasses().map(vc -> new Generator().generateValueClass(vc)));
-        result = result.plusAll(service.getRemoteClasses().map(rc -> new Generator().generateRemoteClass(rc)));
-        result = result.plusAll(service.getInterfaceClasses().map(ic -> new Generator().generateInterfaceClass(ic)));
+
+        result = result.plusAll(
+                substema.getEnums()
+                        .map(e -> new Generator().generateEnum(e)));
+        result = result.plusAll(
+                substema.getValueClasses()
+                        .map(vc -> new Generator().generateValueClass(vc)));
+        result = result.plusAll(
+                substema.getRemoteClasses()
+                        .map(rc -> new Generator().generateRemoteClass(rc)));
+        result = result.plusAll(
+                substema.getInterfaceClasses()
+                        .map(ic -> new Generator().generateInterfaceClass(ic)));
+
         return result.filterNulls().plist();
     }
 
-    private class Generator extends SourceGen{
-        private PSet<RClass>    imports = PSet.empty();
-        private SourceGen       header = new SourceGen();
-        private String          packageName;
+
+
+
+
+
+
+    private class Generator extends AbstractJavaGenerator{
 
         public Generator() {
-            this.packageName = servicePackageName;
-            header.println("// GENERATED CODE: DO NOT CHANGE!");
-            header.println("");
-        }
-
-        public GeneratedJava    toGenJava(RClass cls){
-            SourceGen sg = new SourceGen();
-            header.println("package " + servicePackageName + ";");
-            header.println("");
-            sg.add(header);
-            imports.filter(i -> i.getPackageName().equals(servicePackageName) == false).forEach(i -> {
-                sg.println("import " + i.getPackageName() + "." + i.getClassName() + ";");
-            });
-            sg.println("");
-            sg.add(this);
-            return new GeneratedJava(cls,sg.writeToString());
+            super(compiler,substema.getPackageName());
         }
 
         public GeneratedJava    generateEnum(REnum e ){
+            generateJavaDoc(e.getAnnotations());
             bs("public enum " + e.getName().getClassName());{
                 println(e.getValues().toString(","));
             }be();
             return toGenJava(e.getName());
         }
-        private void addImport(RClass cls){
-            imports = imports.plus(cls);
-        }
-        private void addImport(Class<?> cls){
-            addImport(new RClass(cls.getPackage().getName(),cls.getSimpleName()));
-        }
+
 
         public GeneratedJava generateInterfaceClass(RInterfaceClass ic){
+            generateJavaDoc(ic.getAnnotations());
             bs("public interface " + ic.getName().getClassName()); {
                 //****** GETTERS AND UPDATERS
                 ic.getProperties().forEach(p -> {
@@ -129,17 +177,7 @@ public class ServiceJavaGen {
          * @return  The generated Java code
          */
         public GeneratedJava    generateValueClass(RValueClass vc){
-            //Lets first generate the javadoc (if any)
-            PList<RAnnotation> docs = getAnnotations(vc.getAnnotations(), SubstemaUtils.docRClass);
-            if(docs.isEmpty() == false){
-                println("/**");
-                docs.forEach(d -> {
-                    PMap<String,RConst> props = d.getProperties();
-                    RConstString info = (RConstString)props.getOpt("info").orElseGet(() -> props.get(null));
-                    println(" * " + info.getValue());
-                });
-                println(" */");
-            }
+            generateJavaDoc(vc.getAnnotations());
 
 
             String impl = vc.getInterfaceClasses().isEmpty() ? "" :
@@ -499,35 +537,6 @@ public class ServiceJavaGen {
 
     }
 
-    /**
-     * Filter an annotationList using the annotation RClass name
-     * @param al The list with annotations
-     * @param anCls The RClass to filter
-     * @return The list with annotations with the same RClass
-     */
-    public PList<RAnnotation> getAnnotations(PList<RAnnotation> al, RClass anCls){
-        return al.filter(an -> an.getName().equals(anCls));
-    }
 
 
-
-    static public void main(String...args) throws Exception{
-        String rodFileName= "com.persistentbit.parser.substema";
-        URL url = ServiceJavaGen.class.getResource("/" + rodFileName);
-        System.out.println("URL: " + url);
-        Path path = Paths.get(url.toURI());
-        System.out.println("Path  = " + path);
-        String rod = new String(Files.readAllBytes(path));
-        SubstemaTokenizer tokenizer = new SubstemaTokenizer();
-        PList<Token<SubstemaTokenType>> tokens = tokenizer.tokenize(rodFileName,rod);
-        String packageName  = "com.persistentbit.test";
-        SubstemaParser parser = new SubstemaParser(packageName,tokens);
-        RSubstema service = parser.parseSubstema();
-        System.out.println(service);
-        PList<GeneratedJava> gen = ServiceJavaGen.generate(new JavaGenOptions(),service);
-        gen.forEach(gj -> {
-            System.out.println(gj.code);
-            System.out.println("-----------------------------------");
-        });
-    }
 }

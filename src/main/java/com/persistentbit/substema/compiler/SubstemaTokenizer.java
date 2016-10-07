@@ -14,11 +14,14 @@ import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
 public class SubstemaTokenizer extends SimpleTokenizer<SubstemaTokenType>{
 
     public SubstemaTokenizer(){
-        add(regExMatcher("/\\*.*\\*/",tComment).ignore());
+        add(regExMatcher("/\\*.*?\\*/",tComment).ignore());
         add(regExMatcher("\\n",tNl).ignore());
+        add("<<.*?>>",tDoc);
         add("\\(",tOpen);
         add("\\)",tClose);
         add("\\.",tPoint);
+
+
         add("<",tGenStart);
         add(">",tGenEnd);
         add("\\,",tComma);
