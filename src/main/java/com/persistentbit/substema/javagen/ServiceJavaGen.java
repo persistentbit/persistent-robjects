@@ -301,6 +301,10 @@ public class ServiceJavaGen {
                     }
 
                 }be();
+
+                    //******* TOSTRING
+                    generateToString(vc);
+
                     //******* BUILDER
 
                     bs("static public class Builder" + getBuilderGenerics(vc));{
@@ -338,6 +342,37 @@ public class ServiceJavaGen {
                     be();}
             }be();
             return toGenJava(vc.getTypeSig().getName());
+        }
+
+        /**
+         * Generate a toString() java method for a RValueClass
+         * @param vc The case class
+         *
+         */
+        public void generateToString(RValueClass vc){
+            println("@Override");
+            bs("public String toString()");{
+                println("return \"" + vc.getTypeSig().getName().getClassName() + "<<\" +");
+                indent();
+                boolean first = true;
+
+                for(RProperty p : vc.getProperties()){
+                    String res = "\", ";
+                    if(first){
+                        res = "\"";
+                        first = false;
+                    }
+                    res += p.getName() + "=\"" + " + " + p.getName();
+
+                    if(p.getValueType().isRequired() == false){
+                        res = "(" + p.getName() + " == null ? \"\" : " + res + ")";
+                    }
+                    println(res + " +");
+                }
+                println("\">>\";");
+                outdent();
+            }be();
+            println("");
         }
 
         private PList<RProperty>   getRequiredProps(RValueClass vc) {
