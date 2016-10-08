@@ -169,6 +169,7 @@ public class RServer<R,SESSION> implements RemoteService{
         try {
             Method m = obj.getClass().getMethod(md.getMethodName(), md.getParamTypes());
             CompletableFuture<Object> methodResult = (CompletableFuture<Object>) m.invoke(obj, call.getArguments());
+
             return methodResult.get();
         }catch(Exception e){
             log.severe(e.getMessage());

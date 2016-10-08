@@ -33,6 +33,7 @@ public class ResolvePackageNames {
 
     public RSubstema resolve(){
         RSubstema res = new RSubstema(
+                resolve(org.getPackageDef()),
                 org.getImports(),
                 org.getPackageName(),
                 org.getEnums().map(ec-> resolve(ec)),
@@ -50,9 +51,12 @@ public class ResolvePackageNames {
         return ad;
     }
 
+    private RPackage resolve(RPackage packageDef){
+        return new RPackage(resolve(packageDef.getAnnotations()));
+    }
 
     private REnum   resolve(REnum ec){
-        return ec;
+        return ec.withAnnotations(resolve(ec.getAnnotations()));
     }
     private RValueClass resolve(RValueClass vc){
         PMap<String,RClass> backup = resolvedNames;

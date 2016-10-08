@@ -8,6 +8,7 @@ import com.persistentbit.core.utils.BaseValueClass;
  */
 public class RSubstema extends BaseValueClass{
     private final String packageName;
+    private final RPackage packageDef;
     private final PList<RImport> imports;
     private final PList<REnum> enums;
     private final PList<RValueClass> valueClasses;
@@ -15,7 +16,8 @@ public class RSubstema extends BaseValueClass{
     private final PList<RInterfaceClass> interfaceClasses;
     private final PList<RAnnotationDef> annotationDefs;
 
-    public RSubstema(PList<RImport> imports,String packageName, PList<REnum> enums, PList<RValueClass> valueClasses, PList<RRemoteClass> remoteClasses, PList<RInterfaceClass> interfaceClasses,PList<RAnnotationDef> annotationDefs) {
+    public RSubstema(RPackage packageDef,PList<RImport> imports,String packageName, PList<REnum> enums, PList<RValueClass> valueClasses, PList<RRemoteClass> remoteClasses, PList<RInterfaceClass> interfaceClasses,PList<RAnnotationDef> annotationDefs) {
+        this.packageDef = packageDef;
         this.imports = imports;
         this.packageName = packageName;
         this.enums = enums;
@@ -28,6 +30,10 @@ public class RSubstema extends BaseValueClass{
     @Override
     public String toString() {
         return "RSubstema[" + packageName + "]";
+    }
+
+    public RPackage getPackageDef() {
+        return packageDef;
     }
 
     public String getPackageName() {
@@ -64,4 +70,5 @@ public class RSubstema extends BaseValueClass{
     public RSubstema    witnValueClasses(PList<RValueClass> l){
         return copyWith("valueClasses",l);
     }
+
 }

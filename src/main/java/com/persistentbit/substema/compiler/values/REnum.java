@@ -28,4 +28,8 @@ public class REnum extends BaseValueClass {
     public PList<RAnnotation> getAnnotations() {
         return annotations;
     }
+
+    public REnum withAnnotations(PList<RAnnotation> annotations){
+        return copyWith("annotations",annotations);
+    }
 }

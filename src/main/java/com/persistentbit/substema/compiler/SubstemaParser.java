@@ -61,6 +61,7 @@ public class SubstemaParser {
      * @return The parsed RSubstema.
      */
     public RSubstema parseSubstema() {
+        RPackage packageDef =   null;
         PList<RImport> imports = PList.empty();
         PList<RValueClass>  values = PList.empty();
         PList<RRemoteClass> remotes = PList.empty();
@@ -70,6 +71,14 @@ public class SubstemaParser {
         while(current.type != SubstemaTokenType.tEOF){
             PList<RAnnotation> annotations = parseAnnotations();
             switch(current.type){
+                case tPackage:
+                    if(packageDef != null){
+                        throw new SubstemaParserException(current.pos,"There can be only one package definition");
+                    }
+                    packageDef = new RPackage(annotations);
+                    next();//skip package
+                    skipEndOfStatement();
+                    break;
                 case tImport:
                     if(annotations.isEmpty() == false){
                         throw new SubstemaParserException(current.pos,"Did not expect annotations for an import statement");
@@ -92,7 +101,10 @@ public class SubstemaParser {
                     throw new SubstemaParserException(current.pos,"Expected a definition, not '" + current.text + "'");
             }
         }
-        RSubstema service = new RSubstema(imports,packageName,enums,values,remotes,interfaces,annotationDefs);
+        if(packageDef == null) {
+            packageDef = new RPackage(PList.empty());
+        }
+        RSubstema service = new RSubstema(packageDef,imports,packageName,enums,values,remotes,interfaces,annotationDefs);
 
         return service;
     }
@@ -143,7 +155,9 @@ public class SubstemaParser {
                                 PMap.<String,RConst>empty().put(
                                         "info",
                                         new RConstString(
-                                                StringUtils.escapeToJavaString(current.text.substring(2,current.text.length()-4))
+                                                StringUtils.escapeToJavaString(
+                                                        current.text.substring(2,current.text.length()-2)
+                                                )
 
                                         )
                                 )

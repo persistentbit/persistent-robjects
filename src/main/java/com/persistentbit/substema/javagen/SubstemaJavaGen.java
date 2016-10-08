@@ -105,6 +105,10 @@ public class SubstemaJavaGen {
      */
     public PList<GeneratedJava> generateSubstema(){
         PList<GeneratedJava> result = PList.empty();
+        if(substema.getPackageDef().getAnnotations().isEmpty() == false){
+            result = result.plus(new Generator().generatePackageInfo(substema.getPackageDef()));
+
+        }
 
         result = result.plusAll(
                 substema.getEnums()
@@ -132,6 +136,18 @@ public class SubstemaJavaGen {
 
         public Generator() {
             super(compiler,substema.getPackageName());
+        }
+
+        public GeneratedJava generatePackageInfo(RPackage pdef){
+            //Create the header and add it to this SourcGen instance
+            SourceGen sg = new SourceGen();
+            generateJavaDoc(pdef.getAnnotations());
+            sg.add(this);
+            sg.println("package " + packageName + ";");
+
+            sg.println("");
+            return new GeneratedJava(new RClass(packageName,"package-info"),sg.writeToString());
+
         }
 
         public GeneratedJava    generateEnum(REnum e ){
@@ -231,6 +247,7 @@ public class SubstemaJavaGen {
                 //****** GETTERS AND UPDATERS
                 vc.getProperties().forEach(p -> {
                     if(options.generateGetters){
+                        generateJavaDoc(p.getAnnotations());
                         String rt = toString(p.getValueType().getTypeSig(),p.getValueType().isRequired());
                         String vn = p.getName();
                         if(p.getValueType().isRequired() == false){
@@ -508,8 +525,10 @@ public class SubstemaJavaGen {
         public GeneratedJava    generateRemoteClass(RRemoteClass rc){
             addImport(Remotable.class);
             println("@Remotable");
+            generateJavaDoc(rc.getAnnotations());
             bs("public interface " + rc.getName().getClassName()); {
                 rc.getFunctions().forEach(f -> {
+                    generateJavaDoc(f.getAnnotations());
                     String retType;
                     addImport(CompletableFuture.class);
                     if(f.getResultType().isPresent() == false) {
