@@ -2,7 +2,6 @@ package com.persistentbit.substema.compiler;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
-import com.persistentbit.core.utils.NotYet;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.RConst;
 import com.persistentbit.substema.compiler.values.expr.RConstBoolean;
@@ -109,6 +108,13 @@ public class AnnotationsUtils {
         //So we check the definition if this is the case and
         //return the value for the property where the name is null.
         RAnnotationDef def = getDef(annotation.getName()).orElseThrow(() -> new SubstemaException("Can't find annotation def for " + annotation));
+
+        //  Return the property default value if it is present.
+        RProperty propWithName = def.getProperties().find(p -> p.getName().equals(propertyName)).orElse(null);
+        if(propWithName != null && propWithName.getDefaultValue().isPresent()){
+            return propWithName.getDefaultValue();
+        }
+
         RProperty defProp = getDefaultProperty(def).orElseThrow(
                 ()-> new SubstemaException("Can't find property with name '" + propertyName + "' in " + annotation)
         );
