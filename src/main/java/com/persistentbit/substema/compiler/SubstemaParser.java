@@ -178,6 +178,7 @@ public class SubstemaParser {
                             if(peek().type == tAssign){
                                 propName = current.text;
                                 skip(tIdentifier,"propery name expected for annotation " + name);
+                                next();//skip assign
 
                             } //else{
                             //if(isFirstDefault == false){
