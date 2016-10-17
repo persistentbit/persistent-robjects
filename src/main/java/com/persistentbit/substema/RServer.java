@@ -106,7 +106,13 @@ public class RServer<R,SESSION> implements RemoteService{
                 if(result instanceof Optional){
                     resultNoOption = ((Optional)result).orElseGet(null);
                 }
-                Class<?> remoteClass = result == resultNoOption ? null : RemotableClasses.getRemotableClass(resultNoOption.getClass());
+                //Class<?> remoteClass = result == resultNoOption ? null : RemotableClasses.getRemotableClass(resultNoOption.getClass());
+                Class<?> remoteClass;
+                /*if(result == resultNoOption){
+                    remoteClass = null;
+                } else */{
+                    remoteClass = RemotableClasses.getRemotableClass(resultNoOption.getClass());
+                }
                 if(remoteClass == null ){
                     return RCallResult.value(getSession(sessionManager),call.getThisCall().getMethodToCall(),result);
                 } else {
@@ -169,7 +175,10 @@ public class RServer<R,SESSION> implements RemoteService{
         try {
             Method m = obj.getClass().getMethod(md.getMethodName(), md.getParamTypes());
             CompletableFuture<Object> methodResult = (CompletableFuture<Object>) m.invoke(obj, call.getArguments());
-
+            if(methodResult == null){
+                //We got a null instead of a CompletableFuture.
+                throw new RObjException("method did not return a CompletableFuture: " + m);
+            }
             return methodResult.get();
         }catch(Exception e){
             log.severe(e.getMessage());
