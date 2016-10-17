@@ -3,7 +3,7 @@ package com.persistentbit.substema.compiler;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.tuples.Tuple2;
-import com.persistentbit.core.utils.NotYet;
+import com.persistentbit.core.utils.ToDo;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.RConst;
 
@@ -98,7 +98,7 @@ public class ResolvePackageNames {
             return null;
         }
 
-        throw new NotYet();
+        throw new ToDo();
     }
 
     private RRemoteClass resolve(RRemoteClass rc){
