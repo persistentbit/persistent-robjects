@@ -48,7 +48,7 @@ public class RConstToJava implements RConstVisitor<String>{
 
     @Override
     public String visit(RConstString c) {
-        return "\"" + StringUtils.escapeToJavaString(c.getValue().substring(1,c.getValue().length()-1)) + "\"";
+        return "\"" + StringUtils.escapeToJavaString(c.getValue()) + "\"";
     }
 
 
