@@ -4,7 +4,9 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 
 /**
- * Created by petermuys on 14/09/16.
+ * Contains the definition of a Substema enum.<br>
+ * @since 14/09/16
+ * @author Peter Muys
  */
 public class REnum extends BaseValueClass {
     private final RClass name;
@@ -32,7 +34,8 @@ public class REnum extends BaseValueClass {
     public REnum withAnnotations(PList<RAnnotation> annotations){
         return copyWith("annotations",annotations);
     }
-    public REnum   withName(RClass name){
+    public REnum withName(RClass name){
         return copyWith("name",name);
     }
+
 }

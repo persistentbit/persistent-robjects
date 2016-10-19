@@ -4,7 +4,11 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 
 /**
- * Created by petermuys on 14/09/16.
+ * This class contains the full type signature of value, meaning the {@link RClass} and the {@link RTypeSig}
+ * of the Generic parameters.<br>
+ *
+ * @since 14/09/16
+ * @author Peter Muys
  */
 public class RTypeSig extends BaseValueClass {
     private final RClass             name;

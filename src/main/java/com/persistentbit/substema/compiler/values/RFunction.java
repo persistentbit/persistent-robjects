@@ -8,8 +8,10 @@ import java.util.Optional;
 
 
 /**
- * Created by petermuys on 14/09/16.
- * TODO
+ * Contains the definition of a Substema function.<br>
+ *
+ * @since 14/09/16
+ * @author Peter Muys
  */
 public class RFunction extends BaseValueClass {
     private final String name;
@@ -47,7 +49,7 @@ public class RFunction extends BaseValueClass {
         return annotations;
     }
 
-    public RFunction    withName(String name){
+    public RFunction withName(String name){
         return copyWith("name",name);
     }
     public RFunction withParams(PList<RFunctionParam> params){
@@ -58,5 +60,8 @@ public class RFunction extends BaseValueClass {
     }
     public RFunction withResultType(RValueType rt){
         return copyWith("resultType",rt);
+    }
+    public RFunction withAnnotations(PList<RAnnotation> annotations){
+        return copyWith("annotations",annotations);
     }
 }

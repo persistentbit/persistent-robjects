@@ -4,7 +4,10 @@ import com.persistentbit.core.utils.BaseValueClass;
 
 
 /**
- * Created by petermuys on 14/09/16.
+ * Contains the defintion of a Substema property value type.<br>
+ * Besides the {@link RTypeSig}, it also contains if this is a required value.<br>
+ * @since 14/09/16
+ * @author Peter Muys
  */
 public class RValueType extends BaseValueClass {
     private final RTypeSig typeSig;

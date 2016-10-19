@@ -4,7 +4,9 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 
 /**
- * Created by petermuys on 14/09/16.
+ * A RValueClass holds the definition of a Substema Case Class.<br>
+ * @since 14/09/16
+ * @author Peter Muys
  */
 public class RValueClass extends BaseValueClass {
     private final RTypeSig typeSig;

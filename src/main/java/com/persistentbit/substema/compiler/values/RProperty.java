@@ -7,7 +7,15 @@ import com.persistentbit.substema.compiler.values.expr.RConst;
 import java.util.Optional;
 
 /**
- * Created by petermuys on 14/09/16.
+ * Contains the defintion of a named Substema property.<br>
+ * The property can be an interface, case class or annotation property.<br>
+ * Every property can also have an optional default constant value ({@link RConst})
+ * @see RInterfaceClass
+ * @see RValueClass
+ * @see RAnnotationDef
+ * @see RConst
+ * @since 14/09/16
+ * @author Peter Muys
  */
 public class RProperty extends BaseValueClass {
     private final String     name;

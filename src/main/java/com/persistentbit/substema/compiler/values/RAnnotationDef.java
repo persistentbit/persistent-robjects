@@ -4,7 +4,9 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 
 /**
- * Created by petermuys on 6/10/16.
+ * Contains the definition of a Substema Annotation
+ * @since 6/10/16
+ * @author Peter Muys
  */
 public class RAnnotationDef extends BaseValueClass {
     private final RClass    name;
@@ -22,5 +24,13 @@ public class RAnnotationDef extends BaseValueClass {
 
     public RClass getName() {
         return name;
+    }
+
+    public RAnnotationDef withName(RClass name){
+        return copyWith("name",name);
+    }
+
+    public RAnnotationDef withProperties(PList<RProperty> properties){
+        return copyWith("properties", properties);
     }
 }

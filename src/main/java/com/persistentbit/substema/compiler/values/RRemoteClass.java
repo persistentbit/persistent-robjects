@@ -5,7 +5,9 @@ import com.persistentbit.core.utils.BaseValueClass;
 
 
 /**
- * Created by petermuys on 14/09/16.
+ * Contains the definition of a Substema Remotable class.<br>
+ * @since 14/09/16
+ * @author Peter Muys
  */
 public class RRemoteClass extends BaseValueClass {
     private final RClass name;
@@ -35,5 +37,8 @@ public class RRemoteClass extends BaseValueClass {
     }
     public RRemoteClass withFunctions(PList<RFunction> functions){
         return copyWith("functions",functions);
+    }
+    public RRemoteClass withAnnotations(PList<RAnnotation> annotations){
+        return copyWith("annotations",annotations);
     }
 }

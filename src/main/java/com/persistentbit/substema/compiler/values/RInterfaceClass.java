@@ -4,6 +4,7 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 
 /**
+ * Contains the definition of a Substema Interface class.<br>
  * @author Peter Muys
  * @since 19/09/2016
  */
@@ -21,9 +22,11 @@ public class RInterfaceClass extends BaseValueClass{
     public RClass getName() {
         return name;
     }
-
     public PList<RProperty> getProperties() {
         return properties;
+    }
+    public PList<RAnnotation> getAnnotations() {
+        return annotations;
     }
 
     public RInterfaceClass withName(RClass name){
@@ -32,8 +35,8 @@ public class RInterfaceClass extends BaseValueClass{
     public RInterfaceClass withProperties(PList<RProperty> properties){
         return copyWith("properties",properties);
     }
-
-    public PList<RAnnotation> getAnnotations() {
-        return annotations;
+    public RInterfaceClass withAnnotations(PList<RAnnotation> annotations){
+        return copyWith("annotations",annotations);
     }
+
 }
