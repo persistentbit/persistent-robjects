@@ -56,7 +56,9 @@ public class ResolvePackageNames {
     }
 
     private REnum   resolve(REnum ec){
-        return ec.withAnnotations(resolve(ec.getAnnotations()));
+        return ec
+                .withAnnotations(resolve(ec.getAnnotations()))
+                .withName(full(ec.getName()));
     }
     private RValueClass resolve(RValueClass vc){
         PMap<String,RClass> backup = resolvedNames;
@@ -88,8 +90,17 @@ public class ResolvePackageNames {
 
     }
     private RProperty resolve(RProperty p){
-        return p.withValueType(resolve(p.getValueType())).withAnnotations(resolve(p.getAnnotations()));
+        return p
+                .withValueType(resolve(p.getValueType()))
+                .withAnnotations(resolve(p.getAnnotations()))
+                .withDefaultValue(p.getDefaultValue().map(dv-> resolve(dv)).orElse(null))
+                ;
     }
+
+    private RConst  resolve(RConst cv){
+        throw new ToDo(cv.toString());
+    }
+
     private RValueType  resolve(RValueType vt){
         return vt.withTypeSig(resolve(vt.getTypeSig()));
     }

@@ -1,14 +1,14 @@
 package com.persistentbit.substema.compiler;
 
-import com.persistentbit.core.collections.PMap;
-import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.function.Function2;
 import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
+import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.utils.StringUtils;
-import com.persistentbit.core.function.Function2;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.*;
 
@@ -365,7 +365,7 @@ public class SubstemaParser {
         return new RConstValueObject(new RTypeSig(name),args);
     }
     private RConstEnum parserValueEnum() {
-        RClass cls = parseRClass(packageName);
+        RClass cls = parseRClass("");
         skip(SubstemaTokenType.tPoint,"'.' expected after enum name");
         String valueName = current.text;
         skip(tIdentifier,"enum value name expected");

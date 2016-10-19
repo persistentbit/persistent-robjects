@@ -1,6 +1,14 @@
 package com.persistentbit.substema.codegen;
 
+import com.persistentbit.core.collections.PList;
+import com.persistentbit.substema.compiler.SubstemaCompiler;
+import com.persistentbit.substema.compiler.values.RSubstema;
+import com.persistentbit.substema.dependencies.DependencySupplier;
+import com.persistentbit.substema.dependencies.SupplierDef;
+import com.persistentbit.substema.dependencies.SupplierType;
+import com.persistentbit.substema.javagen.GeneratedJava;
 import com.persistentbit.substema.javagen.JavaGenOptions;
+import com.persistentbit.substema.javagen.SubstemaJavaGen;
 import org.junit.Test;
 
 /**
@@ -10,16 +18,27 @@ public class TestCodeGen {
 
 
     @Test
+    public void testCodeGenExternamEnum() throws Exception{
+        generateCode(new JavaGenOptions(true,true),"com.persistentbit.substema.tests.compiler.enums");
+    }
+
+    @Test
     public void testCodeGen() throws Exception{
-        generateCode(new JavaGenOptions(),"com.persistentbit.generated.defaultOptions");
+        /*generateCode(new JavaGenOptions(),"com.persistentbit.generated.defaultOptions");
         generateCode(new JavaGenOptions().withGenerateGetters(true),"com.persistentbit.generated.withGetters");
         generateCode(new JavaGenOptions().withGenerateUpdaters(true),"com.persistentbit.generated.withUpdaters");
         generateCode(new JavaGenOptions().withGenerateUpdaters(true).withGenerateGetters(true),"com.persistentbit.generated.generateAll");
-
+*/
 
     }
 
     public void generateCode(JavaGenOptions options,String destPackage) throws Exception{
+
+        DependencySupplier ds = new DependencySupplier(PList.val(new SupplierDef(SupplierType.resource,"/")));
+        SubstemaCompiler    comp = new SubstemaCompiler(ds);
+        RSubstema substema = comp.compile(destPackage);
+        PList<GeneratedJava> generated = SubstemaJavaGen.generate(comp,options,substema);
+        generated.forEach(gj -> System.out.println(gj.code));
         /*String rodFileName= "codeGenTest.rod";
         URL url = SubstemaJavaGen.class.getResource("/" + rodFileName);
         System.out.println("URL: " + url);

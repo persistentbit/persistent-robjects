@@ -32,4 +32,7 @@ public class REnum extends BaseValueClass {
     public REnum withAnnotations(PList<RAnnotation> annotations){
         return copyWith("annotations",annotations);
     }
+    public REnum   withName(RClass name){
+        return copyWith("name",name);
+    }
 }

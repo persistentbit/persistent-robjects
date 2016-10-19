@@ -1,0 +1,5 @@
+import com.persistentbit.substema.tests.compiler.enums.common;
+
+case class Test{
+    metDefault:Geslacht =  Geslacht.man;
+}
