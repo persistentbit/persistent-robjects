@@ -134,7 +134,23 @@ public class ResolvePackageNames {
     }
 
     private RConst resolveConst(RTypeSig expectedType,RConst cv){
-        throw new ToDo(cv.toString());
+        return ResolveAndValidateConstValues.resolveAndValidate(expectedType,cv,originalSubstema,this::resolveClass,this::findEnumDef);
+    }
+
+    private REnum   findEnumDef(RClass cls){
+        RSubstema ss = originalSubstema;
+        if(cls.getPackageName().equals(packageName) == false){
+            ss = compiler.compile(cls.getPackageName());
+        }
+        return ss.getEnums().find(e -> e.getName().getClassName().equals(cls.getClassName())).orElseThrow(() -> new SubstemaException("Can't find enum " + cls));
+    }
+
+    private RAnnotationDef findAnnotationDef(RClass cls){
+        RSubstema ss = originalSubstema;
+        if(cls.getPackageName().equals(packageName) == false){
+            ss = compiler.compile(cls.getPackageName());
+        }
+        return ss.getAnnotationDefs().find(e -> e.getName().getClassName().equals(cls.getClassName())).orElseThrow(() -> new SubstemaException("Can't find annotation " + cls));
     }
 
     private RValueType resolveValueType(RValueType vt){

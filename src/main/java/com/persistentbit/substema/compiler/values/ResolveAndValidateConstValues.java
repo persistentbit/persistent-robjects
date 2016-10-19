@@ -17,12 +17,14 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
     private final RTypeSig  expectedType;
     private final RSubstema substema;
     private final Function<RClass,RClass> resolveClassName;
+    private final Function<RClass,REnum>  resolveEnumDef;
 
 
-    private ResolveAndValidateConstValues(RTypeSig expectedType, RSubstema substema,Function<RClass,RClass> resolveClassName) {
+    private ResolveAndValidateConstValues(RTypeSig expectedType, RSubstema substema,Function<RClass,RClass> resolveClassName,Function<RClass,REnum> resolveEnumDef) {
         this.expectedType = expectedType;
         this.substema = substema;
         this.resolveClassName = resolveClassName;
+        this.resolveEnumDef = resolveEnumDef;
     }
 
 //    static public RSubstema resolveAndValidate(RSubstema substema,Function<RClass,RClass> resolveClassName){
@@ -41,8 +43,8 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
 
 
 
-    static public RConst  resolveAndValidate(RTypeSig expectedType, RConst value,RSubstema substema,Function<RClass,RClass> resolveClassName){
-        return new ResolveAndValidateConstValues(expectedType,substema,resolveClassName).visit(value);
+    static public RConst  resolveAndValidate(RTypeSig expectedType, RConst value,RSubstema substema,Function<RClass,RClass> resolveClassName,Function<RClass,REnum> resolveEnumDef){
+        return new ResolveAndValidateConstValues(expectedType,substema,resolveClassName,resolveEnumDef).visit(value);
     }
 
     @Override
@@ -82,11 +84,13 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
 
     @Override
     public RConst visit(RConstEnum c) {
+
         RClass cls = resolveClassName.apply(c.getEnumClass());
-        return substema.getEnums()
-                .find(e -> cls.equals(e.getName()) && e.getValues().contains(c.getEnumValue()))
-                .map(e -> (RConst)c)
-                .orElse(cantConvert(c));
+        REnum e = resolveEnumDef.apply(cls);
+        if(e.getValues().contains(c.getEnumValue()) == false){
+            throw new SubstemaException("Unknown contant value '" + c.getEnumValue() + "' for enum " + cls);
+        }
+        return c.withEnumClass(cls);
     }
 
     @Override
@@ -143,7 +147,7 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
 
         converted = converted.plusAll(c.getPropValues().map(t -> {
                 RTypeSig expected = vc.getProperties().find(p -> p.getName().equals(t._1)).map(p -> p.getValueType().getTypeSig()).get();
-                return t.with_2( resolveAndValidate(expected,t._2,substema,resolveClassName));
+                return t.with_2( resolveAndValidate(expected,t._2,substema,resolveClassName,resolveEnumDef));
         }));
         return c.withTypeSig(resolvedTypeSig).withPropValues(converted);
 
@@ -153,7 +157,7 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
     @Override
     public RConst visit(RConstArray c) {
         RTypeSig expected = expectedType.getGenerics().head();
-        return c.withValues(c.getValues().map(v -> resolveAndValidate(expected,v,substema,resolveClassName)));
+        return c.withValues(c.getValues().map(v -> resolveAndValidate(expected,v,substema,resolveClassName,resolveEnumDef)));
     }
 
 
