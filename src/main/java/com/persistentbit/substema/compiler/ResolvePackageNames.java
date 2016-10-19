@@ -55,9 +55,10 @@ public class ResolvePackageNames {
                 originalSubstema.getInterfaceClasses().map(this::resolveInterfaceClass),
                 originalSubstema.getAnnotationDefs().map(this::resolveAnnotationDef)
         );
-        return ResolveAndValidateConstValues.resolveAndValidate(res,
-                rcls -> rcls.getPackageName().isEmpty()
-                        ? findName(res,rcls.getClassName()).get() : rcls);
+//        return ResolveAndValidateConstValues.resolveAndValidate(res,
+//                rcls -> rcls.getPackageName().isEmpty()
+//                        ? findName(res,rcls.getClassName()).get() : rcls);
+        return res;
     }
 
     private RAnnotationDef resolveAnnotationDef(RAnnotationDef ad){
@@ -91,8 +92,23 @@ public class ResolvePackageNames {
         return result;
     }
 
+
     private PList<RAnnotation> resolveAnnotations(PList<RAnnotation> annotations){
-        return annotations.map(an -> an.withName(resolveClass(an.getName())));
+        return annotations.map(an -> {
+
+            RClass name = resolveClass(an.getName());
+            PMap<String,RConst> values = an.getValues();
+            //TODO
+            //Could be that an annotation value
+            //Needs resolving, so we need to do that here
+
+
+            //RAnnotationDef  atDef = findAnnotationDef(name);
+            //values = values.map(t -> {
+            //    atDef.getProperties().
+            //});
+            return an.withName(name).withValues(values);
+        });
     }
 
 
@@ -109,14 +125,15 @@ public class ResolvePackageNames {
 
     }
     private RProperty resolveProperty(RProperty p){
+        RValueType  vt = resolveValueType(p.getValueType());
         return p
-                .withValueType(resolveValueType(p.getValueType()))
+                .withValueType(vt)
                 .withAnnotations(resolveAnnotations(p.getAnnotations()))
-                .withDefaultValue(p.getDefaultValue().map(this::resolveConst).orElse(null))
+                .withDefaultValue(p.getDefaultValue().map(dv -> resolveConst(vt.getTypeSig(),dv)).orElse(null))
                 ;
     }
 
-    private RConst resolveConst(RConst cv){
+    private RConst resolveConst(RTypeSig expectedType,RConst cv){
         throw new ToDo(cv.toString());
     }
 
@@ -141,7 +158,9 @@ public class ResolvePackageNames {
     }
 
     private RFunctionParam resolveFunctionParam(RFunctionParam p){
-        return p.withValueType(resolveValueType(p.getValueType()));
+        return p
+                .withValueType(resolveValueType(p.getValueType()))
+                .withAnnotations(resolveAnnotations(p.getAnnotations()));
     }
 
 

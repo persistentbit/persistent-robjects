@@ -20,12 +20,14 @@ public class RAnnotation extends BaseValueClass {
     public RClass getName() {
         return name;
     }
+    public PMap<String,RConst> getValues() {
+        return values;
+    }
 
     public RAnnotation withName(RClass name){
         return copyWith("name",name);
     }
-
-    public PMap<String,RConst> getProperties() {
-        return values;
+    public RAnnotation withValues(PMap<String,RConst> values){
+        return copyWith("values",values);
     }
 }

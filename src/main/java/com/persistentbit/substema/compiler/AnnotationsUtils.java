@@ -100,7 +100,7 @@ public class AnnotationsUtils {
      */
     public Optional<RConst> getProperty(RAnnotation annotation, String propertyName){
         //First check and return the value for the actual property name if it exists
-        Optional<RConst> result = annotation.getProperties().getOpt(propertyName);
+        Optional<RConst> result = annotation.getValues().getOpt(propertyName);
         if(result.isPresent()){
             return result;
         }
@@ -119,7 +119,7 @@ public class AnnotationsUtils {
                 ()-> new SubstemaException("Can't find property with name '" + propertyName + "' in " + annotation)
         );
         if(defProp.getName().equals(propertyName)){
-            return annotation.getProperties().getOpt(null);
+            return annotation.getValues().getOpt(null);
         }
         return Optional.empty();
     }

@@ -6,7 +6,10 @@ import com.persistentbit.core.utils.NoEqual;
 
 
 /**
- * Created by petermuys on 14/09/16.
+ * Contains the definition of a {@link RFunction} parameter
+ * @since 14/09/16
+ * @author Peter Muys
+ * @see RFunction
  */
 public class RFunctionParam extends BaseValueClass {
     @NoEqual
@@ -23,19 +26,20 @@ public class RFunctionParam extends BaseValueClass {
     public String getName() {
         return name;
     }
-
     public RValueType getValueType() {
         return valueType;
     }
+    public PList<RAnnotation> getAnnotations() {
+        return annotations;
+    }
 
-    public RFunctionParam   withName(String name){
+    public RFunctionParam withName(String name){
         return copyWith("name",name);
     }
     public RFunctionParam withValueType(RValueType vt){
         return copyWith("valueType",vt);
     }
-
-    public PList<RAnnotation> getAnnotations() {
-        return annotations;
+    public RFunctionParam withAnnotations(PList<RAnnotation> annotations){
+        return copyWith("annotations",annotations);
     }
 }

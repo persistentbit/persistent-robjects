@@ -25,18 +25,18 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
         this.resolveClassName = resolveClassName;
     }
 
-    static public RSubstema resolveAndValidate(RSubstema substema,Function<RClass,RClass> resolveClassName){
-        PList<RValueClass> vcl = substema.getValueClasses().map( vc->
-            vc.withProperties(vc.getProperties().map(p ->
-                p.withDefaultValue(p.getDefaultValue().map( dv ->
-                    resolveAndValidate(p.getValueType().getTypeSig(),dv,substema,resolveClassName)
-                    ).orElse(null)   ))
-            )
-        );
-
-        return substema.witnValueClasses(vcl);
-
-    }
+//    static public RSubstema resolveAndValidate(RSubstema substema,Function<RClass,RClass> resolveClassName){
+//        PList<RValueClass> vcl = substema.getValueClasses().map( vc->
+//            vc.withProperties(vc.getValues().map(p ->
+//                p.withDefaultValue(p.getDefaultValue().map( dv ->
+//                    resolveAndValidate(p.getValueType().getTypeSig(),dv,substema,resolveClassName)
+//                    ).orElse(null)   ))
+//            )
+//        );
+//
+//        return substema.withValueClasses(vcl);
+//
+//    }
 
 
 
