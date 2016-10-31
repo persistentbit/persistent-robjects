@@ -2,7 +2,6 @@ package com.persistentbit.substema.compiler.values.expr;
 
 import com.persistentbit.core.utils.BaseValueClass;
 import com.persistentbit.substema.compiler.values.RClass;
-import com.persistentbit.substema.compiler.values.RTypeSig;
 
 /**
  * @author Peter Muys
@@ -30,5 +29,10 @@ public class RConstNumber extends BaseValueClass implements RConst {
 
     public RClass getNumberType() {
         return numberType;
+    }
+
+    @Override
+    public String toSource() {
+        return number.toString();
     }
 }

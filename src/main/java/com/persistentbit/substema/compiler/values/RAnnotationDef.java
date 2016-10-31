@@ -5,32 +5,40 @@ import com.persistentbit.core.utils.BaseValueClass;
 
 /**
  * Contains the definition of a Substema Annotation
- * @since 6/10/16
+ *
  * @author Peter Muys
+ * @since 6/10/16
  */
-public class RAnnotationDef extends BaseValueClass {
-    private final RClass    name;
-    private final PList<RProperty> properties;
+public class RAnnotationDef extends BaseValueClass{
 
-    public RAnnotationDef(RClass name, PList<RProperty> properties) {
-        this.name = name;
-        this.properties = properties;
-    }
+	private final RClass             name;
+	private final PList<RProperty>   properties;
+	private final PList<RAnnotation> annotations;
 
-    public PList<RProperty> getProperties() {
-        return properties;
-    }
+	public RAnnotationDef(RClass name, PList<RProperty> properties, PList<RAnnotation> annotations) {
+		this.name = name;
+		this.properties = properties;
+		this.annotations = annotations;
+	}
 
+	public PList<RProperty> getProperties() {
+		return properties;
+	}
 
-    public RClass getName() {
-        return name;
-    }
+	public RClass getName() {
+		return name;
+	}
 
-    public RAnnotationDef withName(RClass name){
-        return copyWith("name",name);
-    }
+	public PList<RAnnotation> getAnnotations() { return annotations; }
 
-    public RAnnotationDef withProperties(PList<RProperty> properties){
-        return copyWith("properties", properties);
-    }
+	public RAnnotationDef withName(RClass name) {
+		return copyWith("name", name);
+	}
+
+	public RAnnotationDef withProperties(PList<RProperty> properties) {
+		return copyWith("properties", properties);
+	}
+
+	public RAnnotationDef withAnnotations(PList<RAnnotation> annotations
+	) { return copyWith("annotations", annotations); }
 }

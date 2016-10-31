@@ -1,6 +1,5 @@
 package com.persistentbit.substema.compiler.values;
 
-import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.substema.compiler.SubstemaException;
@@ -40,13 +39,6 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
 //
 //    }
 
-
-
-
-    static public RConst  resolveAndValidate(RTypeSig expectedType, RConst value,RSubstema substema,Function<RClass,RClass> resolveClassName,Function<RClass,REnum> resolveEnumDef){
-        return new ResolveAndValidateConstValues(expectedType,substema,resolveClassName,resolveEnumDef).visit(value);
-    }
-
     @Override
     public RConst visit(RConstBoolean c) {
         if(expectedType.getName().equals(SubstemaUtils.booleanRClass)){
@@ -58,7 +50,6 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
     private RConst cantConvert(RConst c){
         throw new SubstemaException("Can't convert a " + c + " to a " + expectedType);
     }
-
 
     @Override
     public RConst visit(RConstNull c) {
@@ -77,6 +68,12 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
         }
         if(exp.equals(SubstemaUtils.floatRClass) && ccls.equals(SubstemaUtils.doubleRClass)){
             return new RConstNumber(exp,c.getNumber().floatValue());
+        }
+        if(exp.equals(SubstemaUtils.byteRClass)) {
+            return new RConstNumber(exp, c.getNumber().byteValue());
+        }
+        if(exp.equals(SubstemaUtils.shortRClass)) {
+            return new RConstNumber(exp, c.getNumber().shortValue());
         }
         return cantConvert(c);
 
@@ -100,7 +97,6 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
         }
         return cantConvert(c);
     }
-
 
     private RTypeSig resolveTypeSig(RTypeSig typeSig){
         typeSig = typeSig.withName(resolveClassName.apply(typeSig.getName()));
@@ -158,6 +154,13 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
     public RConst visit(RConstArray c) {
         RTypeSig expected = expectedType.getGenerics().head();
         return c.withValues(c.getValues().map(v -> resolveAndValidate(expected,v,substema,resolveClassName,resolveEnumDef)));
+    }
+
+    static public RConst resolveAndValidate(RTypeSig expectedType, RConst value, RSubstema substema,
+                                            Function<RClass, RClass> resolveClassName,
+                                            Function<RClass, REnum> resolveEnumDef
+    ) {
+        return new ResolveAndValidateConstValues(expectedType, substema, resolveClassName, resolveEnumDef).visit(value);
     }
 
 

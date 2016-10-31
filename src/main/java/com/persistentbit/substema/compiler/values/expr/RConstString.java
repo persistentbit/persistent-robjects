@@ -2,6 +2,7 @@ package com.persistentbit.substema.compiler.values.expr;
 
 
 import com.persistentbit.core.utils.BaseValueClass;
+import com.persistentbit.core.utils.StringUtils;
 
 /**
  * @author Peter Muys
@@ -17,5 +18,10 @@ public class RConstString extends BaseValueClass implements RConst {
 
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public String toSource() {
+        return "\"" + StringUtils.escapeToJavaString(value) + "\"";
     }
 }
