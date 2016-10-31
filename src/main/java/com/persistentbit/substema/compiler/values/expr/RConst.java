@@ -1,7 +1,5 @@
 package com.persistentbit.substema.compiler.values.expr;
 
-import com.persistentbit.substema.compiler.values.RTypeSig;
-
 /**
  * The defintion of a Substema literal value
  * @author Peter Muys
@@ -9,4 +7,10 @@ import com.persistentbit.substema.compiler.values.RTypeSig;
  */
 public interface RConst {
 
+	/**
+	 * Return the substema source form of this RConst
+	 *
+	 * @return The source String;
+	 */
+	String toSource();
 }

@@ -1,8 +1,13 @@
 package com.persistentbit.substema.dependencies;
 
 /**
- * Created by petermuys on 25/09/16.
+ * Enum representing the type of Substema source supplier
+ *
+ * @see SupplierDef
+ *
+ * @author Peter Muys
+ * @since 25/09/16
  */
 public enum SupplierType {
-    archive,folder,resource
+    archive, folder, resource, source
 }

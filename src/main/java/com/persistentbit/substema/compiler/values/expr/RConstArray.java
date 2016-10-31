@@ -22,4 +22,9 @@ public class RConstArray extends BaseValueClass implements RConst {
     public RConstArray withValues(PList<RConst> values){
         return copyWith("values",values);
     }
+
+	@Override
+	public String toSource() {
+		return "[" + values.map(v -> v.toSource()).toString(", ") + "]";
+	}
 }

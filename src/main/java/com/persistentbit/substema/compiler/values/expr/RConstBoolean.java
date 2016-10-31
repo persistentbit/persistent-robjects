@@ -1,7 +1,6 @@
 package com.persistentbit.substema.compiler.values.expr;
 
 import com.persistentbit.core.utils.BaseValueClass;
-import com.persistentbit.substema.compiler.values.RTypeSig;
 
 /**
  * @author Peter Muys
@@ -16,5 +15,10 @@ public class RConstBoolean extends BaseValueClass implements RConst {
 
     public boolean isValue() {
         return value;
-    }
+	}
+
+	@Override
+	public String toSource() {
+		return Boolean.toString(value);
+	}
 }

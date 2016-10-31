@@ -32,4 +32,8 @@ public class RValueType extends BaseValueClass {
     public RValueType withRequired(boolean r){
         return copyWith("required",r);
     }
+
+    public String toSource() {
+        return (required ? "" : "?") + typeSig.toSource();
+    }
 }

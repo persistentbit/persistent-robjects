@@ -14,12 +14,12 @@ public class RTypeSig extends BaseValueClass {
     private final RClass             name;
     private final PList<RTypeSig> generics;
 
+    public RTypeSig(RClass name) {
+        this(name, PList.empty());
+    }
     public RTypeSig(RClass name, PList<RTypeSig> generics) {
         this.name = name;
         this.generics = generics;
-    }
-    public RTypeSig(RClass name){
-        this(name,PList.empty());
     }
 
     public RClass getName() {
@@ -35,5 +35,13 @@ public class RTypeSig extends BaseValueClass {
     }
     public RTypeSig withGenerics(PList<RTypeSig> generics){
         return copyWith("generics",generics);
+    }
+
+    public String toSource() {
+        String gen = generics.map(g -> g.toSource()).toString(", ");
+        if(gen.isEmpty() == false) {
+            gen = "<" + gen + ">";
+        }
+        return name.getClassName() + gen;
     }
 }

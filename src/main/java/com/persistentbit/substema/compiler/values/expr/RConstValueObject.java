@@ -31,4 +31,10 @@ public class RConstValueObject extends BaseValueClass implements RConst {
     public POrderedMap<String, RConst> getPropValues() {
         return propValues;
     }
+
+    @Override
+    public String toSource() {
+        String props = propValues.map(t -> t._1 + " = " + t._2.toSource()).toString(", ");
+        return "new " + typeSig.toSource() + "(" + props + ")";
+    }
 }

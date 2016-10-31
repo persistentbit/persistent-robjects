@@ -15,7 +15,8 @@ public class TestROD {
     public void testRODParsing() {
         try{
             SubstemaTokenizer tokenizer = new SubstemaTokenizer();
-            String txt = new String(Files.readAllBytes(Paths.get(SubstemaTokenizer.class.getResource("/app.rod").toURI())));
+            String            txt       =
+                new String(Files.readAllBytes(Paths.get(SubstemaTokenizer.class.getResource("/app.substema").toURI())));
             System.out.println(txt);
             tokenizer.tokenize("app.rod",txt).lazy().filter(t -> t.type != SubstemaTokenType.tWhiteSpace).forEach(System.out::println);
 

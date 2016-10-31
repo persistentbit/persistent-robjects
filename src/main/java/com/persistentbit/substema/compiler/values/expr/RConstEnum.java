@@ -1,9 +1,7 @@
 package com.persistentbit.substema.compiler.values.expr;
 
-import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 import com.persistentbit.substema.compiler.values.RClass;
-import com.persistentbit.substema.compiler.values.RTypeSig;
 
 /**
  * @author Peter Muys
@@ -34,4 +32,8 @@ public class RConstEnum extends BaseValueClass implements RConst {
         return copyWith("enumValue",value);
     }
 
+	@Override
+	public String toSource() {
+		return enumClass.getClassName() + "." + enumValue;
+	}
 }
