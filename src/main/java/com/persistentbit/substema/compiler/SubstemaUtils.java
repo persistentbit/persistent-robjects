@@ -4,51 +4,54 @@ import com.persistentbit.core.collections.PSet;
 import com.persistentbit.substema.compiler.values.RClass;
 
 /**
- * Created by petermuys on 1/10/16.
+ * General Substema utilities.<br>
+ * @author Peter Muys
+ * @since 1/10/16
  */
-public class SubstemaUtils {
+public final class SubstemaUtils{
 
-    static public final String annotationsPackage = "com.persistentbit.substema.annotations";
+    public static final String annotationsPackage = "com.persistentbit.substema.annotations";
 
-    static public final RClass docRClass = new RClass(annotationsPackage,"Doc");
-    static public final RClass noToString = new RClass(annotationsPackage,"NoToString");
+    public static final RClass docRClass  = new RClass(annotationsPackage, "Doc");
+    public static final RClass noToString = new RClass(annotationsPackage, "NoToString");
 
-    static public final RClass stringRClass = new RClass("","String");
-    static public final RClass booleanRClass = new RClass("","Boolean");
-    static public final RClass listRClass = new RClass("","List");
-    static public final RClass setRClass = new RClass("","Set");
-    static public final RClass mapRClass = new RClass("","Map");
-    static public final RClass integerRClass = new RClass("","Integer");
-    static public final RClass byteRClass = new RClass("","Byte");
-    static public final RClass shortRClass = new RClass("","Short");
-    static public final RClass longRClass = new RClass("","Long");
-    static public final RClass floatRClass = new RClass("","Float");
-    static public final RClass doubleRClass = new RClass("","Double");
-    static public final RClass dateRClass = new RClass("","Date");
-    static public final RClass dateTimeRClass = new RClass("","DateTime");
+    public static final RClass stringRClass   = new RClass("", "String");
+    public static final RClass booleanRClass  = new RClass("", "Boolean");
+    public static final RClass listRClass     = new RClass("", "List");
+    public static final RClass setRClass      = new RClass("", "Set");
+    public static final RClass mapRClass      = new RClass("", "Map");
+    public static final RClass integerRClass  = new RClass("", "Integer");
+    public static final RClass byteRClass     = new RClass("", "Byte");
+    public static final RClass shortRClass    = new RClass("", "Short");
+    public static final RClass longRClass     = new RClass("", "Long");
+    public static final RClass floatRClass    = new RClass("", "Float");
+    public static final RClass doubleRClass   = new RClass("", "Double");
+    public static final RClass dateRClass     = new RClass("", "Date");
+    public static final RClass dateTimeRClass = new RClass("", "DateTime");
 
-    static public final PSet<RClass> dateClasses = PSet.val(dateRClass,dateTimeRClass);
+    public static final PSet<RClass> dateClasses = PSet.val(dateRClass, dateTimeRClass);
 
 
-    static public final PSet<RClass> collectionClasses = PSet.val(listRClass,setRClass,mapRClass);
+    public static final PSet<RClass> collectionClasses = PSet.val(listRClass, setRClass, mapRClass);
+    public static final PSet<RClass> numberClasses     = PSet.val(
+        byteRClass, shortRClass, integerRClass, longRClass,
+        floatRClass, doubleRClass
+    );
 
-    static public boolean isDateClass(RClass cls){
-        return dateClasses.contains(cls);
+    public static boolean isSubstemaClass(RClass cls) {
+        return isNumberClass(cls) || isCollectionClass(cls) || cls.equals(stringRClass) || cls
+            .equals(booleanRClass) || isDateClass(cls);
     }
 
-    static public boolean isCollectionClass(RClass cls){
+    public static boolean isNumberClass(RClass cls) {
+        return numberClasses.contains(cls);
+    }
+
+    public static boolean isCollectionClass(RClass cls) {
         return collectionClasses.contains(cls);
     }
 
-    static public boolean isSubstemaClass(RClass cls){
-        return isNumberClass(cls) || isCollectionClass(cls) || cls.equals(stringRClass)|| cls.equals(booleanRClass) || isDateClass(cls);
-    }
-
-    static public final PSet<RClass> numberClasses = PSet.val(
-            byteRClass,shortRClass,integerRClass,longRClass,
-            floatRClass,doubleRClass
-    );
-    static public boolean isNumberClass(RClass cls){
-        return numberClasses.contains(cls);
+    public static boolean isDateClass(RClass cls) {
+        return dateClasses.contains(cls);
     }
 }

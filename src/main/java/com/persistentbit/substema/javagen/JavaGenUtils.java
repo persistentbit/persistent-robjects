@@ -2,7 +2,6 @@ package com.persistentbit.substema.javagen;
 
 import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.RClass;
-import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.compiler.values.RTypeSig;
 
 import java.time.LocalDate;
@@ -10,47 +9,56 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
- * Created by petermuys on 30/09/16.
+ * Substema to Java code generator utilities.<br>
+ *
+ * @author Peter Muys
+ * @since 30/09/16
  */
-public class JavaGenUtils {
+public final class JavaGenUtils{
 
 
+	public static String toString(String defaultPackage, Class<?> cls) {
+		return toString(defaultPackage, toRClass(cls));
+	}
 
-    static public RClass toRClass(Class<?> cls){
-        return new RClass(cls.getPackage().getName(),cls.getSimpleName());
-    }
+	public static String toString(String defaultPackage, RClass cls) {
+		String clsName        = cls.getClassName();
+		String clsPackageName = cls.getPackageName();
 
-    static public String toString(String defaultPackage,Class<?> cls){
-        return toString(defaultPackage,toRClass(cls));
-    }
+		if(clsPackageName.equals(defaultPackage) || clsPackageName.isEmpty()) {
 
-    static public String toString(String defaultPackage,RClass cls){
-        if(cls.getPackageName().equals(defaultPackage) || cls.getPackageName().isEmpty()){
-            if(cls.getClassName().equals(SubstemaUtils.dateRClass)){
-                return LocalDate.class.getSimpleName();
-            }
-            if(cls.getClassName().equals(SubstemaUtils.dateTimeRClass)){
-                return LocalDateTime.class.getSimpleName();
-            }
-            return cls.getClassName();
-        }
-        return cls.getPackageName() + "." + cls.getClassName();
-    }
-    static public String toString(String defaultPackage,RTypeSig typeSig){
-        RClass cls = typeSig.getName();
-        String res;
-        if(cls.getPackageName().equals(defaultPackage) || cls.getPackageName().isEmpty()){
-            res = cls.getClassName();
-        } else {
-            res = cls.getPackageName() + "." + cls.getClassName();
-        }
-        String gen = typeSig.getGenerics().map(g -> toString(defaultPackage,g)).toString(",");
-        res += gen.isEmpty() ? "" : "<" + gen + ">";
-        return res;
-    }
+			if(clsName.equals(SubstemaUtils.dateRClass.getClassName())) {
+				return LocalDate.class.getSimpleName();
+			}
 
-    static public Optional<String> genericsToString(String defaultPackage, RTypeSig typeSig){
-        String res = typeSig.getGenerics().map(g -> toString(defaultPackage,g)).toString(", ");
-        return res.isEmpty() ? Optional.empty() : Optional.of(res);
-    }
+			if(clsName.equals(SubstemaUtils.dateTimeRClass.getClassName())) {
+				return LocalDateTime.class.getSimpleName();
+			}
+			return clsName;
+		}
+		return cls.getPackageName() + "." + clsName;
+	}
+
+	public static RClass toRClass(Class<?> cls) {
+		return new RClass(cls.getPackage().getName(), cls.getSimpleName());
+	}
+
+	public static String toString(String defaultPackage, RTypeSig typeSig) {
+		RClass cls = typeSig.getName();
+		String res;
+		if(cls.getPackageName().equals(defaultPackage) || cls.getPackageName().isEmpty()) {
+			res = cls.getClassName();
+		}
+		else {
+			res = cls.getPackageName() + "." + cls.getClassName();
+		}
+		String gen = typeSig.getGenerics().map(g -> toString(defaultPackage, g)).toString(",");
+		res += gen.isEmpty() ? "" : "<" + gen + ">";
+		return res;
+	}
+
+	public static Optional<String> genericsToString(String defaultPackage, RTypeSig typeSig) {
+		String res = typeSig.getGenerics().map(g -> toString(defaultPackage, g)).toString(", ");
+		return res.isEmpty() ? Optional.empty() : Optional.of(res);
+	}
 }

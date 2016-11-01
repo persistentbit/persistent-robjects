@@ -64,7 +64,7 @@ public class SubstemaSourceGenerator extends SourceGen{
 				if(props.isEmpty() == false) {
 					props = "(" + props + ")";
 				}
-				println("@" + a.getName() + props + ";");
+				println("@" + a.getName().getClassName() + props);
 			}
 		});
 	}
@@ -107,6 +107,7 @@ public class SubstemaSourceGenerator extends SourceGen{
 		bs("case class " + vc.getTypeSig().toSource() + impl);
 		vc.getProperties().forEach(this::addProperty);
 		be();
+		println("");
 	}
 
 	public void addInterface(RInterfaceClass i) {
