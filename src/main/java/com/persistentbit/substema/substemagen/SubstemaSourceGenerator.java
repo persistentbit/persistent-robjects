@@ -70,7 +70,7 @@ public class SubstemaSourceGenerator extends SourceGen{
 	}
 
 	public String toStringRConst(RConst rconst) {
-		return rconst.toString();
+		return rconst.toSource();
 	}
 
 	public void addRemote(RRemoteClass r) {
