@@ -1,11 +1,12 @@
 package com.persistentbit.substema.compiler.values;
 
-import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.utils.BaseValueClass;
 
 import java.util.Objects;
 
 /**
+ * Full name of a Substema Item.<br>
+ * Can be a name for a case class, remote service class, enum, interface
  * @author Peter Muys
  * @since 15/09/2016
  */
@@ -34,5 +35,8 @@ public class RClass extends BaseValueClass{
         return copyWith("className",n);
     }
 
+    public String getFullName() {
+        return packageName + "." + className;
+    }
 
 }
