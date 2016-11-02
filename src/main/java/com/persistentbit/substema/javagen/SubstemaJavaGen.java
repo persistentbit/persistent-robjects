@@ -442,10 +442,10 @@ public final class SubstemaJavaGen{
 						boolean isPrim = isPrimitive(p.getValueType().getTypeSig());
 						if(isPrim) {
 							if(p.getValueType().getTypeSig().getName().getClassName().equals("Float")) {
-								println("if(Float.compare(" + thisVal + "," + thatVal + " != 0) return false;");
+								println("if(Float.compare(" + thisVal + "," + thatVal + ") != 0) return false;");
 							}
 							else if(p.getValueType().getTypeSig().getName().getClassName().equals("Double")) {
-								println("if(Double.compare(" + thisVal + "," + thatVal + " != 0) return false;");
+								println("if(Double.compare(" + thisVal + "," + thatVal + ") != 0) return false;");
 							}
 							else {
 								println("if(" + thisVal + " != " + thatVal + ") return false;");
