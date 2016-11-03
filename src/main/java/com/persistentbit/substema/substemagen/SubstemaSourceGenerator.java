@@ -2,6 +2,7 @@ package com.persistentbit.substema.substemagen;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.sourcegen.SourceGen;
+import com.persistentbit.core.utils.StringUtils;
 import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.RConst;
@@ -54,7 +55,12 @@ public class SubstemaSourceGenerator extends SourceGen{
 		annotationList.forEach(a -> {
 			if(a.getName().equals(SubstemaUtils.docRClass)) {
 				println("<<");
-				a.getValues().values().forEach(c -> println(toStringRConst(c)));
+
+				a.getValues().values().forEach(c -> println(
+						StringUtils.unEscapeJavaString(
+								toStringRConst(c)
+						)
+				));
 				println(">>");
 			}
 			else {
