@@ -3,7 +3,6 @@ package com.persistentbit.substema.compiler;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.tuples.Tuple2;
-import com.persistentbit.core.utils.ToDo;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.RConst;
 
@@ -35,9 +34,9 @@ public class ResolvePackageNames {
 
     /**
      * Main entry point for this class.<br>
-     * @param compiler
-     * @param compiled
-     * @return
+     * @param compiler Substema compiler
+     * @param compiled The result of the parser, needed to be resolved
+     * @return The resolved substema.
      */
     static public RSubstema    resolve(SubstemaCompiler compiler,RSubstema compiled){
         return new ResolvePackageNames(compiler,compiled).resolve();
@@ -55,9 +54,6 @@ public class ResolvePackageNames {
                 originalSubstema.getInterfaceClasses().map(this::resolveInterfaceClass),
                 originalSubstema.getAnnotationDefs().map(this::resolveAnnotationDef)
         );
-//        return ResolveAndValidateConstValues.resolveAndValidate(res,
-//                rcls -> rcls.getPackageName().isEmpty()
-//                        ? findName(res,rcls.getClassName()).get() : rcls);
         return res;
     }
 

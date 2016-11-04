@@ -1,11 +1,13 @@
 package com.persistentbit.substema.substemagen;
 
 import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.sourcegen.SourceGen;
 import com.persistentbit.core.utils.StringUtils;
 import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.RConst;
+import com.persistentbit.substema.compiler.values.expr.RConstString;
 
 /**
  * Create substema source code from compiled substema ({@link RSubstema},{@link RValueClass},...)
@@ -52,26 +54,23 @@ public class SubstemaSourceGenerator extends SourceGen{
 	}
 
 	public void addAnnotations(PList<RAnnotation> annotationList) {
-		annotationList.forEach(a -> {
-			if(a.getName().equals(SubstemaUtils.docRClass)) {
-				println("<<");
+		//Handle all Doc annotations
+		PStream<String> docs =  annotationList.filter(a -> a.getName().equals(SubstemaUtils.docRClass)).lazy()
+				.map(a -> a.getValues().getOpt("info").map(rc -> ((RConstString)rc).getValue()).orElse(null))
+				.filterNulls()
+				.map(StringUtils::unEscapeJavaString);
+		if(docs.isEmpty() == false){
+			println("<<" + docs.toString("") + ">>");
+		}
 
-				a.getValues().values().forEach(c -> println(
-						StringUtils.unEscapeJavaString(
-								toStringRConst(c)
-						)
-				));
-				println(">>");
+		annotationList.filter(a -> a.getName().equals(SubstemaUtils.docRClass) == false).forEach(a -> {
+			String props = a.getValues().map(t ->
+					t._1 + " = " + toStringRConst(t._2)
+			).toString(", ");
+			if(props.isEmpty() == false) {
+				props = "(" + props + ")";
 			}
-			else {
-				String props = a.getValues().map(t ->
-													 t._1 + " = " + toStringRConst(t._2)
-				).toString(", ");
-				if(props.isEmpty() == false) {
-					props = "(" + props + ")";
-				}
-				println("@" + a.getName().getClassName() + props);
-			}
+			println("@" + a.getName().getClassName() + props);
 		});
 	}
 
