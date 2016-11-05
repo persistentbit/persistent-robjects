@@ -131,7 +131,7 @@ public class DependencySupplier extends BaseValueClass implements Function<Strin
 	}
 
 	private String resolveDependency(SupplierDef def, String packageName) {
-		URL in = this.getClass().getResource(def.getPath() + packageName + ".substema");
+		URL in = this.getClass().getResource(def.getPath() + packageName + substemaDefFileExtension);
 		if(in == null) {
 
 			return null;

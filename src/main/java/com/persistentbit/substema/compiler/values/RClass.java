@@ -20,6 +20,18 @@ public class RClass extends BaseValueClass{
         this.className = Objects.requireNonNull(className);
     }
 
+    public RClass(String fullClassName) {
+        String packageName     = null;
+        String resultClassName = fullClassName;
+        int    i               = fullClassName.lastIndexOf('.');
+        if(i != -1) {
+            packageName = resultClassName.substring(0, i);
+            resultClassName = resultClassName.substring(i + 1);
+        }
+        this.packageName = packageName;
+        this.className = resultClassName;
+    }
+
     public String getPackageName() {
         return packageName;
     }

@@ -65,7 +65,7 @@ public class SubstemaSourceGenerator extends SourceGen{
 
 		annotationList.filter(a -> a.getName().equals(SubstemaUtils.docRClass) == false).forEach(a -> {
 			String props = a.getValues().map(t ->
-					t._1 + " = " + toStringRConst(t._2)
+												 (t._1 == null ? "" : t._1 + " = ") + toStringRConst(t._2)
 			).toString(", ");
 			if(props.isEmpty() == false) {
 				props = "(" + props + ")";

@@ -3,29 +3,26 @@ package com.persistentbit.substema;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
+import com.persistentbit.core.logging.PLog;
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.nodes.JJParser;
 import com.persistentbit.jjson.nodes.JJPrinter;
 import com.persistentbit.jjson.utils.ObjectWithTypeName;
 import com.persistentbit.substema.annotations.RemoteCache;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Function;
-import java.util.logging.Logger;
 
 
 public class RServer<R,SESSION> implements RemoteService{
-    static private final Logger log = Logger.getLogger(RServer.class.getName());
-    private final Class<R>   rootInterface;
+
+	private static final PLog log = PLog.get(RServer.class);
+	private final Class<R>   rootInterface;
     private final Class<SESSION>    sessionClass;
     private final Function<RSessionManager<SESSION>,R> rootSupplier;
     private final JJMapper  mapper;
@@ -59,13 +56,15 @@ public class RServer<R,SESSION> implements RemoteService{
         try {
             executor.awaitTermination(timeOut,timeUnit);
         } catch (InterruptedException e) {
-            log.severe(e.getMessage());
+			log.error(e.getMessage());
 
             throw new RObjException(e);
         }
     }
 
-    public CompletableFuture<RCallResult>  call(RCall call){
+	@Override
+	@SuppressWarnings("unchecked")
+	public CompletableFuture<RCallResult>  call(RCall call){
 
         // First we get the sessionData from the call.
         return CompletableFuture.supplyAsync(() -> {
@@ -82,8 +81,8 @@ public class RServer<R,SESSION> implements RemoteService{
                 if(sessionExpires.isBefore(LocalDateTime.now())){
                     //The Session Data is expired, so we continue with no sessionData.
                     //It is up to the implementation to check if there is a session.
-                    log.warning("SESSION EXPIRED: " + sessionData);
-                    sessionData = null;
+					log.warn("SESSION EXPIRED: " + sessionData);
+					sessionData = null;
                     sessionExpires = null;
                 }
             }
@@ -120,8 +119,8 @@ public class RServer<R,SESSION> implements RemoteService{
                     return RCallResult.robject(getSession(sessionManager),createROD(newCallStack,remoteClass,resultNoOption));
                 }
             }catch (Exception e){
-                log.severe(e.getMessage());
-                return RCallResult.exception(getSession(sessionManager),e);
+				log.error(e);
+				return RCallResult.exception(getSession(sessionManager),e);
             }
 
         },executor);
@@ -132,11 +131,11 @@ public class RServer<R,SESSION> implements RemoteService{
         if(sessionManager.getData().isPresent() == false){
             return null;
         }
-        SESSION sdata = sessionManager.getData().get();
-        String data = Base64.getEncoder().encodeToString(JJPrinter.print(false,mapper.write(sdata)).getBytes());
-        RSessionData res = new RSessionData(data,sessionManager.getExpires().get()).signed(secret);
-        return res;
-    }
+		SESSION sessionData = sessionManager.getData().get();
+		String  data        =
+			Base64.getEncoder().encodeToString(JJPrinter.print(false, mapper.write(sessionData)).getBytes());
+		return new RSessionData(data, sessionManager.getExpires().get()).signed(secret);
+	}
 
     private RemoteObjectDefinition  createROD(RCallStack call, Class<?> remotableClass, Object obj){
         try {
@@ -147,10 +146,10 @@ public class RServer<R,SESSION> implements RemoteService{
                 if (m.getParameterCount() == 0 && m.getDeclaredAnnotation(RemoteCache.class) != null) {
                     Object value = m.invoke(obj);
                     try{
-                        value = ((CompletableFuture)value).get();
-                    }catch (Exception e){
-                        log.severe(e.getMessage());
-                        throw new RuntimeException("Error getting cached value from " + remotableClass.getName() + " method: " + md.getMethodName());
+						value = ((Future) value).get();
+					}catch (Exception e){
+						log.error(e.getMessage());
+						throw new RuntimeException("Error getting cached value from " + remotableClass.getName() + " method: " + md.getMethodName());
                     }
                     cachedMethods = cachedMethods.put(md, new ObjectWithTypeName(value));
                 } else {
@@ -159,16 +158,15 @@ public class RServer<R,SESSION> implements RemoteService{
             }
             return new RemoteObjectDefinition(remotableClass,remoteMethods, cachedMethods,call);
         } catch (Exception e){
-            log.severe(e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException(e);
+			log.error(e);
+			throw new RuntimeException(e);
         }
 
     }
 
-
-    private Object singleCall(Object obj, RMethodCall call) throws NoSuchMethodException,IllegalAccessException,InvocationTargetException{
-        MethodDefinition md = call.getMethodToCall();
+	@SuppressWarnings("unchecked")
+	private Object singleCall(Object obj, RMethodCall call) {
+		MethodDefinition md = call.getMethodToCall();
         if(obj == null){
             throw new RuntimeException("Can't call on null: " + md);
         }
@@ -181,14 +179,14 @@ public class RServer<R,SESSION> implements RemoteService{
             }
             return methodResult.get();
         }catch(Exception e){
-            log.severe(e.getMessage());
-            throw new RObjException(e);
+			log.error(e.getMessage());
+			throw new RObjException(e);
         }
 
     }
 
-    private Object call(Object obj, RCallStack callStack) throws NoSuchMethodException,IllegalAccessException,InvocationTargetException{
-        if(callStack.verifySignature(secret,mapper) == false){
+	private Object call(Object obj, RCallStack callStack) {
+		if(callStack.verifySignature(secret,mapper) == false){
              throw new RObjException("Wrong signature !!!");
         }
         for(RMethodCall c : callStack.getCallStack()){
