@@ -273,7 +273,11 @@ public final class SubstemaJavaGen{
 		 * @return The generated Java code
 		 */
 		public GeneratedJava generateValueClass(RValueClass vc) {
-			generateJavaDoc(vc.getAnnotations());
+			String extraDoc =
+				"\nGenerated immutable value class from substema " + substema.getPackageName() + ".<br>\n" +
+					"Properties:<br>\n" +
+					"<ul><br>" + vc.getProperties().map(p -> "<li>{@link #" + p.getName() + "}</li>").toString("\n");
+			generateJavaDoc(vc.getAnnotations(), extraDoc);
 
 
 			String impl = vc.getInterfaceClasses().isEmpty() ? "" :
@@ -281,7 +285,10 @@ public final class SubstemaJavaGen{
 
 			bs("public class " + toString(vc.getTypeSig()) + impl);
 			{
-				vc.getProperties().forEach(p -> println(toString(p.getValueType(), true) + " " + p.getName() + ";"));
+				vc.getProperties().forEach(p -> {
+					generateJavaDoc(p.getAnnotations());
+					println(toString(p.getValueType(), true) + " " + p.getName() + ";");
+				});
 				println("");
 				//***** MAIN CONSTRUCTOR
 				bs("public " + vc.getTypeSig().getName().getClassName() + "(" +
@@ -335,7 +342,6 @@ public final class SubstemaJavaGen{
 				//****** GETTERS AND UPDATERS
 				vc.getProperties().forEach(p -> {
 					if(options.generateGetters) {
-						generateJavaDoc(p.getAnnotations());
 						String rt = toString(p.getValueType().getTypeSig(), p.getValueType().isRequired());
 						String vn = p.getName();
 						if(p.getValueType().isRequired() == false) {
@@ -343,9 +349,43 @@ public final class SubstemaJavaGen{
 							rt = "Optional<" + rt + ">";
 							vn = "Optional.ofNullable(" + vn + ")";
 						}
+						println("/**");
+						println(" * Getter for the property " + p.getName() + "<br>\n");
+						println(" * @see #" + p.getName());
+
+						if(p.getValueType().isRequired()) {
+							println(" * @return The value of property " + p.getName());
+						}
+						else {
+							println(" * @return The Optional value of property " + p.getName());
+						}
+
+						println(" */");
+
 						println("public " + rt + " get" + firstUpper(p.getName()) + "() { return " + vn + "; }");
 					}
 					if(options.generateUpdaters) {
+						println("/**");
+						println(" * Created a new " + toString(vc.getTypeSig()) + "that is a copy of this object, but where the property  " + p
+							.getName() + " is replaced with the given value.<br>");
+						println(" * @see #" + p.getName());
+						if(p.getValueType().isRequired()) {
+							println(" * @param " + p.getName() + " The new NOT NULL value for property " + p.getName());
+						}
+						else {
+							println(" * @param " + p.getName() + " The new NULLABLE value for property " + p.getName());
+						}
+						println(" * @return A new " + toString(vc.getTypeSig()) + " with the new value for property " + p
+							.getName());
+						if(p.getValueType().isRequired()) {
+							println(" * @return The value of property " + p.getName());
+						}
+						else {
+							println(" * @return The Optional value of property " + p.getName());
+						}
+
+						println(" */");
+
 						String s =
 							"public " + toString(vc.getTypeSig()) + " with" + firstUpper(p.getName()) + "(" + toString(p.getValueType()
 																														   .getTypeSig(), p

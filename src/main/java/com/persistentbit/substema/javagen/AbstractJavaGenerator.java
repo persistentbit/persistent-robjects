@@ -1,7 +1,6 @@
 package com.persistentbit.substema.javagen;
 
 import com.persistentbit.core.collections.PList;
-import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.sourcegen.SourceGen;
@@ -11,8 +10,6 @@ import com.persistentbit.substema.compiler.SubstemaCompiler;
 import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.RAnnotation;
 import com.persistentbit.substema.compiler.values.RClass;
-import com.persistentbit.substema.compiler.values.expr.RConst;
-import com.persistentbit.substema.compiler.values.expr.RConstString;
 
 import java.time.LocalDateTime;
 
@@ -70,6 +67,10 @@ public class AbstractJavaGenerator extends SourceGen{
         addImport(new RClass(cls.getPackage().getName(),cls.getSimpleName()));
     }
     protected void generateJavaDoc(PList<RAnnotation> allAnnotations){
+        generateJavaDoc(allAnnotations, "");
+    }
+
+    protected void generateJavaDoc(PList<RAnnotation> allAnnotations, String extra) {
         //Get all documentation strings
         PStream<String> docs =  atUtils.getAnnotation(allAnnotations, SubstemaUtils.docRClass).lazy()
                 .map(a -> atUtils.getStringProperty(a,"info").orElse(null))
@@ -84,6 +85,7 @@ public class AbstractJavaGenerator extends SourceGen{
             docs.forEach(d -> {
                 println(" * " + d);
             });
+            StringUtils.splitInLines(extra).forEach(l -> println(" * " + l));
             println(" */");
         }
     }
