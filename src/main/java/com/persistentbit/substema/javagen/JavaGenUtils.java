@@ -1,5 +1,6 @@
 package com.persistentbit.substema.javagen;
 
+import com.persistentbit.core.collections.PByteList;
 import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.RClass;
 import com.persistentbit.substema.compiler.values.RTypeSig;
@@ -33,6 +34,9 @@ public final class JavaGenUtils{
 
 			if(clsName.equals(SubstemaUtils.dateTimeRClass.getClassName())) {
 				return LocalDateTime.class.getSimpleName();
+			}
+			if(clsName.equals(SubstemaUtils.binaryRClass.getClassName())){
+				return PByteList.class.getSimpleName();
 			}
 			return clsName;
 		}

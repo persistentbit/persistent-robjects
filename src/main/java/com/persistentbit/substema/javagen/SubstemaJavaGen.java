@@ -2,10 +2,7 @@ package com.persistentbit.substema.javagen;
 
 
 import com.persistentbit.core.Nullable;
-import com.persistentbit.core.collections.PList;
-import com.persistentbit.core.collections.PMap;
-import com.persistentbit.core.collections.PSet;
-import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.collections.*;
 import com.persistentbit.core.logging.PLog;
 import com.persistentbit.core.sourcegen.SourceGen;
 import com.persistentbit.core.utils.builders.NOT;
@@ -224,7 +221,10 @@ public final class SubstemaJavaGen{
 					name = "LocalDateTime";
 					addImport(LocalDateTime.class);
 					break;
-
+				case "Binary":
+					name = PByteList.class.getSimpleName();
+					addImport(PByteList.class);
+					break;
 				case "Boolean":
 					name = asPrimitive ? "boolean" : name;
 					break;
@@ -249,6 +249,7 @@ public final class SubstemaJavaGen{
 
 				case "String":
 					break;
+
 
 				default:
 					if(packName.isEmpty()) {

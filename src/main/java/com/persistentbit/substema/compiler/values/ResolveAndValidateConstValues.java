@@ -95,6 +95,9 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
         if(expectedType.getName().equals(SubstemaUtils.stringRClass)){
             return c;
         }
+        if(expectedType.getName().equals(SubstemaUtils.binaryRClass)){
+            return c;
+        }
         return cantConvert(c);
     }
 
