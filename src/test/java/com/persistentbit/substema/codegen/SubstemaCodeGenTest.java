@@ -16,7 +16,7 @@ public class SubstemaCodeGenTest{
 
 	@Test
 	public void testSubstameSourceGen() {
-		String             packageName = "codeGenTest";
+		String             packageName = "com.persistentbit.substema.tests.codegentest";
 		DependencySupplier depSupplier = new DependencySupplier().withResources();
 		SubstemaCompiler   compiler    = new SubstemaCompiler(depSupplier);
 		RSubstema          substema    = compiler.compile(packageName);

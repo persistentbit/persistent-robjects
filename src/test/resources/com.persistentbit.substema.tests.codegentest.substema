@@ -46,6 +46,7 @@ case class WithDEfaultValues{
 
 }
 
+@ExtendsJavaClass
 case class Name{
     firstName:String;
     middleName:?String;

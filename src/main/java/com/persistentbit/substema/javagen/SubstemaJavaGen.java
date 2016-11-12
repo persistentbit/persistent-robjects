@@ -11,6 +11,7 @@ import com.persistentbit.substema.annotations.Remotable;
 import com.persistentbit.substema.annotations.RemoteCache;
 import com.persistentbit.substema.compiler.SubstemaCompiler;
 import com.persistentbit.substema.compiler.SubstemaException;
+import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.*;
 
 import java.io.File;
@@ -178,9 +179,9 @@ public final class SubstemaJavaGen{
 					if(options.generateUpdaters) {
 						String s = "public " + ic.getName()
 							.getClassName() + " with" + firstUpper(p.getName()) + "(" + toString(p.getValueType()
-																									 .getTypeSig(), p
-																									 .getValueType()
-																									 .isRequired()) + " " + p
+							.getTypeSig(), p
+							.getValueType()
+							.isRequired()) + " " + p
 							.getName() + ");";
 
 						println(s);
@@ -281,7 +282,26 @@ public final class SubstemaJavaGen{
 			generateJavaDoc(vc.getAnnotations(), extraDoc);
 
 
-			String impl = vc.getInterfaceClasses().isEmpty() ? "" :
+			//ADD EXTENDS FOR ExtendsJavaClass annotation
+
+			String  impl;
+			boolean hasExtendsJavaAnnotation = false;
+			{
+				RAnnotation extendsJavaAnnotation = atUtils.getOneAnnotation(
+					vc.getAnnotations(), SubstemaUtils.extendsJavaClass).orElse(null);
+				if(extendsJavaAnnotation != null) {
+					String javaClassName = atUtils.getStringProperty(extendsJavaAnnotation, "javaClassName")
+						.orElse(vc.getTypeSig().getName().getClassName() + "Functions");
+					addImport(new RClass(packageName, javaClassName));
+					impl = " extends " + javaClassName;
+					hasExtendsJavaAnnotation = true;
+				}
+				else {
+					impl = "";
+				}
+			}
+
+			impl = vc.getInterfaceClasses().isEmpty() ? impl :
 				" implements " + vc.getInterfaceClasses().map(RClass::getClassName).toString(",");
 
 			bs("public class " + toString(vc.getTypeSig()) + impl);
@@ -293,10 +313,10 @@ public final class SubstemaJavaGen{
 				println("");
 				//***** MAIN CONSTRUCTOR
 				bs("public " + vc.getTypeSig().getName().getClassName() + "(" +
-					   vc.getProperties()
-						   .map(p -> toString(p.getValueType().getTypeSig(), p.getValueType().isRequired() && p
-							   .getDefaultValue().isPresent() == false) + " " + p.getName()).toString(", ")
-					   + ")");
+					vc.getProperties()
+						.map(p -> toString(p.getValueType().getTypeSig(), p.getValueType().isRequired() && p
+							.getDefaultValue().isPresent() == false) + " " + p.getName()).toString(", ")
+					+ ")");
 				{
 					vc.getProperties().forEach(p -> {
 						String fromValue = p.getName();
@@ -330,9 +350,9 @@ public final class SubstemaJavaGen{
 				PList<RProperty> req = vc.getProperties().filter(this::isRequired);
 				if(req.size() != vc.getProperties().size()) {
 					bs("public " + vc.getTypeSig().getName().getClassName() + "(" +
-						   req.map(p -> toString(p.getValueType().getTypeSig(), p.getValueType().isRequired()) + " " + p
-							   .getName()).toString(", ")
-						   + ")");
+						req.map(p -> toString(p.getValueType().getTypeSig(), p.getValueType().isRequired()) + " " + p
+							.getName()).toString(", ")
+						+ ")");
 					{
 						println("this(" + vc.getProperties().map(p -> isRequired(p) ? p.getName() : "null")
 							.toString(",") + ");");
@@ -367,7 +387,8 @@ public final class SubstemaJavaGen{
 					}
 					if(options.generateUpdaters) {
 						println("/**");
-						println(" * Created a new " + toString(vc.getTypeSig()) + "that is a copy of this object, but where the property  " + p
+						println(" * Created a new " + toString(vc
+							.getTypeSig()) + "that is a copy of this object, but where the property  " + p
 							.getName() + " is replaced with the given value.<br>");
 						println(" * @see #" + p.getName());
 						if(p.getValueType().isRequired()) {
@@ -376,7 +397,8 @@ public final class SubstemaJavaGen{
 						else {
 							println(" * @param " + p.getName() + " The new NULLABLE value for property " + p.getName());
 						}
-						println(" * @return A new " + toString(vc.getTypeSig()) + " with the new value for property " + p
+						println(" * @return A new " + toString(vc
+							.getTypeSig()) + " with the new value for property " + p
 							.getName());
 						if(p.getValueType().isRequired()) {
 							println(" * @return The value of property " + p.getName());
@@ -388,10 +410,11 @@ public final class SubstemaJavaGen{
 						println(" */");
 
 						String s =
-							"public " + toString(vc.getTypeSig()) + " with" + firstUpper(p.getName()) + "(" + toString(p.getValueType()
-																														   .getTypeSig(), p
-																														   .getValueType()
-																														   .isRequired()) + " " + p
+							"public " + toString(vc.getTypeSig()) + " with" + firstUpper(p.getName()) + "(" + toString(p
+								.getValueType()
+								.getTypeSig(), p
+								.getValueType()
+								.isRequired()) + " " + p
 								.getName() + ") { return new ";
 						s += vc.getTypeSig().getName().getClassName();
 						if(vc.getTypeSig().getGenerics().isEmpty() == false) {
@@ -415,6 +438,12 @@ public final class SubstemaJavaGen{
 				//******* TOSTRING
 				generateToString(vc);
 
+				//****** _DATA
+				if(hasExtendsJavaAnnotation) {
+					println("protected " + toString(vc.getTypeSig()) + " _getData() { return this; } ");
+					println("");
+				}
+
 				//******* BUILDER
 
 				bs("static public class Builder" + getBuilderGenerics(vc));
@@ -425,9 +454,9 @@ public final class SubstemaJavaGen{
 					vc.getProperties().forEach(p -> {
 						String gen = getBuilderGenerics(vc, PMap.<String, String>empty().put(p.getName(), "SET"));
 						bs("public Builder" + gen + " set" + firstUpper(p.getName()) + "(" + toString(p.getValueType()
-																										  .getTypeSig(), p
-																										  .getValueType()
-																										  .isRequired()) + " " + p
+							.getTypeSig(), p
+							.getValueType()
+							.isRequired()) + " " + p
 							.getName() + ")");
 						{
 							println("this." + p.getName() + " = " + p.getName() + ";");
@@ -683,8 +712,8 @@ public final class SubstemaJavaGen{
 						println("@RemoteCache");
 					}
 					println("CompletableFuture<" + retType + ">\t" + f.getName() + "(" +
-								f.getParams().map(p -> toString(p.getValueType().getTypeSig()) + " " + p.getName())
-									.toString(", ") + ");"
+						f.getParams().map(p -> toString(p.getValueType().getTypeSig()) + " " + p.getName())
+							.toString(", ") + ");"
 					);
 				});
 

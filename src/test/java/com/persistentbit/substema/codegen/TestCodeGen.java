@@ -24,6 +24,7 @@ public class TestCodeGen {
 
     @Test
     public void testCodeGen() throws Exception{
+        generateCode(new JavaGenOptions(true, true), "com.persistentbit.substema.tests.codegentest");
         /*generateCode(new JavaGenOptions(),"com.persistentbit.generated.defaultOptions");
         generateCode(new JavaGenOptions().withGenerateGetters(true),"com.persistentbit.generated.withGetters");
         generateCode(new JavaGenOptions().withGenerateUpdaters(true),"com.persistentbit.generated.withUpdaters");

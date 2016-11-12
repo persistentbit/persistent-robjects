@@ -20,8 +20,9 @@ import java.util.function.Function;
 
 
 /**
- * @param <R>
- * @param <SESSION>
+ * Implements a {@link RemoteService} using a Java class implementation
+ * @param <R> The Service Root interface type
+ * @param <SESSION> The Session data type
  */
 public class RServer<R,SESSION> implements RemoteService{
 

@@ -16,6 +16,8 @@ public final class SubstemaUtils {
     public static final RClass docRClass = new RClass(annotationsPackage, "Doc");
     public static final RClass noToString = new RClass(annotationsPackage, "NoToString");
 
+    public static final RClass extendsJavaClass = new RClass(annotationsPackage, "ExtendsJavaClass");
+
     public static final RClass stringRClass = new RClass("", "String");
     public static final RClass booleanRClass = new RClass("", "Boolean");
     public static final RClass listRClass = new RClass("", "List");
