@@ -19,6 +19,10 @@ import java.util.concurrent.*;
 import java.util.function.Function;
 
 
+/**
+ * @param <R>
+ * @param <SESSION>
+ */
 public class RServer<R,SESSION> implements RemoteService{
 
 	private static final PLog log = PLog.get(RServer.class);
@@ -105,13 +109,8 @@ public class RServer<R,SESSION> implements RemoteService{
                 if(result instanceof Optional){
                     resultNoOption = ((Optional)result).orElseGet(null);
                 }
-                //Class<?> remoteClass = result == resultNoOption ? null : RemotableClasses.getRemotableClass(resultNoOption.getClass());
-                Class<?> remoteClass;
-                /*if(result == resultNoOption){
-                    remoteClass = null;
-                } else */{
-                    remoteClass = RemotableClasses.getRemotableClass(resultNoOption.getClass());
-                }
+                Class<?> remoteClass = RemotableClasses.getRemotableClass(resultNoOption.getClass());
+
                 if(remoteClass == null ){
                     return RCallResult.value(getSession(sessionManager),call.getThisCall().getMethodToCall(),result);
                 } else {
