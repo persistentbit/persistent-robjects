@@ -5,6 +5,7 @@ import com.persistentbit.core.Nullable;
 import com.persistentbit.core.collections.*;
 import com.persistentbit.core.logging.PLog;
 import com.persistentbit.core.sourcegen.SourceGen;
+import com.persistentbit.core.utils.ToDo;
 import com.persistentbit.core.utils.builders.NOT;
 import com.persistentbit.core.utils.builders.SET;
 import com.persistentbit.substema.annotations.Remotable;
@@ -290,6 +291,9 @@ public final class SubstemaJavaGen{
 				RAnnotation extendsJavaAnnotation = atUtils.getOneAnnotation(
 					vc.getAnnotations(), SubstemaUtils.extendsJavaClass).orElse(null);
 				if(extendsJavaAnnotation != null) {
+					if(vc.getTypeSig().getGenerics().isEmpty() == false) {
+						throw new ToDo("Generics with ExtendsJavaClass not yet supported");
+					}
 					String javaClassName = atUtils.getStringProperty(extendsJavaAnnotation, "javaClassName")
 						.orElse(vc.getTypeSig().getName().getClassName() + "Functions");
 					addImport(new RClass(packageName, javaClassName));
@@ -387,8 +391,8 @@ public final class SubstemaJavaGen{
 					}
 					if(options.generateUpdaters) {
 						println("/**");
-						println(" * Created a new " + toString(vc
-							.getTypeSig()) + "that is a copy of this object, but where the property  " + p
+						println(" * Create a new " + toString(vc
+							.getTypeSig()) + " that is a copy of this object, but where the property  " + p
 							.getName() + " is replaced with the given value.<br>");
 						println(" * @see #" + p.getName());
 						if(p.getValueType().isRequired()) {
@@ -600,6 +604,12 @@ public final class SubstemaJavaGen{
 		 * @param vc The case class
 		 */
 		public void generateToString(RValueClass vc) {
+
+			if(atUtils.getOneAnnotation(vc.getAnnotations(), SubstemaUtils.noToString).isPresent()) {
+				//DON'T GENERATE TO STRING IF THERE IS A @NoToString ANNOTATION ON THE CASE CLASS
+				return;
+			}
+
 			println("@Override");
 			bs("public String toString()");
 			{
@@ -608,6 +618,9 @@ public final class SubstemaJavaGen{
 				boolean first = true;
 
 				for(RProperty p : vc.getProperties()) {
+					if(atUtils.getOneAnnotation(p.getAnnotations(), SubstemaUtils.noToString).isPresent()) {
+						continue;
+					}
 					String res = "\", ";
 					if(first) {
 						res = "\"";
