@@ -20,70 +20,67 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
- * User: petermuys
- * Date: 31/10/15
- * Time: 11:22
+ * Implementation of a {@link RemoteService} that uses a HTTP server as endpoint.<br>
+ * @author Peter Muys
+ * @since 31/10/15
  */
 public class HttpRemoteServiceClient implements RemoteService{
-    private static final Logger log = Logger.getLogger(HttpRemoteServiceClient.class.getName());
 
-    private final URL url;
-    private JJMapper mapper = new JJMapper();
+	private static final Logger log = Logger.getLogger(HttpRemoteServiceClient.class.getName());
 
-    public HttpRemoteServiceClient(URL url){
-        this.url = url;
-    }
-    public HttpRemoteServiceClient(String url){
-        try {
-            this.url = new URL(url);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-    }
+	private final URL url;
+	private final JJMapper mapper = new JJMapper();
 
-    @Override
-    public CompletableFuture<RCallResult> call(RCall call) {
-        JJNode callNode = this.mapper.write(call);
-        return doPost(callNode).thenApply(node -> {
-            RCallResult callResult = (RCallResult)this.mapper.read(node, RCallResult.class);
-            return callResult;
-        });
-    }
+	public HttpRemoteServiceClient(URL url) {
+		this.url = url;
+	}
 
-    @Override
-    public void close(long l, TimeUnit timeUnit) {
+	public HttpRemoteServiceClient(String url) {
+		try {
+			this.url = new URL(url);
+		} catch(MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
-    }
+	@Override
+	public CompletableFuture<RCallResult> call(RCall call) {
+		JJNode callNode = this.mapper.write(call);
+		return doPost(callNode).thenApply(node -> this.mapper.read(node, RCallResult.class));
+	}
 
-    public CompletableFuture<JJNode> doPost(JJNode content){
-        return CompletableFuture.supplyAsync(() -> {
-            HttpURLConnection connection = null;
-            try{
-                connection = (HttpURLConnection)url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setUseCaches(false);
-                if(content != null) {
-                    connection.setDoOutput(true);
-                    try (Writer w = new OutputStreamWriter(connection.getOutputStream())) {
-                        JJPrinter.print(false, content, w);
-                        w.flush();
-                    }
-                }
-                try(Reader rin = new InputStreamReader(connection.getInputStream())){
-                    JJNode json = JJParser.parse(rin);
-                    //System.out.println("RESULT FROM CALL: " +  JJPrinter.print(true,json));
-                    return json;
-                }
-            }catch(Exception e){
-                throw new RuntimeException(e);
-            }finally
-            {
-                if(connection != null){
-                    connection.disconnect();
-                }
-            }
-        });
+	@Override
+	public void close(long timeOut, TimeUnit timeUnit) {
 
-    }
+	}
+
+	public CompletableFuture<JJNode> doPost(JJNode content) {
+		return CompletableFuture.supplyAsync(() -> {
+			HttpURLConnection connection = null;
+			try {
+				connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("POST");
+				connection.setUseCaches(false);
+				if(content != null) {
+					connection.setDoOutput(true);
+					try(Writer w = new OutputStreamWriter(connection.getOutputStream())) {
+						JJPrinter.print(false, content, w);
+						w.flush();
+					}
+				}
+				try(Reader rin = new InputStreamReader(connection.getInputStream())) {
+					//System.out.println("RESULT FROM CALL: " +  JJPrinter.print(true,json));
+					return JJParser.parse(rin);
+				}
+			} catch(Exception e) {
+				throw new RuntimeException(e);
+			} finally {
+				if(connection != null) {
+					connection.disconnect();
+				}
+			}
+		});
+
+	}
 
 }
