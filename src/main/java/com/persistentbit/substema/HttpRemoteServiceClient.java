@@ -1,12 +1,9 @@
-package com.persistentbit;
+package com.persistentbit.substema;
 
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.nodes.JJNode;
 import com.persistentbit.jjson.nodes.JJParser;
 import com.persistentbit.jjson.nodes.JJPrinter;
-import com.persistentbit.substema.RCall;
-import com.persistentbit.substema.RCallResult;
-import com.persistentbit.substema.RemoteService;
 
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
