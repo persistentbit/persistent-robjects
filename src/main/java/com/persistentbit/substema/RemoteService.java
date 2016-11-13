@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
  * The implementation (remote, local, http, tcp,...) is completely hidden for the client.<br>
  * @author Peter Muys
  * @see RServer
- * @see HttpRemoteServiceClient
+ * @see RemoteServiceHttpClient
  */
 public interface RemoteService {
     default CompletableFuture<RCallResult>  getRoot(){

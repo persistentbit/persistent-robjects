@@ -1,14 +1,13 @@
 package com.persistentbit.substema;
 
 import com.persistentbit.core.logging.PLog;
+import com.persistentbit.core.utils.IO;
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.nodes.JJNode;
 import com.persistentbit.jjson.nodes.JJParser;
 import com.persistentbit.jjson.nodes.JJPrinter;
 
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -25,9 +24,9 @@ import java.util.concurrent.TimeUnit;
 public class RemoteServiceHttpClient implements RemoteService{
 
     private static final PLog log = PLog.get(RemoteServiceHttpClient.class);
-    private final URL url;
-    private final JJMapper mapper;
-    private ExecutorService executor;
+    private final URL             url;
+    private final JJMapper        mapper;
+    private final ExecutorService executor;
 
     public RemoteServiceHttpClient(URL url) {
         this(url, ForkJoinPool.commonPool());
@@ -66,11 +65,11 @@ public class RemoteServiceHttpClient implements RemoteService{
     public CompletableFuture<RCallResult> call(RCall call) {
         return CompletableFuture.supplyAsync(() -> {
             JJNode callNode = mapper.write(call);
-            log.debug(() -> url.toString() + " call " + callNode);
+            log.debug(() -> url + " call " + callNode);
             JJNode resultNode = doPost(callNode);
-            log.debug(() -> url.toString() + " response " + resultNode);
+            log.debug(() -> url + " response " + resultNode);
             return mapper.read(resultNode,RCallResult.class);
-        },executor);
+        }, executor);
 
     }
 
@@ -91,15 +90,14 @@ public class RemoteServiceHttpClient implements RemoteService{
             connection.setRequestMethod("POST");
             connection.setUseCaches(false);
             connection.setDoOutput(true);
-            try (Writer w = new OutputStreamWriter(connection.getOutputStream())) {
+            connection.setDoInput(true);
+            try(Writer w = new OutputStreamWriter(connection.getOutputStream(), "UTF-8")) {
                 JJPrinter.print(false, content, w);
-                w.flush();
             }
-            try(Reader rin = new InputStreamReader(connection.getInputStream())){
-                JJNode json = JJParser.parse(rin);
+            String data = IO.readStream(connection.getInputStream());
+            log.debug(() -> "Do Post Result: " + data);
+            return JJParser.parse(data);
 
-                return json;
-            }
         }catch(Exception e){
             throw new RuntimeException(e);
         }finally
