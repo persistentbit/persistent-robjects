@@ -91,11 +91,14 @@ public class RemoteServiceHttpClient implements RemoteService{
             connection.setUseCaches(false);
             connection.setDoOutput(true);
             connection.setDoInput(true);
-            try(Writer w = new OutputStreamWriter(connection.getOutputStream(), "UTF-8")) {
+            Writer w = new OutputStreamWriter(connection.getOutputStream(), "UTF-8");
                 JJPrinter.print(false, content, w);
-            }
+                w.flush();
             String data = IO.readStream(connection.getInputStream());
             log.debug(() -> "Do Post Result: " + data);
+            if(data.isEmpty()){
+                throw new RuntimeException("Got an empty response from the server");
+            }
             return JJParser.parse(data);
 
         }catch(Exception e){
