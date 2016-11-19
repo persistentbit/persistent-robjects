@@ -3,7 +3,8 @@ package com.persistentbit.substema.javagen;
 import com.persistentbit.substema.compiler.values.RClass;
 
 /**
- * Created by petermuys on 14/09/16.
+ * @since 14/09/16
+ * @author Peter Muys
  */
 public class GeneratedJava {
     public final RClass name;

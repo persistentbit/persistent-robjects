@@ -14,7 +14,8 @@ import com.persistentbit.substema.compiler.values.RClass;
 import java.time.LocalDateTime;
 
 /**
- * Created by petermuys on 7/10/16.
+ * @since 7/10/16
+ * @author Peter Muys
  */
 public class AbstractJavaGenerator extends SourceGen{
     private PSet<RClass>    imports = PSet.empty();
@@ -47,10 +48,9 @@ public class AbstractJavaGenerator extends SourceGen{
         sg.add(header);
 
         //Add all the external Imports.
-        imports.filter(i -> i.getPackageName().equals(packageName) == false).forEach(i -> {
-            sg.println("import " + i.getPackageName() + "." + i.getClassName() + ";");
-        });
-        sg.println("");
+		imports.filter(i -> i.getPackageName().equals(packageName) == false)
+			.forEach(i -> sg.println("import " + i.getPackageName() + "." + i.getClassName() + ";"));
+		sg.println("");
 
 
         //Add this generated source to the result
@@ -82,10 +82,8 @@ public class AbstractJavaGenerator extends SourceGen{
 
         if(docs.isEmpty() == false){
             println("/**");
-            docs.forEach(d -> {
-                println(" * " + d);
-            });
-            StringUtils.splitInLines(extra).forEach(l -> println(" * " + l));
+			docs.forEach(d -> println(" * " + d));
+			StringUtils.splitInLines(extra).forEach(l -> println(" * " + l));
             println(" */");
         }
     }

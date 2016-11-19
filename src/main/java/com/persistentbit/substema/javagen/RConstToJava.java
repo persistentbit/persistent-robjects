@@ -9,9 +9,10 @@ import com.persistentbit.substema.compiler.values.expr.*;
 import java.util.function.Consumer;
 
 /**
- * Converts an RConst value to a java source string
+ * Converts an RConst value to a java source string<br>
+ * @author Peter Muys
  */
-public class RConstToJava implements RConstVisitor<String>{
+public final class RConstToJava implements RConstVisitor<String>{
     private static int lambdaVarIndex = 1;
     private final String defaultPackageName;
     private final Consumer<RClass> imports;
@@ -21,7 +22,7 @@ public class RConstToJava implements RConstVisitor<String>{
         this.imports = imports;
     }
 
-    static public String toJava(String defaultPackageName,Consumer<RClass> imports,RConst rConst){
+    public static String toJava(String defaultPackageName, Consumer<RClass> imports, RConst rConst) {
         return new RConstToJava(defaultPackageName,imports).visit(rConst);
     }
 
@@ -37,7 +38,7 @@ public class RConstToJava implements RConstVisitor<String>{
 
     @Override
     public String visit(RConstNumber c) {
-        return "" + c.getNumber();
+        return String.valueOf(c.getNumber());
     }
 
     @Override
@@ -54,7 +55,7 @@ public class RConstToJava implements RConstVisitor<String>{
 
     private void addImports(RTypeSig typeSig){
         imports.accept(typeSig.getName());
-        typeSig.getGenerics().forEach(g -> addImports(g));
+        typeSig.getGenerics().forEach(this::addImports);
     }
 
     @Override
@@ -78,6 +79,6 @@ public class RConstToJava implements RConstVisitor<String>{
         if(c.getValues().isEmpty()){
             return "PList.empty()";
         }
-        return "PList.val(" + c.getValues().map(v -> visit(v)).toString(", ") + ")";
+        return "PList.val(" + c.getValues().map(this::visit).toString(", ") + ")";
     }
 }
