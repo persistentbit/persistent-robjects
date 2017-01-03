@@ -3,18 +3,18 @@
 */
 
 
-
+<<Test Doc>>
 enum EnumTest1{
-    anEnumTestValue1,anEnumTestValue2, anEnumTestLastValue
+    anEnumTestValue1,anEnumTestValue2, anEnumTestLastValue;
 }
 
 enum EnumTest2{
-
+    ;
 }
 
 
 
-value class TypesOfValueTest{
+case class TypesOfValueTest{
     aByte: Byte;
     aShort: Short;
     anInt: Integer;
@@ -30,25 +30,42 @@ value class TypesOfValueTest{
 
 }
 
-value class Name{
+case class WithDEfaultValues{
+    aByte: Byte = 0;
+    aShort: Short = 1;
+    anInt: Integer = 2;
+    aLong: Long = 3;
+    aFloat: Float = 4.0;
+    aDouble: Double = 5.0;
+    aString: String = "TestString";
+    anEnum: EnumTest1 = EnumTest1.anEnumTestValue1;
+    aList: List<Integer> = [1,2,3];
+    aSet: Set<Integer> = [2,3,4];
+    aMap: Map<Integer,String>;
+    aBoolean: Boolean = true;
+
+}
+
+@ExtendsJavaClass
+case class Name{
     firstName:String;
     middleName:?String;
     lastName:String;
 }
 
-value class Email{
+case class Email{
     address:String;
     name:?Name;
 }
 
-value class SimplePerson{
+case class SimplePerson{
     id:Integer;
     name:Name;
     email:Email;
 
 }
 
-value class OptionalsTypesOfValueTest{
+case class OptionalsTypesOfValueTest{
     aByte: ?Byte;
     aShort: ?Short;
     anInt: ?Integer;
@@ -64,16 +81,16 @@ value class OptionalsTypesOfValueTest{
 
 }
 
-value class AnEmptyValueClass{
+case class AnEmptyValueClass{
 
 }
 
-value class Tuple2<T1,T2>{
+case class Tuple2<T1,T2>{
     _1:T1;
     _2:T2;
 }
 
-value class GenericsTest<A,B>{
+case class GenericsTest<A,B>{
     a:A;
     ab:Tuple2<A,B>;
     aEnum:Tuple2<A,EnumTest1>;
@@ -84,7 +101,7 @@ value class GenericsTest<A,B>{
 
 }
 
-value class ServiceVersion{
+case class ServiceVersion{
     major:Integer;
     minor:Integer;
     snapShot:Boolean;
@@ -95,18 +112,18 @@ interface IEntity{
 }
 
 
-value class ServiceInfo{
+case class ServiceInfo{
     serviceName:String;
     serviceVersion:ServiceVersion;
 }
 
 
-value class Invoice implements IEntity{
+case class Invoice implements IEntity{
     id:Integer;
     invoiceNumber:String;
 }
 
-value class PersonEntity implements IEntity{
+case class PersonEntity implements IEntity{
     id:Integer;
     name:Name;
 }

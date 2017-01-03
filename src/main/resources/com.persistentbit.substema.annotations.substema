@@ -26,3 +26,13 @@ annotation Doc{
     info:String;
 }
 
+/*
+    This annotation marks a case class as
+    extending a java class in the same package as the case class.
+    If the javaClassName is not defined then a default name
+    of <CaseClassName>Functions will be used.
+
+*/
+annotation ExtendsJavaClass{
+    javaClassName:?String;
+}

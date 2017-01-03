@@ -8,9 +8,14 @@ import com.persistentbit.core.utils.BaseValueClass;
  */
 public class RConstNull extends BaseValueClass implements RConst {
 
+	static public final RConstNull Null = new RConstNull();
+
     private RConstNull(){
 
     }
 
-    static public final RConstNull Null = new RConstNull();
+	@Override
+	public String toSource() {
+		return "null";
+	}
 }
