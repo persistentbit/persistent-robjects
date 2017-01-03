@@ -1,25 +1,25 @@
 package com.persistentbit.substema.javagen;
 
 
+import com.persistentbit.core.Nothing;
 import com.persistentbit.core.Nullable;
+import com.persistentbit.core.Result;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
-import com.persistentbit.core.logging.PLog;
+import com.persistentbit.core.logging.Log;
 import com.persistentbit.core.sourcegen.SourceGen;
+import com.persistentbit.core.utils.IO;
 import com.persistentbit.core.utils.builders.NOT;
 import com.persistentbit.core.utils.builders.SET;
 import com.persistentbit.substema.annotations.Remotable;
 import com.persistentbit.substema.annotations.RemoteCache;
-import com.persistentbit.substema.compiler.*;
+import com.persistentbit.substema.compiler.SubstemaCompiler;
+import com.persistentbit.substema.compiler.SubstemaException;
 import com.persistentbit.substema.compiler.values.*;
-import com.persistentbit.substema.compiler.values.expr.RConst;
-import com.persistentbit.substema.compiler.values.expr.RConstString;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -32,7 +32,7 @@ import java.util.function.Function;
  * @since 14/09/16
  */
 public class SubstemaJavaGen {
-    static private PLog log = PLog.get(SubstemaJavaGen.class);
+
     private final JavaGenOptions options;
     private final RSubstema substema;
 
@@ -74,29 +74,29 @@ public class SubstemaJavaGen {
      * @param substema  The substema to generate java classes for
      * @param outputFolder The root folder where the generated java will be written under
      */
-    static public void generateAndWriteToFiles(SubstemaCompiler compiler,JavaGenOptions options,RSubstema substema, File outputFolder){
-        PList<GeneratedJava> result = generate(compiler,options,substema);
+    static public Result<Nothing> generateAndWriteToFiles(SubstemaCompiler compiler, JavaGenOptions options, RSubstema substema, File outputFolder){
+        return Log.function(compiler,options,substema,outputFolder).code(l-> {
+            PList<GeneratedJava> result = generate(compiler,options,substema);
 
-        result.forEach(g -> {
-            //Package name to path string
-            String packagePath = g.name
+            result.forEach(g -> {
+                //Package name to path string
+                String packagePath = g.name
                     .getPackageName()
                     .replace('.', File.separatorChar)
-            ;
-            //create folders...
-            File dest = new File(outputFolder,packagePath);
-            if(dest.exists() == false){ dest.mkdirs(); }
+                    ;
+                //create folders...
+                File dest = new File(outputFolder,packagePath);
+                if(dest.exists() == false){ dest.mkdirs(); }
 
 
-            dest = new File(dest,g.name.getClassName() + ".java");
-            log.info("Generating " + dest.getAbsolutePath());
-            try(FileWriter fw = new FileWriter(dest)){
-                fw.write(g.code);
-            }catch (IOException io){
-                log.error(io);
-                throw new RuntimeException("Can't write to " + dest.getAbsolutePath());
-            }
+                dest = new File(dest,g.name.getClassName() + ".java");
+                l.info("Generating " + dest.getAbsolutePath());
+                IO.writeFile(g.code,dest);
+
+            });
+            return Result.success(Nothing.inst);
         });
+
     }
 
     /**
