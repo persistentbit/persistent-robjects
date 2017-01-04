@@ -92,7 +92,7 @@ public class RemoteServiceHttpClient implements RemoteService{
                 Writer w = new OutputStreamWriter(connection.getOutputStream(), "UTF-8");
                 JJPrinter.print(false, content, w);
                 w.flush();
-                return IO.readTextStream(connection.getInputStream()).map(data -> {
+                return IO.readTextStream(connection.getInputStream()).flatMap(data -> {
                     l.info("Do Post Result: " + data);
                     return JJParser.parse(data);
                 });

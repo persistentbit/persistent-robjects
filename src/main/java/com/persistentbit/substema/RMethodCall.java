@@ -48,7 +48,7 @@ public class RMethodCall {
             if(node.getType() == JJNode.JType.jsonNull){
                 return null;
             }
-            JJNodeObject obj = node.asObject().get();
+            JJNodeObject obj = node.asObject().orElseThrow();
             MethodDefinition md = masterReader.read(obj.get("methodToCall").get(),MethodDefinition.class);
             JJNode argNode = obj.get("arguments").get();
             if(argNode.asNull().isPresent()){
@@ -56,7 +56,7 @@ public class RMethodCall {
             }
             Method m = RemotableMethods.getRemotableMethod(md);
             Type[] genParams = m.getGenericParameterTypes();
-            PList<JJNode> items = argNode.asArray().get().pstream().plist();
+            PList<JJNode> items = argNode.asArray().orElseThrow().pstream().plist();
             Object[] res = new Object[md.getParamTypes().length];
             for(int t=0; t<md.getParamTypes().length; t++){
                 JJNode n = items.get(t);

@@ -38,7 +38,7 @@ public class AppImpl implements App{
     @Override
     public CompletableFuture<String> createLoginToken(String un, String pw) {
         if(un.startsWith("test") && pw.startsWith("test")){
-            return CompletableFuture.completedFuture(signing.signAsString(mapper.write(new LoginToken(new Date(),un))));
+            return CompletableFuture.completedFuture(signing.signAsString(mapper.write(new LoginToken(new Date(),un))).orElseThrow());
         }
         return CompletableFuture.completedFuture(null);
     }

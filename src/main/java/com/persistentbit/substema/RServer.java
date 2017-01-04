@@ -86,7 +86,7 @@ public class RServer<R, SESSION> implements RemoteService{
 					Result.failure("Invalid Session signature");
 				}
 				sessionData =
-					mapper.read(JJParser.parse(new String(Base64.getDecoder().decode(data.data))), sessionClass);
+					mapper.read(JJParser.parse(new String(Base64.getDecoder().decode(data.data))).orElseThrow(), sessionClass);
 				sessionExpires = data.validUntil;
 				if(sessionExpires.isBefore(LocalDateTime.now())) {
 					//The Session Data is expired, so we continue with no sessionData.

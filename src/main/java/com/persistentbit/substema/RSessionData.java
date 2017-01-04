@@ -40,7 +40,7 @@ public class RSessionData extends BaseValueClass{
      * @return The signed version of this instance.
      */
     public RSessionData    signed(String secret){
-        String sig = JJSigning.sign(this.data + this.validUntil.format(DateTimeFormatter.ISO_DATE_TIME) + secret,"SHA-256");
+        String sig = JJSigning.sign(this.data + this.validUntil.format(DateTimeFormatter.ISO_DATE_TIME) + secret,"SHA-256").orElseThrow();
         return new RSessionData(data,validUntil,sig);
     }
 

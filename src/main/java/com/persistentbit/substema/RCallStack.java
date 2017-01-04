@@ -37,7 +37,7 @@ public class RCallStack extends BaseValueClass {
 
     static public RCallStack    createAndSign(PList<RMethodCall> methods,JJWriter jsonWriter,String secret){
         String msg = JJPrinter.print(false,jsonWriter.write(methods))+secret;
-        return new RCallStack(JJSigning.sign(msg,"SHA-256"),methods);
+        return new RCallStack(JJSigning.sign(msg,"SHA-256").orElseThrow(),methods);
     }
     public boolean verifySignature(String secret, JJWriter jsonWriter){
         String msg = JJPrinter.print(false,jsonWriter.write(callStack))+secret;

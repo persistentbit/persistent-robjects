@@ -32,7 +32,7 @@ public class MinimumServer {
         @Override
         public void handle(HttpExchange t) throws IOException {
             try(Reader r = new InputStreamReader(t.getRequestBody(), Charset.forName("UTF-8"))){
-                JJNode callNode = JJParser.parse(r);
+                JJNode callNode = JJParser.parse(r).orElseThrow();
                 service.call(mapper.read(callNode, RCall.class))
                     .completed()
                     .ifPresent(cr -> {

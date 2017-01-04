@@ -74,7 +74,7 @@ public class RCallResult {
         @Override
         public Object read(Type type, JJNode node, JJReader masterReader) {
             try{
-                JJNodeObject obj = node.asObject().get();
+                JJNodeObject obj = node.asObject().orElseThrow();
                 Object value = null;
                 MethodDefinition md = masterReader.read(obj.get("theCall").get(),MethodDefinition.class);
                 JJNode valueNode = obj.get("value").get();
