@@ -1,5 +1,6 @@
 package com.persistentbit.substema;
 
+import com.persistentbit.core.logging.Log;
 import com.persistentbit.core.utils.ReflectionUtils;
 
 import java.lang.reflect.InvocationHandler;
@@ -8,7 +9,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Logger;
 
 /**
  * An RProxy is a Interface Proxy for Remote Objects that uses a {@link RemoteService} to
@@ -26,7 +26,6 @@ import java.util.logging.Logger;
  */
 public final class RProxy implements InvocationHandler{
 
-	private static final Logger log = Logger.getLogger(RProxy.class.getName());
 
 	private final RemoteService          server;
 	private final RemoteObjectDefinition rod;
@@ -65,12 +64,10 @@ public final class RProxy implements InvocationHandler{
 	 * @return The Proxy
 	 */
 	public static <C> C create(RemoteService server) {
-		try {
-			return create(server, new ClientSessionData(), server.getRoot().get().getRobject().get());
-		} catch(Exception e) {
-			log.severe(e.getMessage());
-			throw new RObjException(e);
-		}
+		return Log.function(server).code(l -> {
+			return create(server, new ClientSessionData(), server.getRoot().orElseThrow().getRobject().get());
+		});
+
 	}
 
 
@@ -114,7 +111,7 @@ public final class RProxy implements InvocationHandler{
 
 		//Execute the Call
 		return server.call(call)
-			.thenApply(result -> {
+			.map(result -> {
 
 				//Save the new Session Data
 				clientSessionData.setSessionData(result.getSessionData().orElse(null));

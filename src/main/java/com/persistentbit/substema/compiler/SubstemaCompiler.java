@@ -3,6 +3,7 @@ package com.persistentbit.substema.compiler;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.dependencies.DependencyResolver;
+import com.persistentbit.core.result.Result;
 import com.persistentbit.substema.compiler.values.RImport;
 import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.dependencies.DependencySupplier;
@@ -37,42 +38,53 @@ public class SubstemaCompiler {
     }
 
 
-    public RSubstema    parse(String packageName){
-        RSubstema res = parsed.getOpt(packageName).orElse(null);
-        if(res != null){
-            return res;
-        }
-        String code = dependencies.apply(packageName).orElse(null);
-        if(code == null){
-            throw new SubstemaException("Can't find code for package " + packageName );
-        }
-        SubstemaParser parser = new SubstemaParser(packageName,new SubstemaTokenizer().tokenize(packageName,code));
-        res = parser.parseSubstema();
-        for(String implicit : implicitImportPackages){
-            if(packageName.equals(implicit) == false && res.getImports().find(i -> i.getPackageName().equals(implicit)).isPresent() == false){
-                res = res.withImports(res.getImports().plus(new RImport(packageName)));
+    public Result<RSubstema> parse(String packageName) {
+        return Result.function(packageName).code(l -> {
+            RSubstema res = parsed.getOpt(packageName).orElse(null);
+            if(res != null) {
+                return Result.success(res);
             }
-        }
+            String code = dependencies.apply(packageName).orElse(null);
+            if(code == null) {
+                return Result.failure(new SubstemaException("Can't find code for package " + packageName));
+            }
+            SubstemaParser parser =
+                new SubstemaParser(packageName, new SubstemaTokenizer().tokenize(packageName, code));
+            res = parser.parseSubstema();
+            for(String implicit : implicitImportPackages) {
+                if(packageName.equals(implicit) == false && res.getImports()
+                    .find(i -> i.getPackageName().equals(implicit)).isPresent() == false) {
+                    res = res.withImports(res.getImports().plus(new RImport(packageName)));
+                }
+            }
 
-        parsed = parsed.put(packageName,res);
-        return res;
+            parsed = parsed.put(packageName, res);
+            return Result.success(res);
+        });
+
     }
 
-    public RSubstema compile(String packageName){
-        //System.out.println("Compiling " + packageName);
-        RSubstema res = compiled.getOpt(packageName).orElse(null);
-        if(res != null){
-            return res;
-        }
-        res = parse(packageName);
+    public Result<RSubstema> compile(String packageName) {
+        return Result.function(packageName).code(l -> {
+            //System.out.println("Compiling " + packageName);
+            RSubstema res = compiled.getOpt(packageName).orElse(null);
+            if(res != null) {
+                return Result.success(res);
+            }
+            return parse(packageName).flatMap(parsed -> {
+                PList<RSubstema> dependencies =
+                    DependencyResolver
+                        .resolve(parsed, s -> s.getImports().map(i -> parse(i.getPackageName()).orElseThrow())
+                        );
+                parsed = parsed.withImports(
+                    parsed.getImports()
+                        .map(i -> new RImport(i.getPackageName(), compile(i.getPackageName()).orElseThrow()))
+                );
+                parsed = ResolvePackageNames.resolve(this, parsed);
+                compiled = compiled.put(packageName, parsed);
+                return Result.success(parsed);
+            });
+        });
 
-        PList<RSubstema> dependencies = DependencyResolver.resolve(res,s ->s.getImports().map(i -> parse(i.getPackageName()))
-        );
-        res = res.withImports(
-                res.getImports().map(i -> new RImport(i.getPackageName(),compile(i.getPackageName())))
-        );
-        res = ResolvePackageNames.resolve(this,res);
-        compiled = compiled.put(packageName,res);
-        return res;
     }
 }

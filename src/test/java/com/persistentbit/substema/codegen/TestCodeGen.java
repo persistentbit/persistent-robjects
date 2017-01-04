@@ -1,6 +1,8 @@
 package com.persistentbit.substema.codegen;
 
+import com.persistentbit.core.Nothing;
 import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.logging.Log;
 import com.persistentbit.substema.compiler.SubstemaCompiler;
 import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.dependencies.DependencySupplier;
@@ -33,13 +35,17 @@ public class TestCodeGen {
 
     }
 
-    public void generateCode(JavaGenOptions options,String destPackage) throws Exception{
+    public void generateCode(JavaGenOptions options, String destPackage) {
+        Log.function(options, destPackage).code(l -> {
+            DependencySupplier   ds        =
+                new DependencySupplier(PList.val(new SupplierDef(SupplierType.resource, "/")));
+            SubstemaCompiler     comp      = new SubstemaCompiler(ds);
+            RSubstema            substema  = comp.compile(destPackage).orElseThrow();
+            PList<GeneratedJava> generated = SubstemaJavaGen.generate(comp, options, substema);
+            generated.forEach(gj -> System.out.println(gj.code));
+            return Nothing.inst;
+        });
 
-        DependencySupplier ds = new DependencySupplier(PList.val(new SupplierDef(SupplierType.resource,"/")));
-        SubstemaCompiler    comp = new SubstemaCompiler(ds);
-        RSubstema substema = comp.compile(destPackage);
-        PList<GeneratedJava> generated = SubstemaJavaGen.generate(comp,options,substema);
-        generated.forEach(gj -> System.out.println(gj.code));
         /*String rodFileName= "codeGenTest.rod";
         URL url = SubstemaJavaGen.class.getResource("/" + rodFileName);
         System.out.println("URL: " + url);

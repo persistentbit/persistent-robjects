@@ -1,6 +1,6 @@
 package com.persistentbit.substema;
 
-import com.persistentbit.core.logging.PLog;
+import com.persistentbit.core.result.Result;
 import com.persistentbit.core.utils.IO;
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.nodes.JJNode;
@@ -12,7 +12,6 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +22,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class RemoteServiceHttpClient implements RemoteService{
 
-    private static final PLog log = PLog.get(RemoteServiceHttpClient.class);
     private final URL             url;
     private final JJMapper        mapper;
     private final ExecutorService executor;
@@ -62,15 +60,14 @@ public class RemoteServiceHttpClient implements RemoteService{
 
 
     @Override
-    public CompletableFuture<RCallResult> call(RCall call) {
-        return CompletableFuture.supplyAsync(() -> {
+    public Result<RCallResult> call(RCall call) {
+        return Result.async(executor, () -> Result.function(call).code(l -> {
             JJNode callNode = mapper.write(call);
-            log.debug(() -> url + " call " + callNode);
-            JJNode resultNode = doPost(callNode);
-            log.debug(() -> url + " response " + resultNode);
-            return mapper.read(resultNode,RCallResult.class);
-        }, executor);
-
+            //log.debug(() -> url + " call " + callNode);
+            return doPost(callNode).map(resultNode -> {
+                return mapper.read(resultNode, RCallResult.class);
+            });
+        }));
     }
 
     @Override
@@ -83,32 +80,29 @@ public class RemoteServiceHttpClient implements RemoteService{
         }
     }
 
-    private JJNode doPost(JJNode content){
-        HttpURLConnection connection = null;
-        try{
-            connection = (HttpURLConnection)url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setUseCaches(false);
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
-            Writer w = new OutputStreamWriter(connection.getOutputStream(), "UTF-8");
+    private Result<JJNode> doPost(JJNode content) {
+        return Result.function(content).code(l -> {
+            HttpURLConnection connection = null;
+            try {
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setUseCaches(false);
+                connection.setDoOutput(true);
+                connection.setDoInput(true);
+                Writer w = new OutputStreamWriter(connection.getOutputStream(), "UTF-8");
                 JJPrinter.print(false, content, w);
                 w.flush();
-            String data = IO.readStream(connection.getInputStream());
-            log.debug(() -> "Do Post Result: " + data);
-            if(data.isEmpty()){
-                throw new RuntimeException("Got an empty response from the server");
+                return IO.readTextStream(connection.getInputStream()).map(data -> {
+                    l.info("Do Post Result: " + data);
+                    return JJParser.parse(data);
+                });
+            } finally {
+                if(connection != null) {
+                    connection.disconnect();
+                }
             }
-            return JJParser.parse(data);
+        });
 
-        }catch(Exception e){
-            throw new RuntimeException(e);
-        }finally
-        {
-            if(connection != null){
-                connection.disconnect();
-            }
-        }
     }
 
 }

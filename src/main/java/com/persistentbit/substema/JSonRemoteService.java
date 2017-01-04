@@ -1,9 +1,9 @@
 package com.persistentbit.substema;
 
+import com.persistentbit.core.result.Result;
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.nodes.JJNode;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -31,16 +31,19 @@ public class JSonRemoteService implements RemoteService{
     }
 
     @Override
-    public CompletableFuture<RCallResult> call(RCall call) {
-        JJNode callNode = mapper.write(call);
-        //log.info(() -> "CALL: " +JJPrinter.print(true,callNode));
-        return service.call(mapper.read(callNode,RCall.class))
-                .thenApply(cr -> {
+    public Result<RCallResult> call(RCall call) {
+        return Result.function(call).code(l -> {
+            JJNode callNode = mapper.write(call);
+            //log.info(() -> "CALL: " +JJPrinter.print(true,callNode));
+            return service.call(mapper.read(callNode, RCall.class))
+                .map(cr -> {
                     JJNode node = mapper.write(cr);
                     //log.info(() -> "RESULT: " +JJPrinter.print(true,node));
-                    RCallResult callResult = mapper.read(node,RCallResult.class);
+                    RCallResult callResult = mapper.read(node, RCallResult.class);
                     return callResult;
                 });
+        });
+
 
     }
 }

@@ -1,5 +1,7 @@
 package com.persistentbit;
 
+import com.persistentbit.core.Nothing;
+import com.persistentbit.core.logging.Log;
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.nodes.JJNode;
 import com.persistentbit.jjson.nodes.JJParser;
@@ -32,18 +34,17 @@ public class MinimumServer {
             try(Reader r = new InputStreamReader(t.getRequestBody(), Charset.forName("UTF-8"))){
                 JJNode callNode = JJParser.parse(r);
                 service.call(mapper.read(callNode, RCall.class))
-                        .thenAccept(cr -> {
-                            try{
+                    .completed()
+                    .ifPresent(cr -> {
+                        Log.function().code(l -> {
                                 JJNode callResultNode = mapper.write(cr);
-                                String response = JJPrinter.print(false,callResultNode);
+                            String     response       = JJPrinter.print(false, callResultNode);
                                 t.sendResponseHeaders(200, response.length());
                                 try(OutputStream os = t.getResponseBody()) {
                                     os.write(response.getBytes());
                                 }
-                            }catch (Exception e){
-                                throw new RuntimeException(e);
-                            }
-
+                            return Nothing.inst;
+                        });
 
                         });
             }

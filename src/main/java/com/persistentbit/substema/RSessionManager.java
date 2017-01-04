@@ -1,6 +1,7 @@
 package com.persistentbit.substema;
 
-import com.persistentbit.core.logging.PLog;
+import com.persistentbit.core.Nothing;
+import com.persistentbit.core.logging.Log;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -14,7 +15,6 @@ import java.util.Optional;
  */
 public class RSessionManager<DATA>{
 
-	private static final PLog log = PLog.get(RSessionManager.class);
 	private DATA          data;
 	private LocalDateTime expires;
 
@@ -29,14 +29,18 @@ public class RSessionManager<DATA>{
 
 
 	public void setData(DATA data, LocalDateTime expires) {
-		log.debug("Set Session data " + data + ", " + expires);
-		this.data = data;
-		if(data == null) {
-			this.expires = null;
-		}
-		else {
-			this.expires = expires;
-		}
+		Log.function(data, expires).code(l -> {
+			l.info("Set Session data " + data + ", " + expires);
+			this.data = data;
+			if(data == null) {
+				this.expires = null;
+			}
+			else {
+				this.expires = expires;
+			}
+			return Nothing.inst;
+		});
+
 	}
 
 	public Optional<DATA> getData() {

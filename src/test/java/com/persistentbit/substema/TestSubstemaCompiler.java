@@ -15,9 +15,10 @@ import org.junit.Test;
 public class TestSubstemaCompiler {
     @Test
     public void testAnnotations() {
-        DependencySupplier ds = new DependencySupplier(PList.val(new SupplierDef(SupplierType.resource,"/")));
-        SubstemaCompiler compiler = new SubstemaCompiler(ds);
-        RSubstema substema = compiler.compile("com.persistentbit.substema.tests.compiler.annotations");
+        DependencySupplier ds       = new DependencySupplier(PList.val(new SupplierDef(SupplierType.resource,"/")));
+        SubstemaCompiler   compiler = new SubstemaCompiler(ds);
+        RSubstema          substema =
+            compiler.compile("com.persistentbit.substema.tests.compiler.annotations").orElseThrow();
         System.out.println(JJPrinter.toJson(substema));
     }
 }

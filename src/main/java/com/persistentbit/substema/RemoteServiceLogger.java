@@ -1,6 +1,8 @@
 package com.persistentbit.substema;
 
-import java.util.concurrent.CompletableFuture;
+import com.persistentbit.core.logging.LogPrinter;
+import com.persistentbit.core.result.Result;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -15,16 +17,12 @@ public class RemoteServiceLogger implements RemoteService{
     }
 
     @Override
-    public CompletableFuture<RCallResult> call(RCall call) {
-        System.out.println("Call:" + call);
-        try{
-            RCallResult result = master.call(call).get();
-            System.out.println(" -->"+ result);
-            return CompletableFuture.completedFuture(result);
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }
-
+    public Result<RCallResult> call(RCall call) {
+        return Result.function(call).code(l -> {
+            return master.call(call)
+                .completed()
+                .withLogs(le -> LogPrinter.consoleInColor().print(le));
+        });
     }
 
     @Override

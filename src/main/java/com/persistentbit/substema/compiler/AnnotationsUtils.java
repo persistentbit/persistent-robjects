@@ -2,6 +2,7 @@ package com.persistentbit.substema.compiler;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.logging.Log;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.RConst;
 import com.persistentbit.substema.compiler.values.expr.RConstBoolean;
@@ -118,8 +119,11 @@ public class AnnotationsUtils{
 	 * @return The found annotation definition
 	 */
 	public Optional<RAnnotationDef> getDef(RClass cls) {
-		RSubstema substema = compiler.compile(cls.getPackageName());
-		return substema.getAnnotationDefs().find(a -> a.getName().equals(cls));
+		return Log.function(cls).code(l -> {
+			RSubstema substema = compiler.compile(cls.getPackageName()).orElseThrow();
+			return substema.getAnnotationDefs().find(a -> a.getName().equals(cls));
+		});
+
 	}
 
 	/**

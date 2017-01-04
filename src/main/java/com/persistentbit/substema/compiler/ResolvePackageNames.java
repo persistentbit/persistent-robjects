@@ -136,7 +136,7 @@ public class ResolvePackageNames {
     private REnum   findEnumDef(RClass cls){
         RSubstema ss = originalSubstema;
         if(cls.getPackageName().equals(packageName) == false){
-            ss = compiler.compile(cls.getPackageName());
+            ss = compiler.compile(cls.getPackageName()).orElseThrow();
         }
         return ss.getEnums().find(e -> e.getName().getClassName().equals(cls.getClassName())).orElseThrow(() -> new SubstemaException("Can't find enum " + cls));
     }
@@ -144,7 +144,7 @@ public class ResolvePackageNames {
     private RAnnotationDef findAnnotationDef(RClass cls){
         RSubstema ss = originalSubstema;
         if(cls.getPackageName().equals(packageName) == false){
-            ss = compiler.compile(cls.getPackageName());
+            ss = compiler.compile(cls.getPackageName()).orElseThrow();
         }
         return ss.getAnnotationDefs().find(e -> e.getName().getClassName().equals(cls.getClassName())).orElseThrow(() -> new SubstemaException("Can't find annotation " + cls));
     }
@@ -234,7 +234,7 @@ public class ResolvePackageNames {
 
 
         if(all.isEmpty()){
-            RSubstema implicitAnnotations = compiler.compile(SubstemaUtils.annotationsPackage);
+            RSubstema implicitAnnotations = compiler.compile(SubstemaUtils.annotationsPackage).orElseThrow();
             all = all.plus(findName(implicitAnnotations,clsName).orElse(null));
             all = all.filterNulls().plist();
         }

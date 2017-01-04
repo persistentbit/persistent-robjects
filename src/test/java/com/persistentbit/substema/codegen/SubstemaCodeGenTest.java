@@ -19,13 +19,14 @@ public class SubstemaCodeGenTest{
 		String             packageName = "com.persistentbit.substema.tests.codegentest";
 		DependencySupplier depSupplier = new DependencySupplier().withResources();
 		SubstemaCompiler   compiler    = new SubstemaCompiler(depSupplier);
-		RSubstema          substema    = compiler.compile(packageName);
+		RSubstema          substema    = compiler.compile(packageName).orElseThrow();
 
 		SubstemaSourceGenerator sourceGen = new SubstemaSourceGenerator();
 		sourceGen.addSubstema(substema);
 		String source = sourceGen.writeToString();
 		System.out.println(source);
 		RSubstema version2 =
-			new SubstemaCompiler(new DependencySupplier().withSource(packageName, source)).compile(packageName);
+			new SubstemaCompiler(new DependencySupplier().withSource(packageName, source)).compile(packageName)
+				.orElseThrow();
 	}
 }

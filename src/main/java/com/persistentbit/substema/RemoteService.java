@@ -1,5 +1,7 @@
 package com.persistentbit.substema;
 
+import com.persistentbit.core.result.Result;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -12,10 +14,12 @@ import java.util.concurrent.TimeUnit;
  * @see RemoteServiceHttpClient
  */
 public interface RemoteService {
-    default CompletableFuture<RCallResult>  getRoot(){
+
+    default Result<RCallResult> getRoot() {
         return call(new RCall(null,null));
     }
-    CompletableFuture<RCallResult>  call(RCall call);
+
+    Result<RCallResult> call(RCall call);
 
     default void close(){
         close(Integer.MAX_VALUE,TimeUnit.DAYS);

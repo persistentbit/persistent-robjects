@@ -3,12 +3,12 @@ package com.persistentbit.substema.javagen;
 
 import com.persistentbit.core.Nothing;
 import com.persistentbit.core.Nullable;
-import com.persistentbit.core.Result;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.logging.Log;
+import com.persistentbit.core.result.Result;
 import com.persistentbit.core.sourcegen.SourceGen;
 import com.persistentbit.core.utils.IO;
 import com.persistentbit.core.utils.builders.NOT;
@@ -77,7 +77,6 @@ public class SubstemaJavaGen {
     static public Result<Nothing> generateAndWriteToFiles(SubstemaCompiler compiler, JavaGenOptions options, RSubstema substema, File outputFolder){
         return Log.function(compiler,options,substema,outputFolder).code(l-> {
             PList<GeneratedJava> result = generate(compiler,options,substema);
-
             result.forEach(g -> {
                 //Package name to path string
                 String packagePath = g.name
@@ -94,8 +93,8 @@ public class SubstemaJavaGen {
                 IO.writeFile(g.code,dest);
 
             });
-            return Result.success(Nothing.inst);
-        });
+			return Result.NothingSuccess;
+		});
 
     }
 
