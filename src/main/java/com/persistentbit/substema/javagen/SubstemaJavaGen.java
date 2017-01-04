@@ -24,7 +24,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 /**
@@ -529,7 +528,7 @@ public class SubstemaJavaGen {
                 rc.getFunctions().forEach(f -> {
                     generateJavaDoc(f.getAnnotations());
                     String retType;
-                    addImport(CompletableFuture.class);
+                    addImport(Result.class);
                     if(f.getResultType().isPresent() == false) {
                         retType = "Object";
                     } else {
@@ -543,7 +542,7 @@ public class SubstemaJavaGen {
                         addImport(RemoteCache.class);
                         println("@RemoteCache");
                     }
-                    println("CompletableFuture<" + retType + ">\t" + f.getName() + "(" +
+                    println("Result<" + retType + ">\t" + f.getName() + "(" +
                             f.getParams().map( p -> toString(p.getValueType().getTypeSig()) + " " + p.getName()).toString(", ") + ");"
                     );
                 });
