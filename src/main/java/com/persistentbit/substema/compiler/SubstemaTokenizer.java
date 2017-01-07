@@ -1,5 +1,6 @@
 package com.persistentbit.substema.compiler;
 
+import com.persistentbit.core.result.Result;
 import com.persistentbit.core.tokenizer.SimpleTokenizer;
 import com.persistentbit.core.tokenizer.TokenFound;
 
@@ -43,25 +44,44 @@ public class SubstemaTokenizer extends SimpleTokenizer<SubstemaTokenType>{
         add(SubstemaTokenizer.stringMatcher(tString,'`',true));
         add(SimpleTokenizer.regExMatcher("[a-zA-Z_][a-zA-Z0-9_]*",tIdentifier).map(found -> {
             switch (found.text){
-                case "package": return new TokenFound<>(found.text,tPackage,found.ignore);
-                case "from": return new TokenFound<>(found.text,tFrom,found.ignore);
-                case "class":return new TokenFound<>(found.text,tClass,found.ignore);
-                case "import":return new TokenFound<>(found.text,tImport,found.ignore);
-                case "cached":return new TokenFound<>(found.text,tCached,found.ignore);
-                case "enum":return new TokenFound<>(found.text,tEnum,found.ignore);
-                case "case" : return new TokenFound<>(found.text,tCase,found.ignore);
-                case "remote": return new TokenFound<>(found.text,tRemote,found.ignore);
-                case "void": return new TokenFound<>(found.text,tVoid,found.ignore);
-                case "exception": return new TokenFound<>(found.text,tException,found.ignore);
-                case "throws": return new TokenFound<>(found.text,tThrows,found.ignore);
-                case "implements": return new TokenFound<>(found.text,tImplements,found.ignore);
-                case "interface": return new TokenFound<>(found.text,tInterface,found.ignore);
-                case "true": return new TokenFound<>(found.text,tTrue,found.ignore);
-                case "false": return new TokenFound<>(found.text,tFalse,found.ignore);
-                case "null": return new TokenFound<>(found.text,tNull,found.ignore);
-                case "new": return new TokenFound<>(found.text,tNew,found.ignore);
-                case "annotation": return new TokenFound<>(found.text,tAnnotation,found.ignore);
-                default: return found;
+                case "package":
+                    return Result.success(new TokenFound<>(found.text, tPackage, found.ignore));
+                case "from":
+                    return Result.success(new TokenFound<>(found.text, tFrom, found.ignore));
+                case "class":
+                    return Result.success(new TokenFound<>(found.text, tClass, found.ignore));
+                case "import":
+                    return Result.success(new TokenFound<>(found.text, tImport, found.ignore));
+                case "cached":
+                    return Result.success(new TokenFound<>(found.text, tCached, found.ignore));
+                case "enum":
+                    return Result.success(new TokenFound<>(found.text, tEnum, found.ignore));
+                case "case":
+                    return Result.success(new TokenFound<>(found.text, tCase, found.ignore));
+                case "remote":
+                    return Result.success(new TokenFound<>(found.text, tRemote, found.ignore));
+                case "void":
+                    return Result.success(new TokenFound<>(found.text, tVoid, found.ignore));
+                case "exception":
+                    return Result.success(new TokenFound<>(found.text, tException, found.ignore));
+                case "throws":
+                    return Result.success(new TokenFound<>(found.text, tThrows, found.ignore));
+                case "implements":
+                    return Result.success(new TokenFound<>(found.text, tImplements, found.ignore));
+                case "interface":
+                    return Result.success(new TokenFound<>(found.text, tInterface, found.ignore));
+                case "true":
+                    return Result.success(new TokenFound<>(found.text, tTrue, found.ignore));
+                case "false":
+                    return Result.success(new TokenFound<>(found.text, tFalse, found.ignore));
+                case "null":
+                    return Result.success(new TokenFound<>(found.text, tNull, found.ignore));
+                case "new":
+                    return Result.success(new TokenFound<>(found.text, tNew, found.ignore));
+                case "annotation":
+                    return Result.success(new TokenFound<>(found.text, tAnnotation, found.ignore));
+                default:
+                    return Result.success(found);
             }
         }));
         add(SubstemaTokenizer.regExMatcher("\\s+",tWhiteSpace).ignore());

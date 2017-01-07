@@ -1,5 +1,7 @@
 package com.persistentbit.substema.codegen;
 
+import com.persistentbit.core.testing.TestCase;
+import com.persistentbit.core.testing.TestRunner;
 import com.persistentbit.substema.compiler.SubstemaCompiler;
 import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.dependencies.DependencySupplier;
@@ -14,8 +16,7 @@ import org.junit.Test;
  */
 public class SubstemaCodeGenTest{
 
-	@Test
-	public void testSubstameSourceGen() {
+	static final TestCase sourceGen = TestCase.name("Substem source code generator").code(tr -> {
 		String             packageName = "com.persistentbit.substema.tests.codegentest";
 		DependencySupplier depSupplier = new DependencySupplier().withResources();
 		SubstemaCompiler   compiler    = new SubstemaCompiler(depSupplier);
@@ -28,5 +29,14 @@ public class SubstemaCodeGenTest{
 		RSubstema version2 =
 			new SubstemaCompiler(new DependencySupplier().withSource(packageName, source)).compile(packageName)
 				.orElseThrow();
+	});
+
+	@Test
+	public void testAll() {
+		TestRunner.runAndPrint(SubstemaCodeGenTest.class);
+	}
+
+	public static void main(String[] args) {
+		new SubstemaCodeGenTest().testAll();
 	}
 }

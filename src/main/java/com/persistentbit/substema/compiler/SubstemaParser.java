@@ -5,6 +5,7 @@ import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.function.Function2;
+import com.persistentbit.core.result.Result;
 import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.core.tuples.Tuple2;
@@ -22,13 +23,13 @@ import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
  */
 public class SubstemaParser{
 
-	private final String                            packageName;
-	private       PStream<Token<SubstemaTokenType>> tokens;
-	private       Token<SubstemaTokenType>          current;
+	private final String                                    packageName;
+	private       PStream<Result<Token<SubstemaTokenType>>> tokens;
+	private       Token<SubstemaTokenType>                  current;
 
-	public SubstemaParser(String packageName, PStream<Token<SubstemaTokenType>> tokens) {
+	public SubstemaParser(String packageName, PStream<Result<Token<SubstemaTokenType>>> tokens) {
 		this.packageName = packageName;
-		this.tokens = tokens;
+		this.tokens = tokens.plist();
 		if(tokens.isEmpty()) {
 			current = new Token<>(new Pos(packageName, 1, 1), tEOF, "");
 		}
@@ -45,7 +46,7 @@ public class SubstemaParser{
 			current = new Token<>(current.pos, tEOF, "");
 			return current;
 		}
-		current = tokens.head();
+		current = tokens.head().orElseThrow();
 		tokens = tokens.tail();
 		return current;
 	}
@@ -53,9 +54,8 @@ public class SubstemaParser{
 	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 	public static void main(String... args) {
 		String test = PList.val(
-			"package be.feniks;",
 			"enum Runtime{",
-			" production, development",
+			" production, development;",
 			"}",
 			"value class AppInfo{",
 			"name:String;",
@@ -67,9 +67,9 @@ public class SubstemaParser{
 			"}"
 		).toString("\n");
 		System.out.println(test);
-		PList<Token<SubstemaTokenType>> tokens = new SubstemaTokenizer().tokenize("test.rod", test);
-		tokens.forEach(System.out::println);
-		new SubstemaParser("com.undefined", tokens).parseSubstema();
+		//PList<Token<SubstemaTokenType>> tokens = new SubstemaTokenizer().tokenize("test.rod", test);
+		//tokens.forEach(System.out::println);
+		new SubstemaParser("com.undefined", new SubstemaTokenizer().tokenize("test.rod", test)).parseSubstema();
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class SubstemaParser{
 	 * @return The next token or tEOF if there are no more tokens.
 	 */
 	private Token<SubstemaTokenType> peek() {
-		return tokens.headOpt().orElseGet(() -> new Token<>(current.pos, tEOF, ""));
+		return tokens.headOpt().orElseGet(() -> Result.success(new Token<>(current.pos, tEOF, ""))).orElseThrow();
 	}
 
 	/**
