@@ -89,10 +89,10 @@ public class SubstemaJavaGen {
 
                 dest = new File(dest,g.name.getClassName() + ".java");
                 l.info("Generating " + dest.getAbsolutePath());
-                IO.writeFile(g.code,dest);
+                IO.writeFile(g.code,dest,IO.utf8);
 
             });
-			return Result.NothingSuccess;
+			return Result.success(Nothing.inst);
 		});
 
     }
