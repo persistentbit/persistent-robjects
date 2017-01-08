@@ -6,7 +6,6 @@ import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.function.Function2;
 import com.persistentbit.core.result.Result;
-import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.utils.StringUtils;
@@ -29,18 +28,13 @@ public class SubstemaParser{
 
 	public SubstemaParser(String packageName, PStream<Result<Token<SubstemaTokenType>>> tokens) {
 		this.packageName = packageName;
-		this.tokens = tokens.plist();
-		if(tokens.isEmpty()) {
-			current = new Token<>(new Pos(packageName, 1, 1), tEOF, "");
-		}
-		else {
-			next();
-		}
+		this.tokens = tokens.plist().lazy();
+		next();
 	}
 
 	private Token<SubstemaTokenType> next() {
-		if(tokens.isEmpty()) {
-			if(current.type == tEOF) {
+		if(tokens.head().isEmpty()) {
+			if(current != null && current.type == tEOF) {
 				throw new SubstemaParserException(current.pos, "Unexpected End-Of-File");
 			}
 			current = new Token<>(current.pos, tEOF, "");
@@ -51,26 +45,6 @@ public class SubstemaParser{
 		return current;
 	}
 
-	@SuppressWarnings("UseOfSystemOutOrSystemErr")
-	public static void main(String... args) {
-		String test = PList.val(
-			"enum Runtime{",
-			" production, development;",
-			"}",
-			"value class AppInfo{",
-			"name:String;",
-			"version:String;",
-			"runtime:Runtime;",
-			"}",
-			"remote class App{",
-			"getAppInfo():AppInfo;",
-			"}"
-		).toString("\n");
-		System.out.println(test);
-		//PList<Token<SubstemaTokenType>> tokens = new SubstemaTokenizer().tokenize("test.rod", test);
-		//tokens.forEach(System.out::println);
-		new SubstemaParser("com.undefined", new SubstemaTokenizer().tokenize("test.rod", test)).parseSubstema();
-	}
 
 	/**
 	 * Peek at the next token value, without changing the current token.<br>

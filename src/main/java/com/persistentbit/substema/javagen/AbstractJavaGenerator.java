@@ -3,6 +3,7 @@ package com.persistentbit.substema.javagen;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.result.Result;
 import com.persistentbit.core.sourcegen.SourceGen;
 import com.persistentbit.core.utils.StringUtils;
 import com.persistentbit.substema.compiler.AnnotationsUtils;
@@ -40,24 +41,25 @@ public class AbstractJavaGenerator extends SourceGen{
      * @param cls   The {@link RClass} that this represents
      * @return The new Generated java source.
      */
-    protected GeneratedJava    toGenJava(RClass cls){
-        //Create the header and add it to this SourcGen instance
-        SourceGen sg = new SourceGen();
-        header.println("package " + packageName + ";");
-        header.println("");
-        sg.add(header);
+    protected Result<GeneratedJava> toGenJava(RClass cls) {
+        return Result.function(cls.getFullName()).code(l -> {
+            //Create the header and add it to this SourcGen instance
+            SourceGen sg = new SourceGen();
+            header.println("package " + packageName + ";");
+            header.println("");
+            sg.add(header);
 
-        //Add all the external Imports.
-		imports.filter(i -> i.getPackageName().equals(packageName) == false)
-			.forEach(i -> sg.println("import " + i.getPackageName() + "." + i.getClassName() + ";"));
-		sg.println("");
-
-
-        //Add this generated source to the result
-        sg.add(this);
+            //Add all the external Imports.
+            imports.filter(i -> i.getPackageName().equals(packageName) == false)
+                .forEach(i -> sg.println("import " + i.getPackageName() + "." + i.getClassName() + ";"));
+            sg.println("");
 
 
-        return new GeneratedJava(cls,sg.writeToString());
+            //Add this generated source to the result
+            sg.add(this);
+
+            return sg.writeToString().map(str -> new GeneratedJava(cls, str));
+        });
     }
 
     protected void addImport(RClass cls){

@@ -144,6 +144,6 @@ public class SubstemaSourceGenerator extends SourceGen{
 
 	@Override
 	public String toString() {
-		return writeToString();
+		return writeToString().toString();
 	}
 }

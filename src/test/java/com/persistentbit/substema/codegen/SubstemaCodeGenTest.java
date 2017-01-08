@@ -1,12 +1,17 @@
 package com.persistentbit.substema.codegen;
 
+import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.result.Result;
 import com.persistentbit.core.testing.TestCase;
 import com.persistentbit.core.testing.TestRunner;
 import com.persistentbit.substema.compiler.SubstemaCompiler;
 import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.dependencies.DependencySupplier;
-import com.persistentbit.substema.substemagen.SubstemaSourceGenerator;
-import org.junit.Test;
+import com.persistentbit.substema.dependencies.SupplierDef;
+import com.persistentbit.substema.dependencies.SupplierType;
+import com.persistentbit.substema.javagen.GeneratedJava;
+import com.persistentbit.substema.javagen.JavaGenOptions;
+import com.persistentbit.substema.javagen.SubstemaJavaGen;
 
 /**
  * Test the Substema Code gen functionality
@@ -17,24 +22,32 @@ import org.junit.Test;
 public class SubstemaCodeGenTest{
 
 	static final TestCase sourceGen = TestCase.name("Substem source code generator").code(tr -> {
-		String             packageName = "com.persistentbit.substema.tests.codegentest";
-		DependencySupplier depSupplier = new DependencySupplier().withResources();
-		SubstemaCompiler   compiler    = new SubstemaCompiler(depSupplier);
-		RSubstema          substema    = compiler.compile(packageName).orElseThrow();
 
-		SubstemaSourceGenerator sourceGen = new SubstemaSourceGenerator();
-		sourceGen.addSubstema(substema);
-		String source = sourceGen.writeToString();
-		System.out.println(source);
-		RSubstema version2 =
-			new SubstemaCompiler(new DependencySupplier().withSource(packageName, source)).compile(packageName)
-				.orElseThrow();
+		generateCode(tr, "com.persistentbit.substema.tests.codegentest");
+		generateCode(tr, "com.persistentbit.substema.tests.compiler.enums");
+		generateCode(tr, "com.persistentbit.substema.tests.compiler.annotations");
+
 	});
 
-	@Test
+
+	private static void generateCode(TestRunner tr, String destPackage) {
+		tr.info("Testing " + destPackage);
+		DependencySupplier ds =
+			new DependencySupplier(PList.val(new SupplierDef(SupplierType.resource, "/")));
+		SubstemaCompiler             comp      = new SubstemaCompiler(ds);
+		RSubstema                    substema  = comp.compile(destPackage).orElseThrow();
+		PList<Result<GeneratedJava>> generated =
+			SubstemaJavaGen.generate(comp, new JavaGenOptions(true, true), substema);
+
+		generated.forEach(gj ->
+							  tr.isSuccess(gj)
+		);
+	}
+
 	public void testAll() {
 		TestRunner.runAndPrint(SubstemaCodeGenTest.class);
 	}
+
 
 	public static void main(String[] args) {
 		new SubstemaCodeGenTest().testAll();

@@ -2,6 +2,7 @@ package com.persistentbit.substema.compiler.values;
 
 import com.persistentbit.core.utils.BaseValueClass;
 
+import java.io.File;
 import java.util.Objects;
 
 /**
@@ -51,4 +52,13 @@ public class RClass extends BaseValueClass{
         return packageName + "." + className;
     }
 
+    @Override
+    public String toString() {
+        return "RClass[" + getFullName() + "]";
+    }
+
+    public File getPackagePath(File rootPath) {
+        String packagePath = getPackageName().replace('.', File.separatorChar);
+        return new File(rootPath, packagePath);
+    }
 }

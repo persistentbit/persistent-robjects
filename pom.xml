@@ -113,12 +113,7 @@
             <artifactId>persistent-jjson</artifactId>
             <version>${persistent-jjson.version}</version>
         </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
+
     </dependencies>
     <profiles>
         <profile>
