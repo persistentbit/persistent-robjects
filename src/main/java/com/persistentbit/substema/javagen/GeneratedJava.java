@@ -33,8 +33,8 @@ public class GeneratedJava {
         return Result.function(this, root).code(l ->
 
                                                     IO.mkdirsIfNotExisting(getPackagePath(root))
-                                                        .map(dest -> new File(name.getClassName() + ".java"))
-                                                        .map(dest -> {
+														.map(dest -> new File(dest, name.getClassName() + ".java"))
+														.map(dest -> {
                                                             l.info("Writing Generated java to " + dest
                                                                 .getAbsolutePath());
                                                             IO.writeFile(code, dest, IO.utf8);
