@@ -45,7 +45,7 @@ public class SubstemaCodeGenTest{
 	}
 
 	public void testAll() {
-		TestRunner.runAndPrint(SubstemaCodeGenTest.class);
+		TestRunner.runAndPrint(SubstemaTestUtils.testLogPrinter, SubstemaCodeGenTest.class);
 	}
 
 
