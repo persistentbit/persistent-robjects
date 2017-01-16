@@ -17,7 +17,9 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 
@@ -150,10 +152,10 @@ public class RServer<R, SESSION> implements RemoteService{
 				if(m.getParameterCount() == 0 && m.getDeclaredAnnotation(RemoteCache.class) != null) {
 					Object value = m.invoke(obj);
 					try {
-						value = ((Future) value).get();
+						value = ((Result) value);
 					} catch(Exception e) {
 						throw new RuntimeException("Error getting cached value from " + remotableClass
-							.getName() + " method: " + md.getMethodName());
+							.getName() + " method: " + md.getMethodName(), e);
 					}
 					cachedMethods = cachedMethods.put(md, new ObjectWithTypeName(value));
 				}
@@ -167,19 +169,20 @@ public class RServer<R, SESSION> implements RemoteService{
 	}
 
 	@SuppressWarnings("unchecked")
-	private Object singleCall(Object obj, RMethodCall call) {
+	private Result<Object> singleCall(Object obj, RMethodCall call) {
 		return Log.function(obj, call).code(l -> {
 			MethodDefinition md = call.getMethodToCall();
 			if(obj == null) {
 				throw new RuntimeException("Can't call on null: " + md);
 			}
-			Method                    m            = obj.getClass().getMethod(md.getMethodName(), md.getParamTypes());
-			CompletableFuture<Object> methodResult = (CompletableFuture<Object>) m.invoke(obj, call.getArguments());
-			if(methodResult == null) {
+			Method         m            = obj.getClass().getMethod(md.getMethodName(), md.getParamTypes());
+			Result<Object> methodResult = (Result<Object>) m.invoke(obj, call.getArguments());
+			/*if(methodResult == null) {
 				//We got a null instead of a CompletableFuture.
 				throw new RObjException("method did not return a CompletableFuture: " + m);
 			}
-			return methodResult.get();
+			return methodResult.get();*/
+			return methodResult;
 		});
 	}
 
