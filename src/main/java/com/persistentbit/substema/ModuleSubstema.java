@@ -1,7 +1,7 @@
 package com.persistentbit.substema;
 
 import com.persistentbit.core.ModuleCore;
-import com.persistentbit.core.logging.printing.LogPrinter;
+import com.persistentbit.core.logging.printing.LogFormatter;
 
 /**
  * TODOC
@@ -11,7 +11,7 @@ import com.persistentbit.core.logging.printing.LogPrinter;
  */
 public final class ModuleSubstema{
 
-	public static LogPrinter createLogPrinter(boolean inColor) {
-		return ModuleCore.createLogPrinter(inColor);
+	public static LogFormatter createLogPrinter(boolean inColor) {
+		return ModuleCore.createLogFormatter(inColor);
 	}
 }
