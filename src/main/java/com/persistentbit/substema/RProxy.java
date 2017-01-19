@@ -1,14 +1,11 @@
 package com.persistentbit.substema;
 
 import com.persistentbit.core.logging.Log;
-import com.persistentbit.core.utils.ReflectionUtils;
+import com.persistentbit.core.result.Result;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * An RProxy is a Interface Proxy for Remote Objects that uses a {@link RemoteService} to
@@ -65,7 +62,7 @@ public final class RProxy implements InvocationHandler{
 	 */
 	public static <C> C create(RemoteService server) {
 		return Log.function(server).code(l -> {
-			return create(server, new ClientSessionData(), server.getRoot().orElseThrow().getRobject().get());
+			return create(server, new ClientSessionData(), server.getRoot().orElseThrow().getRod().get());
 		});
 
 	}
@@ -94,47 +91,38 @@ public final class RProxy implements InvocationHandler{
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		return Result.function(method.getName()).code(l -> {
+			//IGNORE toString method
 
-		//IGNORE toString method
+			if(method.getName().equals("toString")) {
+				return Result.success("RemoteObject[" + rod.getRemoteObjectClass().getName() + "]");
+			}
 
-		if(method.getName().equals("toString")) {
-			return "RemoteObject[" + rod.getRemoteObjectClass().getName() + "]";
-		}
+			MethodDefinition md = new MethodDefinition(rod.getRemoteObjectClass(), method);
+			if(rod.getRemoteCached().containsKey(md)) {
+				Result<Object> cached = rod.getRemoteCached().get(md).getValue();
+				return cached;
+			}
+			//Create The Call
+			RCall call = new RCall(clientSessionData.getSessionData(), rod.getCallStack(), new RMethodCall(md, args));
 
-		MethodDefinition md = new MethodDefinition(rod.getRemoteObjectClass(), method);
-		if(rod.getRemoteCached().containsKey(md)) {
-			Object cached = rod.getRemoteCached().get(md).getValue();
-			return CompletableFuture.completedFuture(cached);
-		}
-		//Create The Call
-		RCall call = new RCall(clientSessionData.getSessionData(), rod.getCallStack(), new RMethodCall(md, args));
+			//Execute the Call
+			return server.call(call)
+				.<Object>map(callResult -> {
+					clientSessionData.setSessionData(callResult.getSessionData().orElse(null));
 
-		//Execute the Call
-		return server.call(call)
-			.map(result -> {
+					//If the result is a remote object,
+					//Then create a new Proxy and return the remote object.
+					if(callResult.getRod().isPresent()) {
+						Object remResult = callResult
+							.getRod()
+							.map(rod -> RProxy.create(server, clientSessionData, rod));
+						return remResult;
+					}
+					//Must be a result value
+					return callResult.getResult().orElse(null);
+				});
 
-				//Save the new Session Data
-				clientSessionData.setSessionData(result.getSessionData().orElse(null));
-
-				//If the result is an exception: Throw it.
-				result.getException().ifPresent(e -> { throw new RuntimeException("Remote exception", e);});
-
-				//If the result is a value: Return it;
-				if(result.getValue().isPresent()) {
-					return result.getValue().get();
-				}
-
-				//Must be remote object
-				RemoteObjectDefinition rod        = result.getRobject().orElse(null);
-				Object                 remResult  = rod == null ? null : RProxy.create(server, clientSessionData, rod);
-				ParameterizedType      computable = (ParameterizedType) method.getGenericReturnType();
-
-				if(ReflectionUtils.classFromType(computable.getActualTypeArguments()[0]) == Optional.class) {
-					remResult = Optional.ofNullable(remResult);
-				}
-				return remResult;
-
-			});
-
+		});
 	}
 }

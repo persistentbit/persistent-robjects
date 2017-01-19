@@ -12,10 +12,11 @@ import java.util.Objects;
 
 public class MethodDefinition implements Serializable
 {
-    private final String methodName;
-    private final Class<?>  remotableClass;
-    private final String[] paramNames;
+    private final String     methodName;
+    private final Class<?>   remotableClass;
+    private final String[]   paramNames;
     private final Class<?>[] paramTypes;
+    private final boolean    returnsRemotable;
 
 
     private static String[] getMethodParamNames(Method m) {
@@ -32,7 +33,13 @@ public class MethodDefinition implements Serializable
     }
 
     public MethodDefinition(Class<?> remotableClass,Method method){
-        this(remotableClass,method.getName(),method.getParameterTypes(),getMethodParamNames(method));
+        this(
+            remotableClass,
+            method.getName(),
+            method.getParameterTypes(),
+            getMethodParamNames(method),
+            RemotableClasses.returnsRemotable(method)
+        );
 
     }
 
@@ -42,13 +49,15 @@ public class MethodDefinition implements Serializable
         return "MethodDefinition[" + remotableClass.getSimpleName() + "#" + methodName + "(" + params + ")]";
     }
 
-    public MethodDefinition(Class<?> remotableClass,String methodName, Class<?>[] paramTypes, String[] paramNames)
+    public MethodDefinition(Class<?> remotableClass, String methodName, Class<?>[] paramTypes, String[] paramNames,
+                            boolean returnsRemotable
+    )
     {
         this.remotableClass = Objects.requireNonNull(remotableClass);
         this.methodName = Objects.requireNonNull(methodName);
         this.paramTypes = Objects.requireNonNull(paramTypes);
         this.paramNames = Objects.requireNonNull(paramNames);
-
+        this.returnsRemotable = returnsRemotable;
     }
 
     public String getMethodName()
@@ -66,6 +75,10 @@ public class MethodDefinition implements Serializable
 
     public Class<?>[] getParamTypes() {
         return paramTypes;
+    }
+
+    public boolean returnsRemotable() {
+        return returnsRemotable;
     }
 
     @Override

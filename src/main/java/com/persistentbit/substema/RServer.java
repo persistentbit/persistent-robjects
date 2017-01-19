@@ -16,7 +16,6 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
@@ -88,7 +87,8 @@ public class RServer<R, SESSION> implements RemoteService{
 					Result.failure("Invalid Session signature");
 				}
 				sessionData =
-					mapper.read(JJParser.parse(new String(Base64.getDecoder().decode(data.data))).orElseThrow(), sessionClass);
+					mapper.read(JJParser.parse(new String(Base64.getDecoder().decode(data.data)))
+									.orElseThrow(), sessionClass);
 				sessionExpires = data.validUntil;
 				if(sessionExpires.isBefore(LocalDateTime.now())) {
 					//The Session Data is expired, so we continue with no sessionData.
@@ -108,28 +108,35 @@ public class RServer<R, SESSION> implements RemoteService{
 				RemoteObjectDefinition rod =
 					createROD(RCallStack.createAndSign(PList.empty(), mapper, secret), this.rootInterface, rootSupplier
 						.apply(sessionManager));
-				return Result.success(RCallResult.robject(getSession(sessionManager), rod));
+				return Result.success(new RCallResult(getSession(sessionManager), rod));
 			}
 
+			//Execute the call stack
+			Result<Object> result =
+				call(rootSupplier.apply(sessionManager), call.getCallStack())
+					.flatMap(impl -> singleCall(impl, call.getThisCall()))//Execute this call
+				;
 
-			Object result = call(rootSupplier.apply(sessionManager), call.getCallStack());
-			result = singleCall(result, call.getThisCall());
-			Object resultNoOption = result;
-			if(result instanceof Optional) {
-				resultNoOption = ((Optional) result).orElseGet(null);
+			if(result.isError()) {
+
 			}
-			Class<?> remoteClass = RemotableClasses.getRemotableClass(resultNoOption.getClass());
 
+			Object resultValue = result.orElse(null);
+			Class<?> remoteClass = resultValue == null
+				? null
+				: RemotableClasses.getRemotableClass(resultValue.getClass());
 			if(remoteClass == null) {
-				return Result.success(RCallResult.value(getSession(sessionManager), call.getThisCall()
-					.getMethodToCall(), result));
+				//We have a value (no remote object)
+				return Result.success(
+					new RCallResult(call.getThisCall().getMethodToCall(), getSession(sessionManager), result)
+				);
 			}
-			else {
-				RCallStack newCallStack = RCallStack
-					.createAndSign(call.getCallStack().getCallStack().plus(call.getThisCall()), mapper, secret);
-				return Result.success(RCallResult
-										  .robject(getSession(sessionManager), createROD(newCallStack, remoteClass, resultNoOption)));
-			}
+			//We have a remote object
+			RCallStack newCallStack = RCallStack
+				.createAndSign(call.getCallStack().getCallStack().plus(call.getThisCall()), mapper, secret);
+			return Result.success(
+				new RCallResult(getSession(sessionManager), createROD(newCallStack, remoteClass, resultValue))
+			);
 		}));
 	}
 
@@ -150,9 +157,9 @@ public class RServer<R, SESSION> implements RemoteService{
 			for(Method m : remotableClass.getDeclaredMethods()) {
 				MethodDefinition md = new MethodDefinition(remotableClass, m);
 				if(m.getParameterCount() == 0 && m.getDeclaredAnnotation(RemoteCache.class) != null) {
-					Object value = m.invoke(obj);
+					Result<Object> value;
 					try {
-						value = ((Result) value);
+						value = (Result<Object>) m.invoke(obj);
 					} catch(Exception e) {
 						throw new RuntimeException("Error getting cached value from " + remotableClass
 							.getName() + " method: " + md.getMethodName(), e);
@@ -169,14 +176,15 @@ public class RServer<R, SESSION> implements RemoteService{
 	}
 
 	@SuppressWarnings("unchecked")
-	private Result<Object> singleCall(Object obj, RMethodCall call) {
-		return Log.function(obj, call).code(l -> {
+	private Result<Object> singleCall(Object implementationObject, RMethodCall call) {
+		return Log.function(implementationObject, call).code(l -> {
 			MethodDefinition md = call.getMethodToCall();
-			if(obj == null) {
+			if(implementationObject == null) {
 				throw new RuntimeException("Can't call on null: " + md);
 			}
-			Method         m            = obj.getClass().getMethod(md.getMethodName(), md.getParamTypes());
-			Result<Object> methodResult = (Result<Object>) m.invoke(obj, call.getArguments());
+			Method m =
+				implementationObject.getClass().getMethod(md.getMethodName(), md.getParamTypes());
+			Result<Object> methodResult = (Result<Object>) m.invoke(implementationObject, call.getArguments());
 			/*if(methodResult == null) {
 				//We got a null instead of a CompletableFuture.
 				throw new RObjException("method did not return a CompletableFuture: " + m);
@@ -186,16 +194,24 @@ public class RServer<R, SESSION> implements RemoteService{
 		});
 	}
 
-	private Object call(Object obj, RCallStack callStack) {
-		return Log.function(obj, callStack).code(l -> {
+	private Result<Object> call(Object implementationObject, RCallStack callStack) {
+		return Result.function(implementationObject, callStack).code(l -> {
 			if(callStack.verifySignature(secret, mapper) == false) {
-				throw new RObjException("Wrong signature !!!");
+				return Result.failure(new RObjException("Wrong signature !!!"));
 			}
-			Object resObj = obj;
+			Object resObj = implementationObject;
 			for(RMethodCall c : callStack.getCallStack()) {
-				resObj = singleCall(resObj, c);
+				if(resObj == null) {
+					return Result.failure("Can't execute call on a null object implementation");
+				}
+				Result<Object> callResult = singleCall(resObj, c);
+				if(callResult.isError()) {
+					return callResult;
+				}
+				callResult.withLogs(logs -> l.add(logs));
+				resObj = callResult.orElse(null);
 			}
-			return resObj;
+			return Result.success(resObj);
 		});
 
 	}

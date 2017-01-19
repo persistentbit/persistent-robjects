@@ -1,11 +1,12 @@
 package com.persistentbit.substema;
 
 
-
-
-
+import com.persistentbit.core.result.Result;
+import com.persistentbit.core.utils.ReflectionUtils;
 import com.persistentbit.substema.annotations.Remotable;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -16,10 +17,20 @@ import java.util.concurrent.CompletableFuture;
  * Date: 30/10/15
  * Time: 17:23
  */
-public class RemotableClasses {
+public final class RemotableClasses{
 
-    static private Map<Class<?>,Optional<Class<?>>> remoteClasses = new HashMap<>();
-    static public Class<?>  getRemotableClass(Class<?> cls){
+    private static Map<Class<?>, Optional<Class<?>>> remoteClasses = new HashMap<>();
+
+
+    public static boolean returnsRemotable(Method m) {
+        if(m.getReturnType().equals(Result.class) == false) {
+            throw new RuntimeException("Expected a result type");
+        }
+        ParameterizedType pt = (ParameterizedType) m.getGenericReturnType();
+        return getRemotableClass(ReflectionUtils.classFromType(pt.getActualTypeArguments()[0])) != null;
+    }
+
+    public static Class<?> getRemotableClass(Class<?> cls) {
         if(cls == CompletableFuture.class){
             throw new RuntimeException("Unreference ComputableFuture");
         }

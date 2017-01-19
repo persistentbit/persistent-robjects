@@ -1,13 +1,5 @@
 package com.persistentbit.substema;
 
-import com.persistentbit.core.collections.PList;
-import com.persistentbit.jjson.mapping.JJReader;
-import com.persistentbit.jjson.mapping.impl.JJObjectReader;
-import com.persistentbit.jjson.nodes.JJNode;
-import com.persistentbit.jjson.nodes.JJNodeObject;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.Arrays;
 
 public class RMethodCall {
@@ -41,7 +33,7 @@ public class RMethodCall {
                 ", arguments=" + Arrays.toString(arguments) +
                 '}';
     }
-
+    /*
     static public final JJObjectReader jsonReader = new JJObjectReader() {
         @Override
         public Object read(Type type, JJNode node, JJReader masterReader) {
@@ -64,5 +56,5 @@ public class RMethodCall {
             }
             return new RMethodCall(md,res);
         }
-    };
+    };*/
 }
