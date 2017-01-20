@@ -1,6 +1,7 @@
 package com.persistentbit.substema;
 
 import com.persistentbit.core.utils.BaseValueClass;
+import com.persistentbit.core.utils.NoToString;
 import com.persistentbit.jjson.security.JJSigning;
 
 import java.time.LocalDateTime;
@@ -16,9 +17,11 @@ import java.time.format.DateTimeFormatter;
  * @see RServer#call(RCall)
  */
 public class RSessionData extends BaseValueClass{
-    public String data;
-    public LocalDateTime   validUntil;
-    public String signature;
+
+    public String        data;
+    public LocalDateTime validUntil;
+    @NoToString
+    public String        signature;
 
     /**
      * @param data       The Data string representing the session data.

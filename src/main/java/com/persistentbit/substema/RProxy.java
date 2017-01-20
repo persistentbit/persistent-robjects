@@ -62,7 +62,7 @@ public final class RProxy implements InvocationHandler{
 	 */
 	public static <C> C create(RemoteService server) {
 		return Log.function(server).code(l -> {
-			return create(server, new ClientSessionData(), server.getRoot().orElseThrow().getRod().get());
+			return create(server, new ClientSessionData(), server.getRoot().orElseThrow().getRod().get().orElseThrow());
 		});
 
 	}
@@ -91,12 +91,13 @@ public final class RProxy implements InvocationHandler{
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		//IGNORE toString method
+		if(method.getName().equals("toString")) {
+			return "RemoteObject[" + rod.getRemoteObjectClass().getName() + "]";
+		}
 		return Result.function(method.getName()).code(l -> {
-			//IGNORE toString method
 
-			if(method.getName().equals("toString")) {
-				return Result.success("RemoteObject[" + rod.getRemoteObjectClass().getName() + "]");
-			}
+
 
 			MethodDefinition md = new MethodDefinition(rod.getRemoteObjectClass(), method);
 			if(rod.getRemoteCached().containsKey(md)) {
@@ -107,22 +108,27 @@ public final class RProxy implements InvocationHandler{
 			RCall call = new RCall(clientSessionData.getSessionData(), rod.getCallStack(), new RMethodCall(md, args));
 
 			//Execute the Call
-			return server.call(call)
-				.<Object>map(callResult -> {
+			return server.call(call).completed()
+				.flatMap(callResult -> {
 					clientSessionData.setSessionData(callResult.getSessionData().orElse(null));
 
 					//If the result is a remote object,
 					//Then create a new Proxy and return the remote object.
 					if(callResult.getRod().isPresent()) {
 						Object remResult = callResult
-							.getRod()
+							.getRod().get()
 							.map(rod -> RProxy.create(server, clientSessionData, rod));
-						return remResult;
+						return (Result) remResult;
 					}
 					//Must be a result value
 					return callResult.getResult().orElse(null);
 				});
 
 		});
+	}
+
+	@Override
+	public String toString() {
+		return "[Remote Proxy for " + rod + "]";
 	}
 }

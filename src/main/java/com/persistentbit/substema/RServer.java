@@ -102,41 +102,66 @@ public class RServer<R, SESSION> implements RemoteService{
 			//Create The session manager that is used
 			//For the complete implementation call chain
 			RSessionManager<SESSION> sessionManager = new RSessionManager<>(sessionData, sessionExpires);
-
-			if(call.getThisCall() == null) {
+			RMethodCall              thisCall       = call.getThisCall();
+			if(thisCall == null) {
 				//This is a call to get the Root Object.
 				RemoteObjectDefinition rod =
 					createROD(RCallStack.createAndSign(PList.empty(), mapper, secret), this.rootInterface, rootSupplier
 						.apply(sessionManager));
-				return Result.success(new RCallResult(getSession(sessionManager), rod));
+				return Result.success(RCallResult.forRootRemoteObject(getSession(sessionManager), Result.success(rod)));
 			}
 
 			//Execute the call stack
 			Result<Object> result =
 				call(rootSupplier.apply(sessionManager), call.getCallStack())
-					.flatMap(impl -> singleCall(impl, call.getThisCall()))//Execute this call
+					.flatMap(impl -> singleCall(impl, thisCall))//Execute this call
 				;
 
+			RSessionData resultSession = getSession(sessionManager);
+
 			if(result.isError()) {
-
+				return Result.success(RCallResult.forResultValue(thisCall.getMethodToCall(), resultSession, result));
 			}
+			boolean isRemotableResult = call.getThisCall().getMethodToCall().returnsRemotable();
 
-			Object resultValue = result.orElse(null);
-			Class<?> remoteClass = resultValue == null
-				? null
-				: RemotableClasses.getRemotableClass(resultValue.getClass());
-			if(remoteClass == null) {
-				//We have a value (no remote object)
+			if(isRemotableResult) {
+
+				//We have a remote object
+				if(result.isEmpty()) {
+					return Result.success(
+						RCallResult.forRemoteObject(
+							thisCall.getMethodToCall(),
+							resultSession,
+							Result
+								.empty("Can't create a Remote Object definition for a null object in call " + thisCall)
+						)
+					);
+				}
+				Object remotableObjectImpl = result.orElseThrow();
+				RCallStack newCallStack = RCallStack
+					.createAndSign(call.getCallStack().getCallStack().plus(thisCall), mapper, secret);
+
+				Result<RemoteObjectDefinition> resultRod =
+					Result.success(createROD(newCallStack, RemotableClasses
+						.getRemotableClass(remotableObjectImpl.getClass()), remotableObjectImpl));
+
 				return Result.success(
-					new RCallResult(call.getThisCall().getMethodToCall(), getSession(sessionManager), result)
+					RCallResult.forRemoteObject(
+						thisCall.getMethodToCall(),
+						resultSession,
+						resultRod
+					)
 				);
 			}
-			//We have a remote object
-			RCallStack newCallStack = RCallStack
-				.createAndSign(call.getCallStack().getCallStack().plus(call.getThisCall()), mapper, secret);
+			//It must be a value result
 			return Result.success(
-				new RCallResult(getSession(sessionManager), createROD(newCallStack, remoteClass, resultValue))
+				RCallResult.forResultValue(
+					thisCall.getMethodToCall(),
+					resultSession,
+					result.completed()
+				)
 			);
+
 		}));
 	}
 
@@ -197,7 +222,7 @@ public class RServer<R, SESSION> implements RemoteService{
 	private Result<Object> call(Object implementationObject, RCallStack callStack) {
 		return Result.function(implementationObject, callStack).code(l -> {
 			if(callStack.verifySignature(secret, mapper) == false) {
-				return Result.failure(new RObjException("Wrong signature !!!"));
+				return Result.failure(new RObjException("Wrong signature !!! "));
 			}
 			Object resObj = implementationObject;
 			for(RMethodCall c : callStack.getCallStack()) {
@@ -211,7 +236,7 @@ public class RServer<R, SESSION> implements RemoteService{
 				callResult.withLogs(logs -> l.add(logs));
 				resObj = callResult.orElse(null);
 			}
-			return Result.success(resObj);
+			return Result.result(resObj);
 		});
 
 	}

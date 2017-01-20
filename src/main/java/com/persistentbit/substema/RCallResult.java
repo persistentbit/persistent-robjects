@@ -8,29 +8,48 @@ import java.util.Optional;
 @Immutable
 public class RCallResult {
 
-    private final MethodDefinition       theCall;
-    private final RSessionData           sessionData;
-    private final Result                 result;
-    private final RemoteObjectDefinition rod;
+    private final MethodDefinition               theCall;
+    private final RSessionData                   sessionData;
+    private final Result                         result;
+    private final Result<RemoteObjectDefinition> rod;
 
 
-    public RCallResult(MethodDefinition theCall, RSessionData sessionData, Result result, RemoteObjectDefinition rod) {
+    public RCallResult(
+        MethodDefinition theCall,
+        RSessionData sessionData,
+        Result result,
+        Result<RemoteObjectDefinition> rod
+    ) {
         this.theCall = theCall;
         this.sessionData = sessionData;
         this.result = result;
         this.rod = rod;
     }
 
-    public RCallResult(MethodDefinition call, RSessionData sessionData, Result result) {
-        this(call, sessionData, result, null);
+    /*
+        public RCallResult(MethodDefinition call, RSessionData sessionData, Result result) {
+			this(call, sessionData, result, null);
+		}
+
+		public RCallResult(MethodDefinition call, RSessionData sessionData, RemoteObjectDefinition rod) {
+			this(call, sessionData, null, rod);
+		}
+
+		public RCallResult(RSessionData sessionData, RemoteObjectDefinition rod) {
+			this(null, sessionData, rod);
+		} */
+    static public RCallResult forRootRemoteObject(RSessionData sessionData, Result<RemoteObjectDefinition> rod) {
+        return new RCallResult(null, sessionData, null, rod);
     }
 
-    public RCallResult(MethodDefinition call, RSessionData sessionData, RemoteObjectDefinition rod) {
-        this(call, sessionData, null, rod);
+    static public RCallResult forRemoteObject(MethodDefinition call, RSessionData sessionData,
+                                              Result<RemoteObjectDefinition> rod
+    ) {
+        return new RCallResult(call, sessionData, null, rod);
     }
 
-    public RCallResult(RSessionData sessionData, RemoteObjectDefinition rod) {
-        this(null, sessionData, rod);
+    static public RCallResult forResultValue(MethodDefinition call, RSessionData sessionData, Result value) {
+        return new RCallResult(call, sessionData, value, null);
     }
 
 
@@ -52,7 +71,7 @@ public class RCallResult {
         return Optional.ofNullable(theCall);
     }
 
-    public Optional<RemoteObjectDefinition> getRod() {
+    public Optional<Result<RemoteObjectDefinition>> getRod() {
         return Optional.ofNullable(rod);
     }
 

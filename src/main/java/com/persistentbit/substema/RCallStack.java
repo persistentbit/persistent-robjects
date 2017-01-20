@@ -1,6 +1,7 @@
 package com.persistentbit.substema;
 
 import com.persistentbit.core.collections.PList;
+import com.persistentbit.core.result.Result;
 import com.persistentbit.core.utils.BaseValueClass;
 import com.persistentbit.jjson.mapping.JJWriter;
 import com.persistentbit.jjson.nodes.JJPrinter;
@@ -40,8 +41,9 @@ public class RCallStack extends BaseValueClass {
         return new RCallStack(JJSigning.sign(msg,"SHA-256").orElseThrow(),methods);
     }
     public boolean verifySignature(String secret, JJWriter jsonWriter){
-        String msg = JJPrinter.print(false,jsonWriter.write(callStack))+secret;
-        return JJSigning.sign(msg,"SHA-256").equals(signature);
+        String         msg    = JJPrinter.print(false, jsonWriter.write(callStack)) + secret;
+        Result<String> signed = JJSigning.sign(msg, "SHA-256");
+        return signed.map(s -> s.equals(signature)).orElse(false);
     }
 
 
