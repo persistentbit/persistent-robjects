@@ -93,7 +93,7 @@ public final class RProxy implements InvocationHandler{
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		//IGNORE toString method
 		if(method.getName().equals("toString")) {
-			return "RemoteObject[" + rod.getRemoteObjectClass().getName() + "]";
+			return "RProxy[" + server + "]";
 		}
 		return Result.function(method.getName()).code(l -> {
 
@@ -104,7 +104,7 @@ public final class RProxy implements InvocationHandler{
 
 
 			if(rod.getRemoteCached().containsKey(md)) {
-				Result<Object> cached = rod.getRemoteCached().get(md).getValue();
+				Result<Object> cached = rod.getRemoteCached().get(md);
 				return cached;
 			}
 			//Create The Call
@@ -132,6 +132,6 @@ public final class RProxy implements InvocationHandler{
 
 	@Override
 	public String toString() {
-		return "[Remote Proxy for " + rod + "]";
+		return "[Remote Proxy for " + server + "]";
 	}
 }

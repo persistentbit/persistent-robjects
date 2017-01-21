@@ -1,5 +1,6 @@
 package com.persistentbit.substema.remotecalls.testservices;
 
+import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.result.Result;
 import com.persistentbit.substema.RSessionManager;
 
@@ -22,5 +23,10 @@ public class LoggedInServiceImpl implements LoggedInService{
 	@Override
 	public Result<String> getLoginName() {
 		return Result.fromOpt(sessionManager.getData()).map(sd -> sd.getLoginName());
+	}
+
+	@Override
+	public Result<PList<TestValue>> getAllValues() {
+		return Result.lazy(() -> Result.success(PList.val(RootServiceImpl.peter, RootServiceImpl.els)));
 	}
 }

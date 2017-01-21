@@ -1,8 +1,15 @@
 package com.persistentbit.substema;
 
 import com.persistentbit.core.Immutable;
+import com.persistentbit.core.logging.Log;
 import com.persistentbit.core.result.Result;
+import com.persistentbit.jjson.mapping.impl.JJObjectReader;
+import com.persistentbit.jjson.nodes.JJNode;
+import com.persistentbit.jjson.nodes.JJNodeObject;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Optional;
 
 @Immutable
@@ -26,18 +33,7 @@ public class RCallResult {
         this.rod = rod;
     }
 
-    /*
-        public RCallResult(MethodDefinition call, RSessionData sessionData, Result result) {
-			this(call, sessionData, result, null);
-		}
 
-		public RCallResult(MethodDefinition call, RSessionData sessionData, RemoteObjectDefinition rod) {
-			this(call, sessionData, null, rod);
-		}
-
-		public RCallResult(RSessionData sessionData, RemoteObjectDefinition rod) {
-			this(null, sessionData, rod);
-		} */
     static public RCallResult forRootRemoteObject(RSessionData sessionData, Result<RemoteObjectDefinition> rod) {
         return new RCallResult(null, sessionData, null, rod);
     }
@@ -79,6 +75,30 @@ public class RCallResult {
         return Optional.ofNullable(sessionData);
     }
 
+    public static final JJObjectReader jsonReader = (type, node, masterReader) ->
+        Log.function().code(l -> {
+                                JJNodeObject     obj         = node.asObject().orElseThrow();
+                                MethodDefinition md          = masterReader.read(obj.get("theCall").get(), MethodDefinition.class);
+                                RSessionData     sessionData = masterReader.read(obj.get("sessionData").get(), RSessionData.class);
+                                JJNode           valueNode   = obj.get("result").get();
+                                Result           value       = null;
+                                if(valueNode.asNull().isPresent() == false) {
+                                    Method   m             = RemotableMethods.getRemotableMethod(md);
+                                    Class<?> returnType    = m.getReturnType();
+                                    Type     genReturnType = m.getGenericReturnType();
+                                    value = (Result) masterReader.read(valueNode, returnType, genReturnType);
+                                }
+                                Result<RemoteObjectDefinition> rod     = null;
+                                JJNode                         rodNode = obj.get("rod").get();
+                                if(rodNode.asNull().isPresent() == false) {
+                                    Field    f             = RCallResult.class.getDeclaredField("rod");
+                                    Class<?> clsRodResult  = f.getType();
+                                    Type     typeRodResult = f.getGenericType();
+                                    rod = (Result<RemoteObjectDefinition>) masterReader.read(rodNode, clsRodResult, typeRodResult);
+                                }
+                                return new RCallResult(md, sessionData, value, rod);
+                            }
+        );
 
 
     /*static public final JJObjectReader jsonReader = (type, node, masterReader) -> {

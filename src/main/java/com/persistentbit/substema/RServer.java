@@ -9,7 +9,6 @@ import com.persistentbit.core.result.Result;
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.nodes.JJParser;
 import com.persistentbit.jjson.nodes.JJPrinter;
-import com.persistentbit.jjson.utils.ObjectWithTypeName;
 import com.persistentbit.substema.annotations.RemoteCache;
 
 import java.lang.reflect.Method;
@@ -59,6 +58,11 @@ public class RServer<R, SESSION> implements RemoteService{
 		this.rootSupplier = Objects.requireNonNull(rootSupplier);
 		this.executor = executor;
 		this.mapper = mapper;
+	}
+
+	@Override
+	public String toString() {
+		return "RServer[" + rootInterface.getName() + "]";
 	}
 
 	public ExecutorService getExecutor() {
@@ -180,8 +184,8 @@ public class RServer<R, SESSION> implements RemoteService{
 
 	private Result<RemoteObjectDefinition> createROD(RCallStack call, Class<?> remotableClass, Object obj) {
 		return Result.function(call, remotableClass, obj).code(l -> {
-			PList<MethodDefinition>                    remoteMethods = PList.empty();
-			PMap<MethodDefinition, ObjectWithTypeName> cachedMethods = PMap.empty();
+			PList<MethodDefinition>        remoteMethods = PList.empty();
+			PMap<MethodDefinition, Result> cachedMethods = PMap.empty();
 			for(Method m : remotableClass.getDeclaredMethods()) {
 				MethodDefinition md = new MethodDefinition(remotableClass, m);
 
@@ -197,7 +201,8 @@ public class RServer<R, SESSION> implements RemoteService{
 					if(value == null) {
 						value = Result.failure("Got a null as Result for the cached value method " + md);
 					}
-					cachedMethods = cachedMethods.put(md, new ObjectWithTypeName(value.completed()));
+					value = value.completed();
+					cachedMethods = cachedMethods.put(md, value);
 				}
 				else {
 					remoteMethods = remoteMethods.plus(md);

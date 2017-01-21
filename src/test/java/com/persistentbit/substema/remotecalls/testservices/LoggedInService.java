@@ -1,7 +1,9 @@
 package com.persistentbit.substema.remotecalls.testservices;
 
+import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.result.Result;
 import com.persistentbit.substema.annotations.Remotable;
+import com.persistentbit.substema.annotations.RemoteCache;
 
 /**
  * TODOC
@@ -12,5 +14,8 @@ import com.persistentbit.substema.annotations.Remotable;
 @Remotable
 public interface LoggedInService{
 
+	@RemoteCache
 	Result<String> getLoginName();
+
+	Result<PList<TestValue>> getAllValues();
 }

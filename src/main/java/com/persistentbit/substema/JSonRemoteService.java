@@ -34,16 +34,22 @@ public class JSonRemoteService implements RemoteService{
     public Result<RCallResult> call(RCall call) {
         return Result.function(call).code(l -> {
             JJNode callNode = mapper.write(call);
-            //log.info(() -> "CALL: " +JJPrinter.print(true,callNode));
-            return service.call(mapper.read(callNode, RCall.class))
-                .map(cr -> {
-                    JJNode node = mapper.write(cr);
-                    //log.info(() -> "RESULT: " +JJPrinter.print(true,node));
-                    RCallResult callResult = mapper.read(node, RCallResult.class);
-                    return callResult;
-                });
+            l.info("JSON call: " + callNode.toString());
+            RCall               callFromJson   = mapper.read(callNode, RCall.class);
+            Result<RCallResult> resRCallResult = service.call(callFromJson).completed();
+            return resRCallResult.map(callResult -> {
+                JJNode node = mapper.write(callResult);
+                l.info("CallResult", node);
+                RCallResult fromJson = mapper.read(node, RCallResult.class);
+                return callResult;
+            });
         });
 
 
+    }
+
+    @Override
+    public String toString() {
+        return "JSONRemoteService[" + service + "]";
     }
 }
