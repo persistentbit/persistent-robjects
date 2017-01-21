@@ -98,8 +98,11 @@ public final class RProxy implements InvocationHandler{
 		return Result.function(method.getName()).code(l -> {
 
 
-
 			MethodDefinition md = new MethodDefinition(rod.getRemoteObjectClass(), method);
+			l.info("Calling " + md.toString());
+
+
+
 			if(rod.getRemoteCached().containsKey(md)) {
 				Result<Object> cached = rod.getRemoteCached().get(md).getValue();
 				return cached;

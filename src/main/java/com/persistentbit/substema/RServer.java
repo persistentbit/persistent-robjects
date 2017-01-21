@@ -105,10 +105,13 @@ public class RServer<R, SESSION> implements RemoteService{
 			RMethodCall              thisCall       = call.getThisCall();
 			if(thisCall == null) {
 				//This is a call to get the Root Object.
-				RemoteObjectDefinition rod =
-					createROD(RCallStack.createAndSign(PList.empty(), mapper, secret), this.rootInterface, rootSupplier
-						.apply(sessionManager));
-				return Result.success(RCallResult.forRootRemoteObject(getSession(sessionManager), Result.success(rod)));
+				return createROD(
+					RCallStack.createAndSign(PList.empty(), mapper, secret),
+					this.rootInterface,
+					rootSupplier.apply(sessionManager)
+				).map(rod ->
+						  RCallResult.forRootRemoteObject(getSession(sessionManager), Result.success(rod))
+				);
 			}
 
 			//Execute the call stack
@@ -142,8 +145,8 @@ public class RServer<R, SESSION> implements RemoteService{
 					.createAndSign(call.getCallStack().getCallStack().plus(thisCall), mapper, secret);
 
 				Result<RemoteObjectDefinition> resultRod =
-					Result.success(createROD(newCallStack, RemotableClasses
-						.getRemotableClass(remotableObjectImpl.getClass()), remotableObjectImpl));
+					createROD(newCallStack, RemotableClasses
+						.getRemotableClass(remotableObjectImpl.getClass()), remotableObjectImpl);
 
 				return Result.success(
 					RCallResult.forRemoteObject(
@@ -158,7 +161,7 @@ public class RServer<R, SESSION> implements RemoteService{
 				RCallResult.forResultValue(
 					thisCall.getMethodToCall(),
 					resultSession,
-					result.completed()
+					result
 				)
 			);
 
@@ -175,47 +178,46 @@ public class RServer<R, SESSION> implements RemoteService{
 		return new RSessionData(data, sessionManager.getExpires().get()).signed(secret);
 	}
 
-	private RemoteObjectDefinition createROD(RCallStack call, Class<?> remotableClass, Object obj) {
-		return Log.function(call, remotableClass, obj).code(l -> {
+	private Result<RemoteObjectDefinition> createROD(RCallStack call, Class<?> remotableClass, Object obj) {
+		return Result.function(call, remotableClass, obj).code(l -> {
 			PList<MethodDefinition>                    remoteMethods = PList.empty();
 			PMap<MethodDefinition, ObjectWithTypeName> cachedMethods = PMap.empty();
 			for(Method m : remotableClass.getDeclaredMethods()) {
 				MethodDefinition md = new MethodDefinition(remotableClass, m);
+
 				if(m.getParameterCount() == 0 && m.getDeclaredAnnotation(RemoteCache.class) != null) {
+					l.info("Getting cached value for " + md);
 					Result<Object> value;
 					try {
 						value = (Result<Object>) m.invoke(obj);
 					} catch(Exception e) {
-						throw new RuntimeException("Error getting cached value from " + remotableClass
-							.getName() + " method: " + md.getMethodName(), e);
+						return Result.failure(new RuntimeException("Error getting cached value from " + remotableClass
+							.getName() + " method: " + md.getMethodName(), e));
 					}
-					cachedMethods = cachedMethods.put(md, new ObjectWithTypeName(value));
+					if(value == null) {
+						value = Result.failure("Got a null as Result for the cached value method " + md);
+					}
+					cachedMethods = cachedMethods.put(md, new ObjectWithTypeName(value.completed()));
 				}
 				else {
 					remoteMethods = remoteMethods.plus(md);
 				}
 			}
-			return new RemoteObjectDefinition(remotableClass, remoteMethods, cachedMethods, call);
+			return Result.success(new RemoteObjectDefinition(remotableClass, remoteMethods, cachedMethods, call));
 		});
 
 	}
 
 	@SuppressWarnings("unchecked")
 	private Result<Object> singleCall(Object implementationObject, RMethodCall call) {
-		return Log.function(implementationObject, call).code(l -> {
+		return Result.function(implementationObject, call).code(l -> {
 			MethodDefinition md = call.getMethodToCall();
 			if(implementationObject == null) {
-				throw new RuntimeException("Can't call on null: " + md);
+				return Result.failure("Can't call on a null implementation object: " + md);
 			}
 			Method m =
 				implementationObject.getClass().getMethod(md.getMethodName(), md.getParamTypes());
-			Result<Object> methodResult = (Result<Object>) m.invoke(implementationObject, call.getArguments());
-			/*if(methodResult == null) {
-				//We got a null instead of a CompletableFuture.
-				throw new RObjException("method did not return a CompletableFuture: " + m);
-			}
-			return methodResult.get();*/
-			return methodResult;
+			return (Result<Object>) m.invoke(implementationObject, call.getArguments());
 		});
 	}
 
@@ -230,10 +232,10 @@ public class RServer<R, SESSION> implements RemoteService{
 					return Result.failure("Can't execute call on a null object implementation");
 				}
 				Result<Object> callResult = singleCall(resObj, c);
+				callResult.withLogs(logs -> l.add(logs));
 				if(callResult.isError()) {
 					return callResult;
 				}
-				callResult.withLogs(logs -> l.add(logs));
 				resObj = callResult.orElse(null);
 			}
 			return Result.result(resObj);
