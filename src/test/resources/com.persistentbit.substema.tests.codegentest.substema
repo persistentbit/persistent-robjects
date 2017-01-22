@@ -132,11 +132,11 @@ case class PersonEntity implements IEntity{
 
 remote class UserSession{
     user():SimplePerson;
-    update(person:SimplePerson):void;
+    update(person:SimplePerson):OK;
 }
 
 remote class AppTest{
     getInfo():ServiceInfo cached;
     getAllUsers():List<SimplePerson>;
-    login(userName:String, passWord:String):?UserSession;
+    login(userName:String, passWord:String):UserSession;
 }

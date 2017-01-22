@@ -512,7 +512,7 @@ public class SubstemaParser{
 		skip(tColon, "':' expected to define the function return type");
 		RValueType returnType = null;
 		boolean    cached     = false;
-		if(current.type != tVoid) {
+		if(current.type != tOK) {
 			returnType = parseRValueType();
 			if(current.type == tCached) {
 				if(params.isEmpty() == false) {

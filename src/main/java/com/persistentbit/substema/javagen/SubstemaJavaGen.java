@@ -2,6 +2,7 @@ package com.persistentbit.substema.javagen;
 
 
 import com.persistentbit.core.Nullable;
+import com.persistentbit.core.OK;
 import com.persistentbit.core.collections.*;
 import com.persistentbit.core.logging.Log;
 import com.persistentbit.core.result.Result;
@@ -581,6 +582,11 @@ public final class SubstemaJavaGen{
 					case "String":
 						break;
 
+					case "OK":
+						name = "OK";
+						addImport(OK.class);
+						break;
+
 					default:
 						if(pname.isEmpty()) {
 							throw new SubstemaException("Don't know interal class " + name);
@@ -635,7 +641,8 @@ public final class SubstemaJavaGen{
 						String retType;
 						addImport(Result.class);
 						if(f.getResultType().isPresent() == false) {
-							retType = "Object";
+							addImport(OK.class);
+							retType = "OK";
 						}
 						else {
 							retType = toString(f.getResultType().get().getTypeSig());

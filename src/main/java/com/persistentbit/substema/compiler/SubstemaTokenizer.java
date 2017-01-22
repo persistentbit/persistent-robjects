@@ -60,9 +60,9 @@ public class SubstemaTokenizer extends SimpleTokenizer<SubstemaTokenType>{
                     return Result.success(new TokenFound<>(found.text, tCase, found.ignore));
                 case "remote":
                     return Result.success(new TokenFound<>(found.text, tRemote, found.ignore));
-                case "void":
-                    return Result.success(new TokenFound<>(found.text, tVoid, found.ignore));
-                case "exception":
+				//case "ok":
+				//    return Result.success(new TokenFound<>(found.text, tOK, found.ignore));
+				case "exception":
                     return Result.success(new TokenFound<>(found.text, tException, found.ignore));
                 case "throws":
                     return Result.success(new TokenFound<>(found.text, tThrows, found.ignore));
