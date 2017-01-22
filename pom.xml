@@ -5,7 +5,7 @@
 
     <groupId>com.persistentbit</groupId>
     <artifactId>substema</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>SUBSTEMA</name>
     <description>Remotable multi-language Services</description>
@@ -34,8 +34,7 @@
         </license>
     </licenses>
     <properties>
-        <junit.version>4.12</junit.version>
-        <persistent-jjson.version>1.0.0-SNAPSHOT</persistent-jjson.version>
+        <persistent-jjson.version>2.0.0-SNAPSHOT</persistent-jjson.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
