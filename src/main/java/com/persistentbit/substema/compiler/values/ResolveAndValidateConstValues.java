@@ -2,6 +2,8 @@ package com.persistentbit.substema.compiler.values;
 
 import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.result.Result;
+import com.persistentbit.substema.compiler.SubstemaCompiler;
 import com.persistentbit.substema.compiler.SubstemaException;
 import com.persistentbit.substema.compiler.SubstemaUtils;
 import com.persistentbit.substema.compiler.values.expr.*;
@@ -13,13 +15,17 @@ import java.util.function.Function;
  *
  */
 public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
-    private final RTypeSig  expectedType;
-    private final RSubstema substema;
+    private final RTypeSig                expectedType;
+    private final RSubstema               substema;
     private final Function<RClass,RClass> resolveClassName;
     private final Function<RClass,REnum>  resolveEnumDef;
+    private final SubstemaCompiler        compiler;
 
-
-    private ResolveAndValidateConstValues(RTypeSig expectedType, RSubstema substema,Function<RClass,RClass> resolveClassName,Function<RClass,REnum> resolveEnumDef) {
+    private ResolveAndValidateConstValues(SubstemaCompiler compiler, RTypeSig expectedType, RSubstema substema,
+                                          Function<RClass, RClass> resolveClassName,
+                                          Function<RClass, REnum> resolveEnumDef
+    ) {
+        this.compiler = compiler;
         this.expectedType = expectedType;
         this.substema = substema;
         this.resolveClassName = resolveClassName;
@@ -107,13 +113,42 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
         return typeSig;
     }
 
+    private Result<RValueClass> findAnyValueClass(RTypeSig typeSig) {
+        return Result.function(typeSig).code(l -> {
+            RValueClass inThisSubstema = substema.getValueClasses().find(vc -> vc.getTypeSig().equals(typeSig))
+                .orElse(null);
+            if(inThisSubstema != null) {
+                return Result.success(inThisSubstema);
+            }
+            l.info(typeSig.toString() + " not found in " + substema.getPackageName());
+            for(RImport imp : substema.getImports()) {
+                RSubstema impSubstema = compiler.compile(imp.getPackageName()).orElse(null);
+                if(impSubstema == null) {
+                    return Result.failure("Error compiling " + imp.getPackageName());
+                }
+                RValueClass foundVc =
+                    impSubstema.getValueClasses().find(vc -> vc.getTypeSig().equals(typeSig)).orElse(null);
+                if(foundVc != null) {
+                    return Result.success(foundVc);
+                }
+                l.info(typeSig.toString() + " not found in " + impSubstema.getPackageName());
+            }
+            return Result.failure(typeSig.toString() + " not found!");
+        });
+    }
+
     @Override
     public RConst visit(RConstValueObject c) {
         if(c.getTypeSig().getGenerics().isEmpty() == false){
             throw new SubstemaException("Generics are currently not supported in constant values:" + c);
         }
-        RTypeSig resolvedTypeSig = resolveTypeSig(c.getTypeSig());
-        RValueClass vc = substema.getValueClasses().find(v -> v.getTypeSig().equals(resolvedTypeSig) && v.getTypeSig().getGenerics().isEmpty()).orElseThrow(()->new SubstemaException("Unknown constant value class for " + c));
+        RTypeSig    resolvedTypeSig = resolveTypeSig(c.getTypeSig());
+        RValueClass vc              = findAnyValueClass(resolvedTypeSig)
+            .orElseThrow(() -> new SubstemaException("Can't find case class for " + resolvedTypeSig));
+        if(vc.getTypeSig().getGenerics().isEmpty() == false) {
+            throw new SubstemaException("Generics are not supported in constant values");
+        }
+        //RValueClass vc = findAnyValueClass().orElseThrow().substema.getValueClasses().find(v -> v.getTypeSig().equals(resolvedTypeSig) && v.getTypeSig().getGenerics().isEmpty()).orElseThrow(()->new SubstemaException("Unknown constant value class for " + c));
 
         boolean isInterfaceExpected = substema.getInterfaceClasses().find(i-> i.getName().equals(expectedType.getName())).isPresent();
 
@@ -146,7 +181,7 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
 
         converted = converted.plusAll(c.getPropValues().map(t -> {
                 RTypeSig expected = vc.getProperties().find(p -> p.getName().equals(t._1)).map(p -> p.getValueType().getTypeSig()).get();
-                return t.with_2( resolveAndValidate(expected,t._2,substema,resolveClassName,resolveEnumDef));
+            return t.with_2(resolveAndValidate(compiler, expected, t._2, substema, resolveClassName, resolveEnumDef));
         }));
         return c.withTypeSig(resolvedTypeSig).withPropValues(converted);
 
@@ -156,14 +191,17 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
     @Override
     public RConst visit(RConstArray c) {
         RTypeSig expected = expectedType.getGenerics().head();
-        return c.withValues(c.getValues().map(v -> resolveAndValidate(expected,v,substema,resolveClassName,resolveEnumDef)));
+        return c.withValues(c.getValues()
+                                .map(v -> resolveAndValidate(compiler, expected, v, substema, resolveClassName, resolveEnumDef)));
     }
 
-    static public RConst resolveAndValidate(RTypeSig expectedType, RConst value, RSubstema substema,
+    static public RConst resolveAndValidate(SubstemaCompiler compiler, RTypeSig expectedType, RConst value,
+                                            RSubstema substema,
                                             Function<RClass, RClass> resolveClassName,
                                             Function<RClass, REnum> resolveEnumDef
     ) {
-        return new ResolveAndValidateConstValues(expectedType, substema, resolveClassName, resolveEnumDef).visit(value);
+        return new ResolveAndValidateConstValues(compiler, expectedType, substema, resolveClassName, resolveEnumDef)
+            .visit(value);
     }
 
 

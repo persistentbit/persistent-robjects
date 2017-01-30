@@ -130,7 +130,8 @@ public class ResolvePackageNames {
     }
 
     private RConst resolveConst(RTypeSig expectedType,RConst cv){
-        return ResolveAndValidateConstValues.resolveAndValidate(expectedType,cv,originalSubstema,this::resolveClass,this::findEnumDef);
+        return ResolveAndValidateConstValues
+            .resolveAndValidate(compiler, expectedType, cv, originalSubstema, this::resolveClass, this::findEnumDef);
     }
 
     private REnum   findEnumDef(RClass cls){

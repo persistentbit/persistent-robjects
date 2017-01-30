@@ -2,6 +2,7 @@
     Test ROD for the ROD parser and Java Code Generator.
 */
 
+import com.persistentbit.substema.tests.common;
 
 <<Test Doc>>
 enum EnumTest1{
@@ -139,4 +140,8 @@ remote class AppTest{
     getInfo():ServiceInfo cached;
     getAllUsers():List<SimplePerson>;
     login(userName:String, passWord:String):UserSession;
+}
+
+case class AValueClassWithDefaultFromCommon{
+    aValue:FromCommon = new FromCommon();
 }

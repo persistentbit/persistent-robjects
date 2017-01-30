@@ -6,6 +6,7 @@ import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.function.Function2;
 import com.persistentbit.core.result.Result;
+import com.persistentbit.core.tokenizer.Pos;
 import com.persistentbit.core.tokenizer.Token;
 import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.utils.StringUtils;
@@ -37,7 +38,7 @@ public class SubstemaParser{
 			if(current != null && current.type == tEOF) {
 				throw new SubstemaParserException(current.pos, "Unexpected End-Of-File");
 			}
-			current = new Token<>(current.pos, tEOF, "");
+			current = new Token<>(current == null ? new Pos(packageName, 1, 1) : current.pos, tEOF, "");
 			return current;
 		}
 		current = tokens.head().orElseThrow();
