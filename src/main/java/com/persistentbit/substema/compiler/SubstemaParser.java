@@ -575,6 +575,8 @@ public class SubstemaParser{
 		PList<String> values = PList.empty();
 		if(current.type != tSemiColon) {
 			values = sep(tComma, () -> {
+				PList<RAnnotation> valueAnnotations = parseAnnotations();
+				//TODO Annotations on values should be added to the result REnum values
 				assertType(tIdentifier, "enum value name expected");
 				String valueName = current.text;
 				next();
