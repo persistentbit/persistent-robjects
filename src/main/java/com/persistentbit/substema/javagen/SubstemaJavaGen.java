@@ -30,7 +30,7 @@ import java.util.function.Function;
 public final class SubstemaJavaGen{
 
 	private final JavaGenOptions options;
-	private final RSubstema      substema;
+	private final RSubstema substema;
 
 	private final SubstemaCompiler compiler;
 	private final PList<GeneratedJava> generatedJava = PList.empty();
@@ -81,11 +81,11 @@ public final class SubstemaJavaGen{
 															  RSubstema substema, File outputFolder
 	) {
 		return Log.function(compiler, options, substema, outputFolder).code(l ->
-																				generate(compiler, options, substema)
-																					.map(generated -> generated
-																						.flatMap(g -> g
-																							.writeToFile(outputFolder))
-																					)
+			generate(compiler, options, substema)
+				.map(generated -> generated
+					.flatMap(g -> g
+						.writeToFile(outputFolder))
+				)
 		);
 	}
 
@@ -110,17 +110,17 @@ public final class SubstemaJavaGen{
 
 			result = result.plusAll(
 				substema.getEnums()
-					.map(e -> addLog.apply(new Generator().generateEnum(e))
-					));
+						.map(e -> addLog.apply(new Generator().generateEnum(e))
+						));
 			result = result.plusAll(
 				substema.getValueClasses()
-					.map(vc -> addLog.apply(new Generator().generateValueClass(vc))));
+						.map(vc -> addLog.apply(new Generator().generateValueClass(vc))));
 			result = result.plusAll(
 				substema.getRemoteClasses()
-					.map(rc -> addLog.apply(new Generator().generateRemoteClass(rc))));
+						.map(rc -> addLog.apply(new Generator().generateRemoteClass(rc))));
 			result = result.plusAll(
 				substema.getInterfaceClasses()
-					.map(ic -> addLog.apply(new Generator().generateInterfaceClass(ic))));
+						.map(ic -> addLog.apply(new Generator().generateInterfaceClass(ic))));
 
 			return result.filterNulls().plist();
 		});
@@ -143,7 +143,7 @@ public final class SubstemaJavaGen{
 
 				sg.println("");
 				return sg.writeToString().map(str ->
-												  new GeneratedJava(new RClass(packageName, "package-info"), str)
+					new GeneratedJava(new RClass(packageName, "package-info"), str)
 				);
 			});
 
@@ -181,10 +181,11 @@ public final class SubstemaJavaGen{
 						}
 						if(options.generateUpdaters) {
 							String s = "public " + ic.getName()
-								.getClassName() + " with" + firstUpper(p.getName()) + "(" + toString(p.getValueType()
-																										 .getTypeSig(), p
-																										 .getValueType()
-																										 .isRequired()) + " " + p
+													 .getClassName() + " with" + firstUpper(p
+								.getName()) + "(" + toString(p.getValueType()
+															  .getTypeSig(), p
+								.getValueType()
+								.isRequired()) + " " + p
 								.getName() + ");";
 
 							println(s);
@@ -218,14 +219,14 @@ public final class SubstemaJavaGen{
 				bs("public class " + toString(vc.getTypeSig()) + impl);
 				{
 					vc.getProperties()
-						.forEach(p -> println(toString(p.getValueType(), true) + " " + p.getName() + ";"));
+					  .forEach(p -> println(toString(p.getValueType(), true) + " " + p.getName() + ";"));
 					println("");
 					//***** MAIN CONSTRUCTOR
 					bs("public " + vc.getTypeSig().getName().getClassName() + "(" +
-						   vc.getProperties()
-							   .map(p -> toString(p.getValueType().getTypeSig(), p.getValueType().isRequired() && p
-								   .getDefaultValue().isPresent() == false) + " " + p.getName()).toString(", ")
-						   + ")");
+						vc.getProperties()
+						  .map(p -> toString(p.getValueType().getTypeSig(), p.getValueType().isRequired() && p
+							  .getDefaultValue().isPresent() == false) + " " + p.getName()).toString(", ")
+						+ ")");
 					{
 						vc.getProperties().forEach(p -> {
 							String fromValue = p.getName();
@@ -259,13 +260,13 @@ public final class SubstemaJavaGen{
 					PList<RProperty> req = vc.getProperties().filter(this::isRequired);
 					if(req.size() != vc.getProperties().size()) {
 						bs("public " + vc.getTypeSig().getName().getClassName() + "(" +
-							   req.map(p -> toString(p.getValueType().getTypeSig(), p.getValueType()
-								   .isRequired()) + " " + p
-								   .getName()).toString(", ")
-							   + ")");
+							req.map(p -> toString(p.getValueType().getTypeSig(), p.getValueType()
+																				  .isRequired()) + " " + p
+								.getName()).toString(", ")
+							+ ")");
 						{
 							println("this(" + vc.getProperties().map(p -> isRequired(p) ? p.getName() : "null")
-								.toString(",") + ");");
+												.toString(",") + ");");
 						}
 						be();
 					}
@@ -285,18 +286,20 @@ public final class SubstemaJavaGen{
 						}
 						if(options.generateUpdaters) {
 							String s =
-								"public " + toString(vc.getTypeSig()) + " with" + firstUpper(p.getName()) + "(" + toString(p.getValueType()
-																															   .getTypeSig(), p
-																															   .getValueType()
-																															   .isRequired()) + " " + p
+								"public " + toString(vc.getTypeSig()) + " with" + firstUpper(p
+									.getName()) + "(" + toString(p.getValueType()
+																  .getTypeSig(), p
+									.getValueType()
+									.isRequired()) + " " + p
 									.getName() + ") { return new ";
 							s += vc.getTypeSig().getName().getClassName();
 							if(vc.getTypeSig().getGenerics().isEmpty() == false) {
 								s += "<>";
 							}
 							s += "(" + vc.getProperties()
-								.map(param -> (param.getName().equals(p.getName()) ? "" : "this.") + param.getName())
-								.toString(", ") + ")";
+										 .map(param -> (param.getName().equals(p.getName()) ? "" : "this.") + param
+											 .getName())
+										 .toString(", ") + ")";
 							s += "; }";
 							println(s);
 						}
@@ -377,12 +380,15 @@ public final class SubstemaJavaGen{
 				println("if (this == o) return true;");
 				println("if (o == null || getClass() != o.getClass()) return false;");
 				println("");
-				if(vc.getProperties().isEmpty() == false) {
+				PList<RProperty> equalsProps =
+					vc.getProperties()
+					  .filter(p -> atUtils.hasAnnotation(p.getAnnotations(), atUtils.rclassNoEquals) == false);
+				if(equalsProps.isEmpty() == false) {
 					println(vc.getTypeSig().getName().getClassName() + " that = (" + vc.getTypeSig().getName()
 																					   .getClassName() + ")o;");
 					println("");
 				}
-				vc.getProperties().forEach(p -> {
+				equalsProps.forEach(p -> {
 					String thisVal = p.getName();
 					String thatVal = "that." + thisVal;
 					if(p.getValueType().isRequired()) {
@@ -415,12 +421,16 @@ public final class SubstemaJavaGen{
 			println("@Override");
 			bs("public int hashCode()");
 			{
-				if(vc.getProperties().isEmpty()) {
+				PList<RProperty> hashCodeProps = vc.getProperties()
+												   .filter(p -> atUtils.hasAnnotation(p
+													   .getAnnotations(), atUtils.rclassNoEquals) == false);
+				if(hashCodeProps.isEmpty()) {
 					println("return 0;");
 				}
 				else {
 					println("int _result;");
-					vc.getProperties().headMiddleEnd().forEach(t -> {
+
+					hashCodeProps.headMiddleEnd().forEach(t -> {
 						if(t._1 == PStream.HeadMiddleEnd.head || t._1 == PStream.HeadMiddleEnd.headAndEnd) {
 							print("_result = ");
 						}
@@ -481,8 +491,10 @@ public final class SubstemaJavaGen{
 				println("return \"" + vc.getTypeSig().getName().getClassName() + "<<\" +");
 				indent();
 				boolean first = true;
-
-				for(RProperty p : vc.getProperties()) {
+				PList<RProperty> props = vc.getProperties()
+										   .filter(p -> atUtils
+											   .hasAnnotation(p.getAnnotations(), atUtils.rclassNoToString) == false);
+				for(RProperty p : props) {
 					String res = "\", ";
 					if(first) {
 						res = "\"";
@@ -504,7 +516,7 @@ public final class SubstemaJavaGen{
 
 		private PList<RProperty> getRequiredProps(RValueClass vc) {
 			return vc.getProperties()
-				.filter(p -> p.getDefaultValue().isPresent() == false && p.getValueType().isRequired());
+					 .filter(p -> p.getDefaultValue().isPresent() == false && p.getValueType().isRequired());
 		}
 
 		private String getBuilderGenerics(RValueClass vc) {
@@ -513,7 +525,9 @@ public final class SubstemaJavaGen{
 
 		private String getBuilderGenerics(RValueClass vc, PMap<String, String> namesReplace) {
 			PList<String> requiredProperties = getRequiredProps(vc).zipWithIndex()
-				.map(t -> namesReplace.getOpt(t._2.getName()).orElse("_T" + (t._1 + 1))).plist();
+																   .map(t -> namesReplace.getOpt(t._2.getName())
+																						 .orElse("_T" + (t._1 + 1)))
+																   .plist();
 			if(requiredProperties.isEmpty() == false) {
 				addImport(SET.class);
 				addImport(NOT.class);
@@ -671,8 +685,8 @@ public final class SubstemaJavaGen{
 							println("@RemoteCache");
 						}
 						println("Result<" + retType + ">\t" + f.getName() + "(" +
-									f.getParams().map(p -> toString(p.getValueType().getTypeSig()) + " " + p.getName())
-										.toString(", ") + ");"
+							f.getParams().map(p -> toString(p.getValueType().getTypeSig()) + " " + p.getName())
+							 .toString(", ") + ");"
 						);
 					});
 

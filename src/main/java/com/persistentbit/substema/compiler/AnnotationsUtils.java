@@ -20,6 +20,11 @@ public class AnnotationsUtils{
 	private final SubstemaCompiler compiler;
 
 
+	public static final RClass rclassNoToString = new RClass(SubstemaUtils.annotationsPackage, "NoToString");
+	public static final RClass rclassNoEquals = new RClass(SubstemaUtils.annotationsPackage, "NoEquals");
+
+
+
 	public AnnotationsUtils(SubstemaCompiler compiler) {
 		this.compiler = compiler;
 	}
