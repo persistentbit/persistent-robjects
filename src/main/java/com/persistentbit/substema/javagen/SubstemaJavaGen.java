@@ -305,153 +305,168 @@ public final class SubstemaJavaGen{
 						}
 					});
 					//******* EQUALS
-					println("@Override");
-					bs("public boolean equals(Object o)");
-					{
-						println("if (this == o) return true;");
-						println("if (o == null || getClass() != o.getClass()) return false;");
-						println("");
-						if(vc.getProperties().isEmpty() == false) {
-							println(vc.getTypeSig().getName().getClassName() + " that = (" + vc.getTypeSig().getName()
-								.getClassName() + ")o;");
-							println("");
-						}
-						vc.getProperties().forEach(p -> {
-							String thisVal = p.getName();
-							String thatVal = "that." + thisVal;
-							if(p.getValueType().isRequired()) {
-								boolean isPrim = isPrimitive(p.getValueType().getTypeSig());
-								if(isPrim) {
-									if(p.getValueType().getTypeSig().getName().equals("float")) {
-										println("if(Float.compare(" + thisVal + "," + thatVal + " != 0) return false;");
-									}
-									else if(p.getValueType().getTypeSig().getName().equals("double")) {
-										println("if(Double.compare(" + thisVal + "," + thatVal + " != 0) return false;");
-									}
-									else {
-										println("if(" + thisVal + " != " + thatVal + ") return false;");
-									}
-								}
-								else {
-									println("if(!" + thisVal + ".equals(" + thatVal + ")) return false;");
-								}
-							}
-							else {
-								println("if(" + thisVal + "!= null ? !" + thisVal + ".equals(" + thatVal + ") : " + thatVal + " != null) return false;");
-							}
-						});
-						println("return true;");
-					}
-					be();
+					generateEquals(vc);
 					//******* HASHCODE
-					println("@Override");
-					bs("public int hashCode()");
-					{
-						if(vc.getProperties().isEmpty()) {
-							println("return 0;");
-						}
-						else {
-							println("int result;");
-							vc.getProperties().headMiddleEnd().forEach(t -> {
-								if(t._1 == PStream.HeadMiddleEnd.head || t._1 == PStream.HeadMiddleEnd.headAndEnd) {
-									print("result = ");
-								}
-								else {
-									print("result = 31 * result + ");
-								}
-								String value = t._2.getName();
-								String hash  = value + ".hashCode()";
-
-								if(t._2.getValueType().isRequired()) {
-									switch(t._2.getValueType().getTypeSig().getName().getClassName()) {
-										case "Float":
-											hash = "Float.hashCode(" + value + ")";
-											break;
-										case "Long":
-											hash = "Long.hashCode(" + value + ")";
-											break;
-										case "Double":
-											hash = "Double.hashCode(" + value + ")";
-											break;
-										case "Short":
-											hash = "Short.hashCode(" + value + ")";
-											break;
-										case "Byte":
-											hash = "Byte.hashCode(" + value + ")";
-											break;
-										case "Boolean":
-											hash = "Boolean.hashCode(" + value + ")";
-											break;
-										case "Integer":
-											hash = "Integer.hashCode(" + value + ")";
-											break;
-
-									}
-
-								}
-								else {
-									hash = "(" + value + " != null ? " + hash + ": 0)";
-								}
-								println(hash + ";");
-							});
-							println("return result;");
-						}
-
-					}
-					be();
+					generateHashcode(vc);
 
 					//******* TOSTRING
 					generateToString(vc);
 
 					//******* BUILDER
 
-					bs("static public class Builder" + getBuilderGenerics(vc));
-					{
-						vc.getProperties()
-							.forEach(p -> println(toString(p.getValueType(), false) + " " + p.getName() + ";"));
-						println("");
-						vc.getProperties().forEach(p -> {
-							String gen = getBuilderGenerics(vc, PMap.<String, String>empty().put(p.getName(), "SET"));
-							bs("public Builder" + gen + " set" + firstUpper(p.getName()) + "(" + toString(p.getValueType()
-																											  .getTypeSig(), p
-																											  .getValueType()
-																											  .isRequired()) + " " + p
-								.getName() + ")");
-							{
-								println("this." + p.getName() + " = " + p.getName() + ";");
-								println("return (Builder" + getBuilderGenerics(vc, PMap.<String, String>empty()
-									.put(p.getName(), "SET")) + ") this;");
-							}
-							be();
-						});
-
-
-					}
-					be();
-					String onlyGen = vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName()).toString(",");
-					onlyGen = onlyGen.isEmpty() ? "" : "<" + onlyGen + ">";
-					String not = getRequiredProps(vc).map(v -> "NOT")
-						.plusAll(vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName())).toString(",");
-					String set = getRequiredProps(vc).map(v -> "SET")
-						.plusAll(vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName())).toString(",");
-					not = not.isEmpty() ? not : "<" + not + ">";
-					set = set.isEmpty() ? set : "<" + set + ">";
-					addImport(Function.class);
-					String p = "Function<Builder" + not + ",Builder" + set + "> supplier";
-					bs("static public " + onlyGen + " " + toString(vc.getTypeSig()) + " build(" + p + ")");
-					{
-
-						println("Builder b = supplier.apply(new Builder" + (getBuilderGenerics(vc)
-							.isEmpty() ? "" : "<>") + "());");
-						println("return new " + vc.getTypeSig().getName().getClassName() + "(" + vc.getProperties()
-							.map(v -> "b." + v.getName()).toString(", ") + ");");
-						be();
-					}
+					generateValueClassBuilder(vc);
 				}
 				be();
 				return toGenJava(vc.getTypeSig().getName());
 
 			});
+		}
+
+		private void generateValueClassBuilder(RValueClass vc) {
+			bs("static public class Builder" + getBuilderGenerics(vc));
+			{
+				vc.getProperties()
+				  .forEach(p -> println(toString(p.getValueType(), false) + " " + p.getName() + ";"));
+				println("");
+				vc.getProperties().forEach(p -> {
+					String gen = getBuilderGenerics(vc, PMap.<String, String>empty().put(p.getName(), "SET"));
+					bs("public Builder" + gen + " set" + firstUpper(p.getName()) + "(" + toString(p.getValueType()
+																								   .getTypeSig(), p
+						.getValueType()
+						.isRequired()) + " " + p
+						.getName() + ")");
+					{
+						println("this." + p.getName() + " = " + p.getName() + ";");
+						println("return (Builder" + getBuilderGenerics(vc, PMap.<String, String>empty()
+							.put(p.getName(), "SET")) + ") this;");
+					}
+					be();
+				});
+
+
+			}
+			be();
+			String onlyGen = vc.getTypeSig().getGenerics().map(g -> g.getName().getClassName()).toString(",");
+			onlyGen = onlyGen.isEmpty() ? "" : "<" + onlyGen + ">";
+			String not = getRequiredProps(vc).map(v -> "NOT")
+											 .plusAll(vc.getTypeSig().getGenerics()
+														.map(g -> g.getName().getClassName())).toString(",");
+			String set = getRequiredProps(vc).map(v -> "SET")
+											 .plusAll(vc.getTypeSig().getGenerics()
+														.map(g -> g.getName().getClassName())).toString(",");
+			not = not.isEmpty() ? not : "<" + not + ">";
+			set = set.isEmpty() ? set : "<" + set + ">";
+			addImport(Function.class);
+			String p = "Function<Builder" + not + ",Builder" + set + "> supplier";
+			bs("static public " + onlyGen + " " + toString(vc.getTypeSig()) + " build(" + p + ")");
+			{
+
+				println("Builder b = supplier.apply(new Builder" + (getBuilderGenerics(vc)
+					.isEmpty() ? "" : "<>") + "());");
+				println("return new " + vc.getTypeSig().getName().getClassName() + "(" + vc.getProperties()
+																						   .map(v -> "b." + v.getName())
+																						   .toString(", ") + ");");
+				be();
+			}
+		}
+
+		private void generateEquals(RValueClass vc) {
+			println("@Override");
+			bs("public boolean equals(Object o)");
+			{
+				println("if (this == o) return true;");
+				println("if (o == null || getClass() != o.getClass()) return false;");
+				println("");
+				if(vc.getProperties().isEmpty() == false) {
+					println(vc.getTypeSig().getName().getClassName() + " that = (" + vc.getTypeSig().getName()
+																					   .getClassName() + ")o;");
+					println("");
+				}
+				vc.getProperties().forEach(p -> {
+					String thisVal = p.getName();
+					String thatVal = "that." + thisVal;
+					if(p.getValueType().isRequired()) {
+						boolean isPrim = isPrimitive(p.getValueType().getTypeSig());
+						if(isPrim) {
+							if(p.getValueType().getTypeSig().getName().equals("float")) {
+								println("if(Float.compare(" + thisVal + "," + thatVal + " != 0) return false;");
+							}
+							else if(p.getValueType().getTypeSig().getName().equals("double")) {
+								println("if(Double.compare(" + thisVal + "," + thatVal + " != 0) return false;");
+							}
+							else {
+								println("if(" + thisVal + " != " + thatVal + ") return false;");
+							}
+						}
+						else {
+							println("if(!" + thisVal + ".equals(" + thatVal + ")) return false;");
+						}
+					}
+					else {
+						println("if(" + thisVal + "!= null ? !" + thisVal + ".equals(" + thatVal + ") : " + thatVal + " != null) return false;");
+					}
+				});
+				println("return true;");
+			}
+			be();
+		}
+
+		private void generateHashcode(RValueClass vc) {
+			println("@Override");
+			bs("public int hashCode()");
+			{
+				if(vc.getProperties().isEmpty()) {
+					println("return 0;");
+				}
+				else {
+					println("int _result;");
+					vc.getProperties().headMiddleEnd().forEach(t -> {
+						if(t._1 == PStream.HeadMiddleEnd.head || t._1 == PStream.HeadMiddleEnd.headAndEnd) {
+							print("_result = ");
+						}
+						else {
+							print("_result = 31 * _result + ");
+						}
+						String value = t._2.getName();
+						String hash  = value + ".hashCode()";
+
+						if(t._2.getValueType().isRequired()) {
+							switch(t._2.getValueType().getTypeSig().getName().getClassName()) {
+								case "Float":
+									hash = "Float.hashCode(" + value + ")";
+									break;
+								case "Long":
+									hash = "Long.hashCode(" + value + ")";
+									break;
+								case "Double":
+									hash = "Double.hashCode(" + value + ")";
+									break;
+								case "Short":
+									hash = "Short.hashCode(" + value + ")";
+									break;
+								case "Byte":
+									hash = "Byte.hashCode(" + value + ")";
+									break;
+								case "Boolean":
+									hash = "Boolean.hashCode(" + value + ")";
+									break;
+								case "Integer":
+									hash = "Integer.hashCode(" + value + ")";
+									break;
+
+							}
+
+						}
+						else {
+							hash = "(" + value + " != null ? " + hash + ": 0)";
+						}
+						println(hash + ";");
+					});
+					println("return _result;");
+				}
+
+			}
+			be();
 		}
 
 		/**
