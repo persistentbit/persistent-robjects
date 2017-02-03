@@ -144,4 +144,6 @@ remote class AppTest{
 
 case class AValueClassWithDefaultFromCommon{
     aValue:FromCommon = new FromCommon();
+    aCalendar:Calendar = new Calendar();
 }
+

@@ -120,7 +120,13 @@ public class ResolveAndValidateConstValues implements RConstVisitor<RConst> {
             if(inThisSubstema != null) {
                 return Result.success(inThisSubstema);
             }
-            l.info(typeSig.toString() + " not found in " + substema.getPackageName());
+			inThisSubstema = substema.getValueClasses().find(vc -> vc.getTypeSig().getName().getClassName()
+																	 .equals(typeSig.getName().getClassName()))
+									 .orElse(null);
+			if(inThisSubstema != null) {
+				return Result.success(inThisSubstema);
+			}
+			l.info(typeSig.toString() + " not found in " + substema.getPackageName());
             for(RImport imp : substema.getImports()) {
                 RSubstema impSubstema = compiler.compile(imp.getPackageName()).orElse(null);
                 if(impSubstema == null) {

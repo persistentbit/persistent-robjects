@@ -3,3 +3,21 @@ case class FromCommon{
     id:Integer = 0;
     name:String = "Peter";
 }
+
+
+case class UurCalendar{
+    maandag:Boolean = false;
+    dinsdag:Boolean = false;
+    woensdag:Boolean = false;
+    donderdag:Boolean = false;
+    vrijdag:Boolean = false;
+    zaterdag:Boolean = false;
+    zondag:Boolean = false;
+}
+
+case class Calendar{
+    sMorgens:UurCalendar = new UurCalendar();
+    namiddag:UurCalendar = new UurCalendar();
+    sAvonds:UurCalendar = new UurCalendar();
+    sNachts:UurCalendar = new UurCalendar();
+}
