@@ -3,16 +3,15 @@ package com.persistentbit.substema.compiler;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.POrderedMap;
-import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.function.Function2;
 import com.persistentbit.core.result.Result;
-import com.persistentbit.core.tokenizer.Pos;
-import com.persistentbit.core.tokenizer.Token;
+import com.persistentbit.core.tokenizers.Token;
 import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.utils.StringUtils;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.*;
 
+import java.util.Iterator;
 import java.util.function.Supplier;
 
 import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
@@ -24,25 +23,27 @@ import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
 public class SubstemaParser{
 
 	private final String                                    packageName;
-	private       PStream<Result<Token<SubstemaTokenType>>> tokens;
+	private Iterator<Token<SubstemaTokenType>> tokens;
 	private       Token<SubstemaTokenType>                  current;
+	private       SubstemaTokenType                  currentType;
+	private		  String currentText;
 
-	public SubstemaParser(String packageName, PStream<Result<Token<SubstemaTokenType>>> tokens) {
+	public SubstemaParser(String packageName, Iterator<Token<SubstemaTokenType>> tokens) {
 		this.packageName = packageName;
-		this.tokens = tokens.plist().lazy();
+		this.tokens = tokens;
 		next();
 	}
 
 	private Token<SubstemaTokenType> next() {
-		if(tokens.head().isEmpty()) {
-			if(current != null && current.type == tEOF) {
-				throw new SubstemaParserException(current.pos, "Unexpected End-Of-File");
-			}
-			current = new Token<>(current == null ? new Pos(packageName, 1, 1) : current.pos, tEOF, "");
-			return current;
+		if(tokens.hasNext() == false){
+			throw new SubstemaParserException(current.pos, "Unexpected End-Of-File");
 		}
-		current = tokens.head().orElseThrow();
-		tokens = tokens.tail();
+
+		current = tokens.next();
+		if(current.result.leftOpt().isPresent()){
+			throw new SubstemaParserException(current.pos, current.result.leftOpt().get());
+		}
+		cu
 		return current;
 	}
 
