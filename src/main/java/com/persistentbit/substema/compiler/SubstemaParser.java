@@ -43,7 +43,9 @@ public class SubstemaParser{
 		if(current.result.leftOpt().isPresent()){
 			throw new SubstemaParserException(current.pos, current.result.leftOpt().get());
 		}
-		cu
+		Token.Data<SubstemaTokenType> data = current.result.rightOpt().get();
+		currentText = data.text;
+		currentType = data.type;
 		return current;
 	}
 
@@ -70,9 +72,9 @@ public class SubstemaParser{
 		PList<REnum>           enums          = PList.empty();
 		PList<RInterfaceClass> interfaces     = PList.empty();
 		PList<RAnnotationDef>  annotationDefs = PList.empty();
-		while(current.type != tEOF) {
+		while(currentType != tEOF) {
 			PList<RAnnotation> annotations = parseAnnotations();
-			switch(current.type) {
+			switch(currentType) {
 				case tPackage:
 					if(packageDef != null) {
 						throw new SubstemaParserException(current.pos, "There can be only one package definition");
@@ -106,7 +108,7 @@ public class SubstemaParser{
 					annotationDefs = annotationDefs.plus(parseAnnotationDef(annotations));
 					break;
 				default:
-					throw new SubstemaParserException(current.pos, "Expected a definition, not '" + current.text + "'");
+					throw new SubstemaParserException(current.pos, "Expected a definition, not '" + currentText + "'");
 			}
 		}
 		if(packageDef == null) {
@@ -134,9 +136,9 @@ public class SubstemaParser{
 		skip(tAnnotation, "'annotation' keyword expected");
 		RClass           cls   = parseRClass(packageName);
 		PList<RProperty> props = PList.empty();
-		if(current.type == tBlockStart) {
+		if(currentType == tBlockStart) {
 			next();
-			while(current.type != tEOF && current.type != tBlockEnd) {
+			while(currentType != tEOF && currentType != tBlockEnd) {
 				props = props.plus(parseRProperty(parseAnnotations()));
 			}
 			skip(tBlockEnd, "'}' expected for the end of the annotation definition of " + cls.getClassName());
@@ -153,8 +155,8 @@ public class SubstemaParser{
 	 */
 	private PList<RAnnotation> parseAnnotations() {
 		PList<RAnnotation> result = PList.empty();
-		while(current.type == tAt || current.type == tDoc) {
-			if(current.type == tDoc) {
+		while(currentType == tAt || currentType == tDoc) {
+			if(currentType == tDoc) {
 				result = result.plus(
 					new RAnnotation(
 						SubstemaUtils.docRClass,
@@ -162,7 +164,7 @@ public class SubstemaParser{
 							"info",
 							new RConstString(
 								StringUtils.escapeToJavaString(
-									current.text.substring(2, current.text.length() - 2)
+									currentText.substring(2, currentText.length() - 2)
 								)
 
 							)
@@ -176,14 +178,14 @@ public class SubstemaParser{
 				RClass               name   = parseRClass("");
 				PMap<String, RConst> values = PMap.empty();
 
-				if(current.type == tOpen) {
+				if(currentType == tOpen) {
 					next();
-					if(current.type != tClose) {
+					if(currentType != tClose) {
 						values = values.plusAll(sep(tComma, () -> {
 							String propName = null;
 
 							if(peek().type == tAssign) {
-								propName = current.text;
+								propName = currentText;
 								skip(tIdentifier, "property name expected for annotation " + name);
 								next();//skip assign
 
@@ -221,15 +223,15 @@ public class SubstemaParser{
 
 	private RTypeSig parseTypeSignature() {
 		assertType(tIdentifier, "Class name expected.");
-		String className = current.text;
+		String className = currentText;
 
 		next(); //skip class name
 		PList<RTypeSig> generics = PList.empty();
-		if(current.type == tGenStart) {
+		if(currentType == tGenStart) {
 			next(); //skip <
-			while(current.type != tEOF) {
+			while(currentType != tEOF) {
 				generics = generics.plus(parseTypeSignature());
-				if(current.type == tGenEnd) {
+				if(currentType == tGenEnd) {
 					next(); //skip >
 					break;
 				}
@@ -240,7 +242,7 @@ public class SubstemaParser{
 	}
 
 	private void assertType(SubstemaTokenType type, String msg) {
-		if(current.type != type) {
+		if(currentType != type) {
 			throw new SubstemaParserException(current.pos, msg);
 		}
 	}
@@ -258,7 +260,7 @@ public class SubstemaParser{
 	 * @return a new RClass
 	 */
 	private RClass parseRClass(String packageName) {
-		String name = current.text;
+		String name = currentText;
 		skip(tIdentifier, "identifier expected!");
 		return new RClass(packageName, name);
 	}
@@ -267,9 +269,9 @@ public class SubstemaParser{
 		skip(tInterface, "'interface' expected");
 		RClass           name = parseRClass(packageName);
 		PList<RProperty> p    = PList.empty();
-		if(current.type == tBlockStart) {
+		if(currentType == tBlockStart) {
 			next();
-			while(current.type != tEOF && current.type != tBlockEnd) {
+			while(currentType != tEOF && currentType != tBlockEnd) {
 				p = p.plus(parseRProperty(parseAnnotations()));
 			}
 			skip(tBlockEnd, "'}' expected");
@@ -290,16 +292,16 @@ public class SubstemaParser{
 		skip(tClass, "'class' expected");
 		RTypeSig      sig        = parseTypeSignature();
 		PList<RClass> interfaces = PList.empty();
-		if(current.type == tImplements) {
+		if(currentType == tImplements) {
 			next();//skip implements;
 			interfaces = sep(tComma, () -> parseRClass(""));
 		}
 
 
 		PList<RProperty> props = PList.empty();
-		if(current.type == tBlockStart) {
+		if(currentType == tBlockStart) {
 			next();
-			while(current.type != tEOF && current.type != tBlockEnd) {
+			while(currentType != tEOF && currentType != tBlockEnd) {
 				props = props.plus(parseRProperty(parseAnnotations()));
 			}
 			skip(tBlockEnd, "'}' expected");
@@ -309,7 +311,7 @@ public class SubstemaParser{
 
 	private RValueType parseRValueType() {
 		boolean required = true;
-		if(current.type == tQuestion) {
+		if(currentType == tQuestion) {
 			required = false;
 			next();
 		}
@@ -319,13 +321,13 @@ public class SubstemaParser{
 
 	private RProperty parseRProperty(PList<RAnnotation> annotations) {
 		assertType(tIdentifier, "property name expected");
-		String name = current.text;
+		String name = currentText;
 		next(); //skip name;
 
 		skip(tColon, "':' expected after property name");
 		RValueType valueType    = parseRValueType();
 		RConst     defaultValue = null;
-		if(current.type == tAssign) {
+		if(currentType == tAssign) {
 			next();//skip '='
 			defaultValue = parseConst();
 		}
@@ -339,7 +341,7 @@ public class SubstemaParser{
 	 * @return The literal.
 	 */
 	private RConst parseConst() {
-		switch(current.type) {
+		switch(currentType) {
 			case tArrayStart:
 				return parseValueArray();
 			case tTrue:
@@ -357,7 +359,7 @@ public class SubstemaParser{
 				next();
 				return RConstNull.Null;
 			case tString: {
-				String value = current.text;
+				String value = currentText;
 				next();
 				return new RConstString(value.substring(1, value.length() - 1));
 			}
@@ -371,9 +373,9 @@ public class SubstemaParser{
 		RClass name = parseRClass("");
 		skip(tOpen, "'(' expected after value class name");
 		POrderedMap<String, RConst> args = POrderedMap.empty();
-		if(current.type != tClose) {
+		if(currentType != tClose) {
 			args = args.plusAll(sep(tComma, () -> {
-				String propName = current.text;
+				String propName = currentText;
 				skip(tIdentifier, "Expected property name.");
 				skip(tColon, "':' expected after property name.");
 				return new Tuple2<>(propName, parseConst());
@@ -386,25 +388,25 @@ public class SubstemaParser{
 	private RConstEnum parserValueEnum() {
 		RClass cls = parseRClass("");
 		skip(tPoint, "'.' expected after enum name");
-		String valueName = current.text;
+		String valueName = currentText;
 		skip(tIdentifier, "enum value name expected");
 		return new RConstEnum(cls, valueName);
 	}
 
 	private RConstNumber parseValueNumber() {
 		boolean negative = false;
-		if(current.type == tPlus) {
+		if(currentType == tPlus) {
 			next();
 		}
-		else if(current.type == tMin) {
+		else if(currentType == tMin) {
 			negative = true;
 			next();
 		}
-		if(current.type != tNumber) {
+		if(currentType != tNumber) {
 			throw new SubstemaParserException(current.pos, "Expected a number");
 		}
 		RClass cls = SubstemaUtils.integerRClass;
-		String txt = (negative ? "-" : "") + current.text.toLowerCase();
+		String txt = (negative ? "-" : "") + currentText.toLowerCase();
 		Function2<Long, Long, Boolean> check = (min, max) -> {
 			long value = Long.parseLong(txt);
 			return min <= value && value <= max;
@@ -453,7 +455,7 @@ public class SubstemaParser{
 	private RConstArray parseValueArray() {
 		skip(tArrayStart, "'[' expected");
 		PList<RConst> elements = PList.empty();
-		if(current.type != tArrayEnd) {
+		if(currentType != tArrayEnd) {
 			elements = sep(tComma, this::parseConst);
 		}
 		skip(tArrayEnd, "']' expected");
@@ -461,11 +463,11 @@ public class SubstemaParser{
 	}
 
 	private RConstBoolean parseValueBoolean() {
-		if(current.type == tTrue) {
+		if(currentType == tTrue) {
 			next();
 			return new RConstBoolean(true);
 		}
-		if(current.type == tFalse) {
+		if(currentType == tFalse) {
 			next();
 			return new RConstBoolean(false);
 		}
@@ -474,7 +476,7 @@ public class SubstemaParser{
 
 	private RFunctionParam parseFunctionParam(PList<RAnnotation> annotations) {
 		assertType(tIdentifier, "parameter name expected");
-		String name = current.text;
+		String name = currentText;
 		next(); //skip name;
 
 		skip(tColon, "':' expected after parameter name");
@@ -487,13 +489,13 @@ public class SubstemaParser{
 		skip(tRemote, "'remote' expected");
 		skip(tClass, "'class' expected");
 		assertType(tIdentifier, "function name expected");
-		RClass name = new RClass(packageName, current.text);
+		RClass name = new RClass(packageName, currentText);
 		next(); //skip name;
 
 		PList<RFunction> functions = PList.empty();
-		if(current.type == tBlockStart) {
+		if(currentType == tBlockStart) {
 			next();
-			while(current.type != tEOF && current.type != tBlockEnd) {
+			while(currentType != tEOF && currentType != tBlockEnd) {
 				functions = functions.plus(parseRFunction(parseAnnotations()));
 			}
 			skip(tBlockEnd, "'}' expected");
@@ -503,20 +505,20 @@ public class SubstemaParser{
 
 	private RFunction parseRFunction(PList<RAnnotation> annotations) {
 		assertType(tIdentifier, "function name expected");
-		String name = current.text;
+		String name = currentText;
 		next(); //skip name;
 		skip(tOpen, "'(' expected after function name");
 		PList<RFunctionParam> params = PList.empty();
-		if(current.type == tIdentifier) {
+		if(currentType == tIdentifier) {
 			params = sep(tComma, () -> parseFunctionParam(parseAnnotations()));
 		}
 		skip(tClose, "')' expected after function parameters");
 		skip(tColon, "':' expected to define the function return type");
 		RValueType returnType = null;
 		boolean    cached     = false;
-		if(current.type != tOK) {
+		if(currentType != tOK) {
 			returnType = parseRValueType();
-			if(current.type == tCached) {
+			if(currentType == tCached) {
 				if(params.isEmpty() == false) {
 					throw new SubstemaParserException(current.pos, "cached result is not supported on functions with parameters.");
 				}
@@ -537,7 +539,7 @@ public class SubstemaParser{
 
 		return sep(tPoint, () -> {
 			assertType(tIdentifier, "name expected");
-			String name = current.text;
+			String name = currentText;
 			next();
 			return name;
 		}).toString(".");
@@ -558,9 +560,9 @@ public class SubstemaParser{
 	 */
 	private <T> PList<T> sep(SubstemaTokenType sep, Supplier<T> r) {
 		PList<T> res = PList.empty();
-		while(current.type != tEOF) {
+		while(currentType != tEOF) {
 			res = res.plus(r.get());
-			if(current.type != sep) {
+			if(currentType != sep) {
 				return res;
 			}
 			next();
@@ -571,16 +573,16 @@ public class SubstemaParser{
 	private REnum parseEnum(PList<RAnnotation> annotations) {
 		skip(tEnum, "'enum' expected");
 		assertType(tIdentifier, "enum name expected.");
-		String name = current.text;
+		String name = currentText;
 		next();
 		skip(tBlockStart, "'{' expected for enum definition");
 		PList<String> values = PList.empty();
-		if(current.type != tSemiColon) {
+		if(currentType != tSemiColon) {
 			values = sep(tComma, () -> {
 				PList<RAnnotation> valueAnnotations = parseAnnotations();
 				//TODO Annotations on values should be added to the result REnum values
 				assertType(tIdentifier, "enum value name expected");
-				String valueName = current.text;
+				String valueName = currentText;
 				next();
 				return valueName;
 			});
