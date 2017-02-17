@@ -17,7 +17,12 @@ annotation VarChar{
     length:Integer = 256;
 }
 
-@Table("users")
+case class Test{
+    @VarChar(80)
+        userName:String;
+}
+
+/*@Table("users")
 @Doc("Dit is een tabel met users")
 case class Users{
     @AutoGen
@@ -26,4 +31,4 @@ case class Users{
     userName:String;
     @NoToString()
     info:?String;
-}
+}*/

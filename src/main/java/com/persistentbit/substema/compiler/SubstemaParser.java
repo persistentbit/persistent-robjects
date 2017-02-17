@@ -4,7 +4,6 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PMap;
 import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.function.Function2;
-import com.persistentbit.core.result.Result;
 import com.persistentbit.core.tokenizers.Token;
 import com.persistentbit.core.tuples.Tuple2;
 import com.persistentbit.core.utils.StringUtils;
@@ -47,16 +46,6 @@ public class SubstemaParser{
 		currentText = data.text;
 		currentType = data.type;
 		return current;
-	}
-
-
-	/**
-	 * Peek at the next token value, without changing the current token.<br>
-	 *
-	 * @return The next token or tEOF if there are no more tokens.
-	 */
-	private Token<SubstemaTokenType> peek() {
-		return tokens.headOpt().orElseGet(() -> Result.success(new Token<>(current.pos, tEOF, ""))).orElseThrow();
 	}
 
 	/**
@@ -181,24 +170,7 @@ public class SubstemaParser{
 				if(currentType == tOpen) {
 					next();
 					if(currentType != tClose) {
-						values = values.plusAll(sep(tComma, () -> {
-							String propName = null;
-
-							if(peek().type == tAssign) {
-								propName = currentText;
-								skip(tIdentifier, "property name expected for annotation " + name);
-								next();//skip assign
-
-							} //else{
-							//if(isFirstDefault == false){
-							//    throw new SubstemaParserException(current.pos,"There can be maximum 1 default value");
-							//}
-							//isFirstDefault = false;
-							//}
-
-							RConst value = parseConst();
-							return Tuple2.of(propName, value);
-						}));
+						values = values.plusAll(sep(tComma, this::parseMaybeNamedConst));
 					}
 
 					skip(tClose, "')' expected to close the annotation " + name);
@@ -251,6 +223,10 @@ public class SubstemaParser{
 		assertType(type, msg);
 		next();
 	}
+	private void error(String msg){
+		throw new SubstemaParserException(current.pos,msg);
+	}
+
 
 	/**
 	 * parse the Class name and create a RClass with the given packageName and the parsed class Name
@@ -341,27 +317,34 @@ public class SubstemaParser{
 	 * @return The literal.
 	 */
 	private RConst parseConst() {
+		Tuple2<String,RConst> res = parseMaybeNamedConst();
+		if(res._1 != null){
+			error("Didn't expect a named constant");
+		}
+		return res._2;
+	}
+	private Tuple2<String,RConst> parseMaybeNamedConst() {
 		switch(currentType) {
 			case tArrayStart:
-				return parseValueArray();
+				return Tuple2.of(null,parseValueArray());
 			case tTrue:
 			case tFalse:
-				return parseValueBoolean();
+				return Tuple2.of(null,parseValueBoolean());
 			case tMin:
 			case tPlus:
 			case tNumber:
-				return parseValueNumber();
+				return Tuple2.of(null,parseValueNumber());
 			case tNew:
-				return parseValueValueObject();
+				return Tuple2.of(null,parseValueValueObject());
 			case tIdentifier:
-				return parserValueEnum();
+				return parserValueEnumOrNamedConstant();
 			case tNull:
 				next();
-				return RConstNull.Null;
+				return Tuple2.of(null,RConstNull.Null);
 			case tString: {
 				String value = currentText;
 				next();
-				return new RConstString(value.substring(1, value.length() - 1));
+				return Tuple2.of(null,new RConstString(value.substring(1, value.length() - 1)));
 			}
 			default:
 				throw new SubstemaParserException(current.pos, "Expected a literal value");
@@ -385,12 +368,21 @@ public class SubstemaParser{
 		return new RConstValueObject(new RTypeSig(name), args);
 	}
 
-	private RConstEnum parserValueEnum() {
+	private Tuple2<String,RConst> parserValueEnumOrNamedConstant() {
 		RClass cls = parseRClass("");
+		if(currentType == tAssign){
+			next(); //skip =
+			//We have a named constant.
+			String name = cls.getClassName();
+			if(cls.getPackageName() != null) {
+				error("Expected a property name");
+			}
+			return Tuple2.of(name, parseConst());
+		}
 		skip(tPoint, "'.' expected after enum name");
 		String valueName = currentText;
 		skip(tIdentifier, "enum value name expected");
-		return new RConstEnum(cls, valueName);
+		return Tuple2.of(null,new RConstEnum(cls, valueName));
 	}
 
 	private RConstNumber parseValueNumber() {
@@ -451,6 +443,8 @@ public class SubstemaParser{
 		next(); //skip number
 		return new RConstNumber(cls, value);
 	}
+
+
 
 	private RConstArray parseValueArray() {
 		skip(tArrayStart, "'[' expected");

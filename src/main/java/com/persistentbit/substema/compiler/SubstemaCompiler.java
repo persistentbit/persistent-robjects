@@ -49,7 +49,7 @@ public class SubstemaCompiler {
                 return Result.failure(new SubstemaException("Can't find code for package " + packageName));
             }
             SubstemaParser parser =
-                new SubstemaParser(packageName, new SubstemaTokenizer().tokenize(packageName, code));
+                new SubstemaParser(packageName, SubstemaTokenizer.inst.tokenize(packageName, code));
             res = parser.parseSubstema();
             for(String implicit : implicitImportPackages) {
                 if(packageName.equals(implicit) == false && res.getImports()
