@@ -1,6 +1,7 @@
 package com.persistentbit.substema.compiler;
 
-import com.persistentbit.core.tokenizer.Pos;
+
+import com.persistentbit.core.tokenizers.Pos;
 
 /**
  * Created by petermuys on 13/09/16.
