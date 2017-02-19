@@ -17,8 +17,9 @@ import java.util.Optional;
  * @since 14/09/16
  * @author Peter Muys
  */
-public class RProperty extends BaseValueClass {
-    private final String     name;
+public class RProperty extends BaseValueClass implements Annotated<RProperty>{
+
+	private final String     name;
     private final RValueType valueType;
     private final RConst defaultValue;
     private final PList<RAnnotation> annotations;
@@ -33,7 +34,11 @@ public class RProperty extends BaseValueClass {
         this(name,valueType,null,annotations);
     }
 
-    public String getName() {
+	public RProperty(String name, RValueType valueType, RConst defaultValue) {
+		this(name, valueType, defaultValue, PList.empty());
+	}
+
+	public String getName() {
         return name;
     }
 

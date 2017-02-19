@@ -1,13 +1,10 @@
 package com.persistentbit.substema.compiler;
 
 import com.persistentbit.core.result.Result;
-import com.persistentbit.core.tokenizer.SimpleTokenizer;
-import com.persistentbit.core.tokenizer.TokenFound;
+import com.persistentbit.core.tokenizers.SimpleTokenizer;
+import com.persistentbit.core.tokenizers.TokenFound;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import static com.persistentbit.core.tokenizer.SimpleTokenizer.regExMatcher;
+import static com.persistentbit.core.tokenizers.SimpleTokenizer.regExMatcher;
 import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
 
 /**
@@ -16,7 +13,7 @@ import static com.persistentbit.substema.compiler.SubstemaTokenType.*;
 public class SubstemaTokenizer{
 
 
-	public static SimpleTokenizer<SubstemaTokenType> inst = new SimpleTokenizer<SubstemaTokenType>()
+	public static SimpleTokenizer<SubstemaTokenType> inst = new SimpleTokenizer<>(tEOF)
 		.add(regExMatcher("/\\*.*?\\*/", tComment).ignore())
 		.add(regExMatcher("\\n", tNl).ignore())
 		.add("<<.*?>>", tDoc)
@@ -84,18 +81,8 @@ public class SubstemaTokenizer{
                     return Result.success(found);
             }
 		}))
-		.add(SimpleTokenizer.regExMatcher("\\s+", tWhiteSpace).ignore());
+		.add(regExMatcher("\\s+", tWhiteSpace).ignore());
 
 
-	public static void main(String... args) {
-		try{
-			SimpleTokenizer<SubstemaTokenType> tokenizer = SubstemaTokenizer.inst;
-			String                             txt       = new String(Files.readAllBytes(Paths.get(SubstemaTokenizer.class.getResource("/app.rod").toURI())));
-            System.out.println(txt);
-            tokenizer.tokenize("app.rod",txt).forEach(System.out::println);
 
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }
-    }
 }

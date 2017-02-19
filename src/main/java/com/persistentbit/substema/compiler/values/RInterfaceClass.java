@@ -8,8 +8,9 @@ import com.persistentbit.core.utils.BaseValueClass;
  * @author Peter Muys
  * @since 19/09/2016
  */
-public class RInterfaceClass extends BaseValueClass{
-    private final RClass name;
+public class RInterfaceClass extends BaseValueClass implements Annotated<RInterfaceClass>{
+
+	private final RClass name;
     private final PList<RProperty> properties;
     private final PList<RAnnotation> annotations;
 
@@ -25,9 +26,11 @@ public class RInterfaceClass extends BaseValueClass{
     public PList<RProperty> getProperties() {
         return properties;
     }
-    public PList<RAnnotation> getAnnotations() {
-        return annotations;
-    }
+
+	@Override
+	public PList<RAnnotation> getAnnotations() {
+		return annotations;
+	}
 
     public RInterfaceClass withName(RClass name){
         return copyWith("name",name);
@@ -35,8 +38,10 @@ public class RInterfaceClass extends BaseValueClass{
     public RInterfaceClass withProperties(PList<RProperty> properties){
         return copyWith("properties",properties);
     }
-    public RInterfaceClass withAnnotations(PList<RAnnotation> annotations){
-        return copyWith("annotations",annotations);
-    }
+
+	@Override
+	public RInterfaceClass withAnnotations(PList<RAnnotation> annotations){
+		return copyWith("annotations",annotations);
+	}
 
 }
