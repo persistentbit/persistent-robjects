@@ -25,14 +25,14 @@ public class SubstemaParser{
 	public static final Parser<String> ws = Scan.whiteSpace;
 
 	public static final Parser<String> identifier =
-		ws.skipAndThen(Scan.identifier
+		ws.skipAnd(Scan.identifier
 				.verify("An Identifier can't start with '_'", id -> id.startsWith("_") == false)
 				.skip(ws));
 
 	public static final Parser<String> term(String term) {
 		return ws
-			.skipAndThen(Scan.term(term))
-			.andThenSkip(ws);
+			.skipAnd(Scan.term(term))
+			.skip(ws);
 	}
 
 	public static final Parser<String> parsePackageName =
@@ -42,7 +42,7 @@ public class SubstemaParser{
 
 	public static final Parser<RImport> parseImport =
 		term("import")
-			.skipAndThen(parsePackageName)
+			.skipAnd(parsePackageName)
 			.map(packageName -> new RImport(packageName))
 			.skip(ws)
 			.onErrorAddMessage("Import statement expected");
@@ -50,8 +50,8 @@ public class SubstemaParser{
 	public static final <R> Parser<R> block(Parser<R> content) {
 		return
 			term("{")
-				.skipAndThen(content)
-				.andThenSkip(term("}"))
+				.skipAnd(content)
+				.skip(term("}"))
 			;
 	}
 
@@ -78,10 +78,10 @@ public class SubstemaParser{
 	public static final Parser<RTypeSig> parseTypeSig() {
 		return source ->
 			identifier
-				.andThen(
+				.and(
 					term("<")
-						.skipAndThen(Parser.oneOrMoreSep(parseTypeSig(), term(",")))
-						.andThenSkip(term(">"))
+						.skipAnd(Parser.oneOrMoreSep(parseTypeSig(), term(",")))
+						.skip(term(">"))
 						.optional().map(optList -> optList.orElse(PList.empty()))
 				).map(nameAndOptGenerics ->
 				new RTypeSig(new RClass(nameAndOptGenerics._1), nameAndOptGenerics._2)
@@ -93,7 +93,7 @@ public class SubstemaParser{
 
 	public static final Parser<RValueType> parseValueType =
 		term("?").optional()
-				 .andThen(parseTypeSig())
+				 .and(parseTypeSig())
 				 .map(requiredAndTypeSig -> new RValueType(requiredAndTypeSig._2, requiredAndTypeSig._1
 					 .isPresent() == false))
 				 .skip(ws)
@@ -120,11 +120,11 @@ public class SubstemaParser{
 
 	public static final Parser<RProperty> parserRProperty =
 		parseAnnotated(identifier
-			.andThenSkip(term(":"))
-			.andThen(parseValueType)
-			.andThen(
+			.skip(term(":"))
+			.and(parseValueType)
+			.and(
 				term("=")
-					.skipAndThen(parseConst)
+					.skipAnd(parseConst)
 					.optional()
 			)
 			.map(idValTypeOptConst ->
@@ -141,8 +141,8 @@ public class SubstemaParser{
 	public static final Parser<RInterfaceClass> parseInterface =
 		parseAnnotated(
 			term("interface")
-				.skipAndThen(parseClassName)
-				.andThen(block(Parser.zeroOrMore(parserRProperty.andThenSkip(term(";")))))
+				.skipAnd(parseClassName)
+				.and(block(Parser.zeroOrMore(parserRProperty.skip(term(";")))))
 				.skip(ws)
 				.onErrorAddMessage("Interface definition expected")
 				.map(t -> new RInterfaceClass(t._1, t._2, PList.empty()))
