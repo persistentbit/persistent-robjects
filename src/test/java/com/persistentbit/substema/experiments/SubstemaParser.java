@@ -22,16 +22,17 @@ import com.persistentbit.substema.compiler.values.expr.RConst;
  */
 public class SubstemaParser{
 
+	public static final Parser<String> ws = Scan.whiteSpace;
+
 	public static final Parser<String> identifier =
-		Scan.whiteSpace
-			.skipAndThen(Scan.identifier
+		ws.skipAndThen(Scan.identifier
 				.verify("An Identifier can't start with '_'", id -> id.startsWith("_") == false)
-				.skipWhiteSpace());
+				.skip(ws));
 
 	public static final Parser<String> term(String term) {
-		return Scan.whiteSpace
+		return ws
 			.skipAndThen(Scan.term(term))
-			.andThenSkip(Scan.whiteSpace);
+			.andThenSkip(ws);
 	}
 
 	public static final Parser<String> parsePackageName =
@@ -42,8 +43,8 @@ public class SubstemaParser{
 	public static final Parser<RImport> parseImport =
 		term("import")
 			.skipAndThen(parsePackageName)
-			.skipWhiteSpace()
 			.map(packageName -> new RImport(packageName))
+			.skip(ws)
 			.onErrorAddMessage("Import statement expected");
 
 	public static final <R> Parser<R> block(Parser<R> content) {
@@ -71,7 +72,6 @@ public class SubstemaParser{
 				  }
 				  return new RClass(ids.dropLast().toString("."), ids.lastOpt().get());
 			  })
-			  .skipWhiteSpace()
 			  .onErrorAddMessage("Class name expected");
 
 
@@ -86,7 +86,7 @@ public class SubstemaParser{
 				).map(nameAndOptGenerics ->
 				new RTypeSig(new RClass(nameAndOptGenerics._1), nameAndOptGenerics._2)
 			)
-				.skipWhiteSpace()
+				.skip(ws)
 				.onErrorAddMessage("Type signature expected.")
 				.parse(source);
 	}
@@ -96,7 +96,7 @@ public class SubstemaParser{
 				 .andThen(parseTypeSig())
 				 .map(requiredAndTypeSig -> new RValueType(requiredAndTypeSig._2, requiredAndTypeSig._1
 					 .isPresent() == false))
-				 .skipWhiteSpace()
+				 .skip(ws)
 				 .onErrorAddMessage("Expected value type");
 
 	public static final Parser<RConst> parseConst = Parser.toDo("RConst");
@@ -134,7 +134,7 @@ public class SubstemaParser{
 					idValTypeOptConst._2.orElse(null)
 				)
 			)
-			.skipWhiteSpace()
+			.skip(ws)
 			.onErrorAddMessage("Expected a property declaration")
 		);
 
@@ -143,7 +143,7 @@ public class SubstemaParser{
 			term("interface")
 				.skipAndThen(parseClassName)
 				.andThen(block(Parser.zeroOrMore(parserRProperty.andThenSkip(term(";")))))
-				.skipWhiteSpace()
+				.skip(ws)
 				.onErrorAddMessage("Interface definition expected")
 				.map(t -> new RInterfaceClass(t._1, t._2, PList.empty()))
 		);
