@@ -2,7 +2,7 @@ package com.persistentbit.substema;
 
 
 import com.persistentbit.core.result.Result;
-import com.persistentbit.core.utils.ReflectionUtils;
+import com.persistentbit.core.utils.UReflect;
 import com.persistentbit.substema.annotations.Remotable;
 
 import java.lang.reflect.Method;
@@ -27,8 +27,8 @@ public final class RemotableClasses{
             throw new RuntimeException("Expected a result type");
         }
         ParameterizedType pt = (ParameterizedType) m.getGenericReturnType();
-        return getRemotableClass(ReflectionUtils.classFromType(pt.getActualTypeArguments()[0])) != null;
-    }
+		return getRemotableClass(UReflect.classFromType(pt.getActualTypeArguments()[0])) != null;
+	}
 
     public static Class<?> getRemotableClass(Class<?> cls) {
         if(cls == CompletableFuture.class){

@@ -1,7 +1,7 @@
 package com.persistentbit.substema.javagen;
 
 import com.persistentbit.core.collections.PList;
-import com.persistentbit.core.utils.StringUtils;
+import com.persistentbit.core.utils.UString;
 import com.persistentbit.substema.compiler.values.RClass;
 import com.persistentbit.substema.compiler.values.RTypeSig;
 import com.persistentbit.substema.compiler.values.expr.*;
@@ -49,8 +49,8 @@ public final class RConstToJava implements RConstVisitor<String>{
 
     @Override
     public String visit(RConstString c) {
-        return "\"" + StringUtils.escapeToJavaString(c.getValue()) + "\"";
-    }
+		return "\"" + UString.escapeToJavaString(c.getValue()) + "\"";
+	}
 
 
     private void addImports(RTypeSig typeSig){
@@ -66,8 +66,9 @@ public final class RConstToJava implements RConstVisitor<String>{
         result += JavaGenUtils.genericsToString(defaultPackageName,c.getTypeSig()).orElse("");
         String varName = "_b" + (lambdaVarIndex++);
         result += "build(" + varName + " -> " + varName;
-        String setters = c.getPropValues().map(p -> "set" + StringUtils.firstUpperCase(p._1) + "(" + visit(p._2) + ")").toString(".");
-        result += setters.isEmpty() ? "" : "." + setters;
+		String setters =
+			c.getPropValues().map(p -> "set" + UString.firstUpperCase(p._1) + "(" + visit(p._2) + ")").toString(".");
+		result += setters.isEmpty() ? "" : "." + setters;
         result += ")";
 
         return result;

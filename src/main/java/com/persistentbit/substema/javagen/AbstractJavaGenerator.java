@@ -5,7 +5,7 @@ import com.persistentbit.core.collections.PSet;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.result.Result;
 import com.persistentbit.core.sourcegen.SourceGen;
-import com.persistentbit.core.utils.StringUtils;
+import com.persistentbit.core.utils.UString;
 import com.persistentbit.substema.compiler.AnnotationsUtils;
 import com.persistentbit.substema.compiler.SubstemaCompiler;
 import com.persistentbit.substema.compiler.SubstemaUtils;
@@ -75,18 +75,18 @@ public class AbstractJavaGenerator extends SourceGen{
     protected void generateJavaDoc(PList<RAnnotation> allAnnotations, String extra) {
         //Get all documentation strings
         PStream<String> docs =  atUtils.getAnnotation(allAnnotations, SubstemaUtils.docRClass).lazy()
-                .map(a -> atUtils.getStringProperty(a,"info").orElse(null))
-                .filterNulls()
-                .map(StringUtils::unEscapeJavaString)
-                .map(StringUtils::splitInLines).<String>flatten()
-                .plist();
+									   .map(a -> atUtils.getStringProperty(a,"info").orElse(null))
+									   .filterNulls()
+									   .map(UString::unEscapeJavaString)
+									   .map(UString::splitInLines).<String>flatten()
+			.plist();
 
 
         if(docs.isEmpty() == false){
             println("/**");
 			docs.forEach(d -> println(" * " + d));
-			StringUtils.splitInLines(extra).forEach(l -> println(" * " + l));
-            println(" */");
+			UString.splitInLines(extra).forEach(l -> println(" * " + l));
+			println(" */");
         }
     }
 

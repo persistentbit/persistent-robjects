@@ -6,7 +6,7 @@ import com.persistentbit.core.collections.POrderedMap;
 import com.persistentbit.core.function.Function2;
 import com.persistentbit.core.tokenizers.Token;
 import com.persistentbit.core.tuples.Tuple2;
-import com.persistentbit.core.utils.StringUtils;
+import com.persistentbit.core.utils.UString;
 import com.persistentbit.substema.compiler.values.*;
 import com.persistentbit.substema.compiler.values.expr.*;
 
@@ -152,7 +152,7 @@ public class SubstemaParser{
 						PMap.<String, RConst>empty().put(
 							"info",
 							new RConstString(
-								StringUtils.escapeToJavaString(
+								UString.escapeToJavaString(
 									currentText.substring(2, currentText.length() - 2)
 								)
 
@@ -406,29 +406,29 @@ public class SubstemaParser{
 		Number value;
 		if(txt.endsWith("l")) {
 			cls = SubstemaUtils.longRClass;
-			value = Long.parseLong(StringUtils.dropLast(txt, 1));
+			value = Long.parseLong(UString.dropLast(txt, 1));
 		}
 		else if(txt.contains("f")) {
 			cls = SubstemaUtils.floatRClass;
-			value = Float.parseFloat(StringUtils.dropLast(txt, 1));
+			value = Float.parseFloat(UString.dropLast(txt, 1));
 		}
 		else if(txt.contains("s")) {
 			cls = SubstemaUtils.shortRClass;
 			if(check.apply((long) Short.MIN_VALUE, (long) Short.MAX_VALUE) == false) {
 				throw new SubstemaParserException(current.pos, "Value " + txt + " is to big or to small to be a Short");
 			}
-			value = Short.parseShort(StringUtils.dropLast(txt, 1));
+			value = Short.parseShort(UString.dropLast(txt, 1));
 		}
 		else if(txt.contains("b")) {
 			cls = SubstemaUtils.byteRClass;
 			if(check.apply((long) Byte.MIN_VALUE, (long) Byte.MAX_VALUE) == false) {
 				throw new SubstemaParserException(current.pos, "Value " + txt + " is to big or to small to be a Byte");
 			}
-			value = Byte.parseByte(StringUtils.dropLast(txt, 1));
+			value = Byte.parseByte(UString.dropLast(txt, 1));
 		}
 		else if(txt.contains("d") || txt.contains(".")) {
 			cls = SubstemaUtils.doubleRClass;
-			value = Double.parseDouble(StringUtils.dropLast(txt, 1));
+			value = Double.parseDouble(UString.dropLast(txt, 1));
 		}
 		else {
 			if(check.apply((long) Integer.MIN_VALUE, (long) Integer.MAX_VALUE) == false) {
