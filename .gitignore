@@ -14,3 +14,4 @@ hs_err_pid*
 *.iml
 
 src/test/java/com/persistentbit/generated/
+/hotspots*
