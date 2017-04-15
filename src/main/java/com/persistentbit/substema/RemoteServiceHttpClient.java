@@ -1,7 +1,8 @@
 package com.persistentbit.substema;
 
+import com.persistentbit.core.io.IORead;
 import com.persistentbit.core.result.Result;
-import com.persistentbit.core.utils.IO;
+import com.persistentbit.core.io.IO;
 import com.persistentbit.jjson.mapping.JJMapper;
 import com.persistentbit.jjson.nodes.JJNode;
 import com.persistentbit.jjson.nodes.JJParser;
@@ -92,7 +93,7 @@ public class RemoteServiceHttpClient implements RemoteService{
                 Writer w = new OutputStreamWriter(connection.getOutputStream(), "UTF-8");
                 JJPrinter.print(false, content, w);
                 w.flush();
-                return IO.readTextStream(connection.getInputStream(),IO.utf8).flatMap(data -> {
+                return IORead.readTextStream(connection.getInputStream(),IO.utf8).flatMap(data -> {
                     l.info("Do Post Result: " + data);
                     return JJParser.parse(data);
                 });

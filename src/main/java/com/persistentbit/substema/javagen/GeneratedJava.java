@@ -1,7 +1,8 @@
 package com.persistentbit.substema.javagen;
 
+import com.persistentbit.core.io.IOFiles;
 import com.persistentbit.core.result.Result;
-import com.persistentbit.core.utils.IO;
+import com.persistentbit.core.io.IO;
 import com.persistentbit.substema.compiler.values.RClass;
 
 import java.io.File;
@@ -32,12 +33,12 @@ public class GeneratedJava {
     public Result<File> writeToFile(File root) {
         return Result.function(this, root).code(l ->
 
-                                                    IO.mkdirsIfNotExisting(getPackagePath(root))
-														.map(dest -> new File(dest, name.getClassName() + ".java"))
-														.map(dest -> {
+                                                    IOFiles.mkdirsIfNotExisting(getPackagePath(root))
+														   .map(dest -> new File(dest, name.getClassName() + ".java"))
+														   .map(dest -> {
                                                             l.info("Writing Generated java to " + dest
                                                                 .getAbsolutePath());
-                                                            IO.writeFile(code, dest, IO.utf8);
+                                                            IOFiles.write(code, dest, IO.utf8);
                                                             return dest;
                                                         })
         );
