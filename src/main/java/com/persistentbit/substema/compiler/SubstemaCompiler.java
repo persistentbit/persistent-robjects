@@ -75,7 +75,7 @@ public class SubstemaCompiler {
                 PList<RSubstema> dependencies =
                     DependencyResolver
                         .resolve(parsed, s -> s.getImports().map(i -> parse(i.getPackageName()).orElseThrow())
-                        );
+                        ).orElseThrow();
                 parsed = parsed.withImports(
                     parsed.getImports()
                         .map(i -> new RImport(i.getPackageName(), compile(i.getPackageName()).orElseThrow()))
