@@ -25,7 +25,7 @@ public class RemoteServiceLogger implements RemoteService{
         return Result.function(call).code(l -> {
             return master.call(call)
                 .completed()
-                .withLogs(le -> effect.accept(Tuple2.of(call, le)));
+                .doWithLogs(le -> effect.accept(Tuple2.of(call, le)));
         });
     }
 

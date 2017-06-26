@@ -237,7 +237,7 @@ public class RServer<R, SESSION> implements RemoteService{
 					return Result.failure("Can't execute call on a null object implementation");
 				}
 				Result<Object> callResult = singleCall(resObj, c);
-				callResult.withLogs(logs -> l.add(logs));
+				callResult.doWithLogs(logs -> l.add(logs));
 				if(callResult.isError()) {
 					return callResult;
 				}
